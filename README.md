@@ -24,6 +24,17 @@ to know exactly where I am at one glance.
 >*Second Solution* : get the power back
 
 
+###What does it look like ?
+
+![Tartify, give some colors to your GIT_PS1](https://github.com/peterhost/tartify/blob/master/img/tartify-shell.png?raw=true "Tartify : Optional title")
+
+###OMG, how can you stand it ?
+
+As *Dorothy Parker* once said :
+
+    A little bad taste is like a nice dash of paprika.
+
+
 ###What dzit do ?
 
 It addresses 3 concerns of mine :
@@ -83,18 +94,6 @@ It addresses 3 concerns of mine :
     ☆
     ...
 
-###What does it look like ?
-
-![Tartify, give some colors to your
-GIT_PS1](https://github.com/peterhost/tartify/blob/master/img/tartify-shell.png?raw=true "Tartify : Optional title")
-
-###OMG, how can you stand it ?
-
-As *Dorothy Parker* once said :
-
-    A little bad taste is like a nice dash of paprika.
-
-
 ###Doesn't it say something about Vim ?
 
 Indeed it does. As is tartifying your shell is not enough, I also offer
@@ -108,8 +107,20 @@ commands in it's statusbar, so we have to limit ourselves.
     is corresponding to a Git controlled file, and if so, spit out all
     the same infos, with less colors.
 
+
+###Preemptive FAQ
+
 >Aint it heavy ?
 
     It is. Reason why the statusbar updates are limited
 
+>Won't it slow down my editor and my shell ?
 
+    Yes it will. If that is a problem and you can't live without
+    tartification either, just go buy yourself a Cray II or whatever
+    it is they're called nowadays
+
+>Youse dumb or wha ? Why repeat the parent directory's name in the first
+>line and the PWD in your prompt
+
+    Sometimes, directories go deep, deep... underworld
