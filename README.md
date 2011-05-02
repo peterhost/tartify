@@ -1,6 +1,6 @@
 ##TARTIFY - pimp up my PS1
 
-###Wha, Why, Whatfor ?
+###Tartification for the masses
 
 If you're like me, colors are a gift of the gods which prevent us from
 falling back into the middle ages of colorless terminals. The Gods are
@@ -72,15 +72,44 @@ It addresses 3 concerns of mine :
 
 * Last, I need to see stashes **pop out** because stashes are bad, they
   make me forget about them, and I end screwing up. I need to see how
-  many element are in the stash pile, and to always see them, so that I
+  many element are in the stash stack, and to always see them, so that I
   can get rid of them as fast as I can
 
->Solution : use colors for that. A stash is like a cookie. Three
->stashes, 3 symbols. In **bold yellow**
+>Solution : use colors for that. A stash is like a stinkin cookie. Three
+>stashes, 3 stinkies. In **bold yellow**
 
     ☆
     ☆
     ☆
     ...
+
+###What does it look like ?
+
+![Tartify, give some colors to your
+GIT_PS1](https://github.com/peterhost/tartify/blob/master/img/tartify-shell.png?raw=true "Tartify : Optional title")
+
+###OMG, how can you stand it ?
+
+As *Dorothy Parker* once said :
+
+    A little bad taste is like a nice dash of paprika.
+
+
+###Doesn't it say something about Vim ?
+
+Indeed it does. As is tartifying your shell is not enough, I also offer
+you to tartify your favorite editor. This however, is moderate
+tartification because Vim only allows the equivalent of 80 printf
+commands in it's statusbar, so we have to limit ourselves.
+
+>What it does
+
+    It does the same. Each of your statusbar will indicate if a buffer
+    is corresponding to a Git controlled file, and if so, spit out all
+    the same infos, with less colors.
+
+>Aint it heavy ?
+
+    It is. Reason why the statusbar updates are limited
 
 
