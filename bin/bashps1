@@ -156,7 +156,7 @@ function __ps1_marker() {
 
 function __gitps1_repo_name()
 {
-  local notart=$1   # no tartify : TRUE for no color
+  local notartify=$1   #TRUE for no color
   local color
   local nocolor
   #? are we inside a GIT repo
@@ -168,15 +168,16 @@ function __gitps1_repo_name()
     color=$color$nocolor
     color=$color"/${__NN_}"
   fi
-  [ $notart ] &&  echo $nocolor || echo -ne $color
+  [ $notartify ] &&  echo -ne $nocolor || echo -ne $color
 }
+
 
 
 
 
 function __gitps1_stash()
 {
-  local notart=$1   # no tartify : TRUE for no color
+  local notartify=$1   #TRUE for no color
   local color
   local nocolor
   #? are we inside a GIT repo
@@ -186,20 +187,19 @@ function __gitps1_stash()
     then
 
       # One star per stash
-      color = " ${_NN_}${_Y_} "
-      nocolor = "  "
+      color="${_NN_}${_EMY_}"
+      nocolor="  "
       for (( i=0; i< $(git stash list | wc -l); i++ ))
       do
-        nocolor = "${nocolor}☆ "
+        nocolor=$nocolor"☆ "
       done
-      nocolor = "${nocolor}   "
-      color = "${nocolor}${_NN_}"
+      nocolor=$nocolor"   "
+      color="$color$nocolor""${_NN_}"
 
     fi
   fi
-  [ $notart ] &&  echo $nocolor || echo -ne $color
+  [ $notartify ] &&  echo -ne $nocolor || echo -e $color
 }
-
 
 
 
@@ -214,27 +214,41 @@ function __gitps1_diff_count() {
 
 
 
-# COLORED branch name
+# COLORED mode
+#
 # unstaged modifications :              RED
 # uncommited material :                 MAGENTA
 # unpushed commits to tracked remote :  YELLOW
 # all is commited and pushed :          GREEN
-
+#
 # untracked files :                     UNDERLINED
+#
+# NON COLORED mode
+# optionnal return value $nocolor_infos
+#
+#   nocolor_info="(S|C|P|O)(U)?(M)?"
+#       S:unstaged, C:uncommited, P:unpushed, O:allisOK,
+#       U:untracked, M:unmerged
+#
 function __gitps1_branch()
 {
 
+  local notartify=$1   #TRUE for no color
+  local givemeinfos=$2 #TRUE prepends $nocolor_info"|" to the result
+  local color
+  local nocolor
+  local nocolor_infos # store color infos in an easilly parseable string
   #? are we inside a GIT repo
   if git rev-parse --git-dir >/dev/null 2>&1
   then
     local gitdir_=`git rev-parse --git-dir`
 
-    local color="  "${__NN_}
     local commited=false
     local remotelogentries
     local isunstaged
     local isuntracked
     local branchname=$(git branch 2>/dev/null| sed -n '/^\*/s/^\* //p')
+    color=${__NN_}
     # NON-EMPTY GIT REPO
     # VERIFY that .git/refs/heads/ directory is not empty
     if [ $(ls $gitdir_/refs/heads/ | wc -l) -gt 0 ]
@@ -249,7 +263,8 @@ function __gitps1_branch()
         #  YES : green
         if [ !  $(git diff  --cached | wc -l) -gt 0  ]
         then
-          color=$color"\033[32m" #GREEN
+          color=$color$__G_ #GREEN
+          nocolor_infos="O"
 
 
           #? is there a remote for this repo ?
@@ -264,18 +279,21 @@ function __gitps1_branch()
               remotelogentries=$(git log origin/$branchname.. | wc -l )
               if [ $remotelogentries  -gt 0 ]
               then
-                color="${color}${__EM_}\033[33m" #YELLOW BOLD
+                color=$color$__EMY_ #YELLOW BOLD
+                nocolor_infos="P"
               fi
             fi
           fi
         #  NO: MAGENTA
         else
-          color=$color"\033[35m" #MAGENTA
+          color=$color$__M_ #MAGENTA
+          nocolor_infos="C"
         fi
 
       #  NO : RED
       else
-        color="${color}${__EM_}\033[31m" #BOLD RED
+        color=$color$__EMR_} #BOLD RED
+        nocolor_infos="S"
         commited=false
       fi
 
@@ -283,14 +301,17 @@ function __gitps1_branch()
       #? UNTRACKED FILES -> underlined
       if [ -n "$(git ls-files --others --exclude-standard)" ]; then
         color=$color$__UN_
+        nocolor_infos=$nocolor_infos"U"
       fi
 
       color=$color$branchname$__NN_
+      nocolor=$branchname
 
       # ---------- UNMERGED FILES -------------
-      if [ $(git ls-files -u) ]
+      if [ $(git ls-files -u | wc -l ) -gt 0 ]
       then
-        color=$__EM_$_BL_"   \033[31m✖  "$_NN_$color #BOLD RED BLINKING CROSS
+        color=$__BL_$__EMR_"   ✖  "$__NN_$color #BOLD RED BLINKING CROSS
+        nocolor_infos=$nocolor_infos"M"
       fi
 
 
@@ -299,7 +320,10 @@ function __gitps1_branch()
   else
     return 0
   fi
-  echo -ne $color
+
+  [ $notartify ] &&  {
+      [ $givemeinfos ] && echo -ne $nocolor_infos"|"$nocolor || echo -ne $nocolor 
+  } || echo -e $color
 }
 
 
@@ -311,12 +335,15 @@ function __gitps1_branch()
 function __gitps1_remote
 {
 
+  local notartify=$1   #TRUE for no color
+  local color
+  local nocolor
   #? are we inside a GIT repo
   if git rev-parse --git-dir >/dev/null 2>&1
   then
     local gitdir_=`git rev-parse --git-dir`
-    local color="  "$__NN_
     local branchname=$(git branch 2>/dev/null| sed -n '/^\*/s/^\* //p')
+    color="  "$__NN_
 
     # NON-EMPTY GIT REPO
     # VERIFY that .git/refs/heads/ directory is not empty
@@ -333,7 +360,7 @@ function __gitps1_remote
       for remotename in $(git remote show); do
 
         # special markers for origin and upstream
-        # nb: a tracked remote is preceded by a little ✈ symbol
+        # nb: a tracked remote is preceded by a little ➝ symbol
         case $remotename in
             origin)   marker="O"; marker_color="${__G_}"   ;;  #green
           upstream)   marker="U"; marker_color="${__M_}"   ;;  #magenta
@@ -343,7 +370,8 @@ function __gitps1_remote
         # CURRENT BRANCH is tracked to CURRENT REMOTE ?
         if [[ $(git config --get branch.$branchname.remote) =~ $remotename ]]
         then
-          before_traked="➝${__EM_} "; after_tracked="${_EMQ_}"
+          [ $notartify ]  &&  { before_traked="➝ "; after_tracked=""; } ||
+                              { before_traked="➝${__EM_} "; after_tracked="${_EMQ_}"; }
         else
           before_traked=""; after_tracked=""
         fi
@@ -353,27 +381,35 @@ function __gitps1_remote
         local ahead_count="$(__gitps1_diff_count $remotename/$branchname HEAD)"
         local behind_count="$(__gitps1_diff_count HEAD $remotename/$branchname)"
         local diffcount=""
+        local diffcountnocol=""
         if [ 0 -lt "$ahead_count" ]; then
             diffcount="${__G_}${ahead_count}"
+            diffcountnocol="+${ahead_count}"
         fi
 
         if [ 0 -lt "$behind_count" ]; then
-            [ -n "$diffcount" ] && diffcount="${diffcount}${marker_color}/"
+            [ -n "$diffcount" ] && { 
+                    diffcount="${diffcount}${marker_color}/"
+                    diffcountnocol="${diffcountnocol}/"
+                  }
             diffcount="${diffcount}${__R_}${behind_count}"
+            diffcountnocol="${diffcountnocol}-${behind_count}"
         fi
 
         [ -n "$diffcount" ] && diffcount=" ${marker_color}($diffcount${marker_color}) "
+        [ -n "$diffcountnocol" ] && diffcountnocol=" ($diffcountnocol) "
         #echo "$diffcount"
 
 
         color=$color"${marker_color}${before_traked}${marker}${after_tracked}${diffcount}${__NN_}"
+        nocolor=$nocolor"${before_traked}${marker}${after_tracked}${diffcountnocol}"
 
       done
     fi
   else
     return 0
   fi
-  echo -ne $color
+  [ $notartify ] &&  echo -ne $nocolor || echo -e $color
 }
 
 
@@ -389,7 +425,7 @@ function __gitps1_remote
 #}
 
 
-PS1="\$(__gitps1_repo_name)\$(__gitps1_branch)  \$(__gitps1_remote) \$(__gitps1_stash)${NONE}\n[${__UC_}\u${_EMK_}@${_EMUC_}\h ${_C_}\${NEW_PWD}${_EMK_}]\$(__ps1_marker) ${_NN_}"
+PS1="\$(__gitps1_repo_name)\$(__gitps1_branch)  \$(__gitps1_remote) \$(__gitps1_stash)${__NN_}\n[${__UC_}\u${_EMK_}@${_EMUC_}\h ${_C_}\${NEW_PWD}${_EMK_}]\$(__ps1_marker) ${_NN_}"
 
 
 PROMPT_COMMAND=bash_prompt_command
