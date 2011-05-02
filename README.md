@@ -7,7 +7,7 @@
        ##     ##    ##  ##    ###    ##      ######   ##           ##    
 
 
-##TARTIFY - pimp up my PS1
+#PIMP UP YOUR PS1
 
 ###Tartification for the masses
 
