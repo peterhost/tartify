@@ -359,6 +359,8 @@ function __gitps1_remote
       local marker_color
       local before_traked
       local after_tracked
+      local before_untraked
+      local after_untracked
 
       # loop through remotes
       for remotename in $(git remote show); do
@@ -374,10 +376,12 @@ function __gitps1_remote
         # CURRENT BRANCH is tracked to CURRENT REMOTE ?
         if [[ $(git config --get branch.$branchname.remote) =~ $remotename ]]
         then
-          [ $notartify ]  &&  { before_traked="➝ "; after_tracked=""; } ||
-                              { before_traked="➝${__EM_} "; after_tracked="${_EMQ_}"; }
+          [ $notartify ]  &&  { before_traked=" ➝ "; after_tracked="";
+                                before_untraked=" "; after_untracked=""; } ||
+                              { before_traked=" ➝${__EM_} "; after_tracked="${_EMQ_}";
+                                before_untraked=" "; after_untracked=""; }
         else
-          before_traked=""; after_tracked=""
+          before_traked=""; after_tracked="";before_traked=" "; after_tracked=""; 
         fi
 
 
@@ -438,5 +442,5 @@ export -f __gitps1_repo_name
 export -f __gitps1_branch
 export -f __gitps1_remote
 export -f __gitps1_stash
-
+export __tartify_shell_loaded=1
 
