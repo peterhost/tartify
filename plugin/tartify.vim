@@ -69,6 +69,12 @@ function! s:errmsg(msg)
 endfunction
 
 
+"Bail if not on *nix
+if has("win32") || has("win64") || has("win16") || has("win95")
+  call s:errmsg("Tartify will only work in Cygwin's version of Vim on windows.")
+  finish
+endif
+
 
 " Bail if Vim isn't compiled with status line support.
 if has( "statusline" ) == 0
