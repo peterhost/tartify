@@ -5,7 +5,7 @@
 #
 #    Description:  BASH PS1 with GIT support
 #
-#                  Colored command prompt adapted to GIT repository. VERY 
+#                  Colored command prompt adapted to GIT repository. VERY
 #                  colorfull, not for the faint hearted
 #
 #  Configuration:  place this file somewhere in your PATH and source it in your
@@ -24,18 +24,18 @@
 #        Created:  01.05.2011
 #        License:  WTFPL V2
 #
-# DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE Version 2, December 2004 
+# DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE Version 2, December 2004
 #
-# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net> 
+# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
 #
 # Everyone is permitted to copy and distribute verbatim or modified
 # copies of this license document, and changing it is allowed as long as
-# the name is changed. 
+# the name is changed.
 #
 #            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE TERMS AND
-#            CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION 
+#            CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 #
-#  0. You just DO WHAT THE FUCK YOU WANT TO. 
+#  0. You just DO WHAT THE FUCK YOU WANT TO.
 #
 #------------------------------------------------------------------------------
 
@@ -184,8 +184,8 @@ function __gitps1_stash()
   local notartify=$1   #TRUE for no color
   local color
   local nocolor
-  #? are we inside a GIT repo
-  if git rev-parse --git-dir >/dev/null 2>&1
+  #? are we inside a GIT repo's working tree
+  if `git rev-parse --is-inside-work-tree`
   then
     if [ $(git stash list | wc -l) -gt 0 ]
     then
@@ -227,11 +227,13 @@ function __gitps1_diff_count() {
 #
 # untracked files :                     UNDERLINED
 #
+# inside .git dir :                     BLUE
+#
 # NON COLORED mode
 # optionnal return value $nocolor_infos
 #
-#   nocolor_info="(S|C|P|O)(U)?(M)?"
-#       S:unstaged, C:uncommited, P:unpushed, O:allisOK,
+#   nocolor_info="(S|C|P|O|G)(U)?(M)?"
+#       S:unstaged, C:uncommited, P:unpushed, O:allisOK,G:insideDotGit
 #       U:untracked, M:unmerged
 #
 function __gitps1_branch()
@@ -242,7 +244,7 @@ function __gitps1_branch()
   local color
   local nocolor
   local nocolor_infos # store color infos in an easilly parseable string
-  #? are we inside a GIT repo
+  #? are we inside a GIT repo's working tree
   if git rev-parse --git-dir >/dev/null 2>&1
   then
     local gitdir_=`git rev-parse --git-dir`
@@ -253,74 +255,81 @@ function __gitps1_branch()
     local isuntracked
     local branchname=$(git branch 2>/dev/null| sed -n '/^\*/s/^\* //p')
     color=${__NN_}
-    # NON-EMPTY GIT REPO
-    # VERIFY that .git/refs/heads/ directory is not empty
-    if [ $(ls $gitdir_/refs/heads/ | wc -l) -gt 0 ]
-    then
-
-      #? ALL modified files are STAGED
-      if git diff --quiet >/dev/null 2>&1
+    if `git rev-parse --is-inside-work-tree`; then
+    ##? are we inside a GIT repo
+      # NON-EMPTY GIT REPO
+      # VERIFY that .git/refs/heads/ directory is not empty
+      if [ $(ls $gitdir_/refs/heads/ | wc -l) -gt 0 ]
       then
 
-
-        #? all STAGED changes commited
-        #  YES : green
-        if [ !  $(git diff  --cached | wc -l) -gt 0  ]
+        #? ALL modified files are STAGED
+        if git diff --quiet >/dev/null 2>&1
         then
-          color=$color$__G_ #GREEN
-          nocolor_infos="O"
 
 
-          #? is there a remote for this repo ?
-          if [ $(git remote show | wc -l) -gt 0 ]
+          #? all STAGED changes commited
+          #  YES : green
+          if [ !  $(git diff  --cached | wc -l) -gt 0  ]
           then
-            # restrict test to the remote called 'origin'
-            if git remote show | grep origin >/dev/null
-            then
+            color=$color$__G_ #GREEN
+            nocolor_infos="O"
 
-              #? all comits in current branch have been pushed to remote with in same branch
-              #  NO : yellow
-              remotelogentries=$(git log origin/$branchname.. | wc -l )
-              if [ $remotelogentries  -gt 0 ]
+
+            #? is there a remote for this repo ?
+            if [ $(git remote show | wc -l) -gt 0 ]
+            then
+              # restrict test to the remote called 'origin'
+              if git remote show | grep origin >/dev/null
               then
-                color=$color$__EMY_ #YELLOW BOLD
-                nocolor_infos="P"
+
+                #? all comits in current branch have been pushed to remote with in same branch
+                #  NO : yellow
+                remotelogentries=$(git log origin/$branchname.. | wc -l )
+                if [ $remotelogentries  -gt 0 ]
+                then
+                  color=$color$__EMY_ #YELLOW BOLD
+                  nocolor_infos="P"
+                fi
               fi
             fi
+          #  NO: MAGENTA
+          else
+            color=$color$__M_ #MAGENTA
+            nocolor_infos="C"
           fi
-        #  NO: MAGENTA
+
+        #  NO : RED
         else
-          color=$color$__M_ #MAGENTA
-          nocolor_infos="C"
+          color=$color$__EMR_ #BOLD RED
+          nocolor_infos="S"
+          commited=false
         fi
 
-      #  NO : RED
-      else
-        color=$color$__EMR_} #BOLD RED
-        nocolor_infos="S"
-        commited=false
+
+        #? UNTRACKED FILES -> underlined
+        if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+          color=$color$__UN_
+          nocolor_infos=$nocolor_infos"U"
+        fi
+
+        color=$color$branchname$__NN_
+        nocolor=$branchname
+
+        # ---------- UNMERGED FILES -------------
+        if [ $(git ls-files -u | wc -l ) -gt 0 ]
+        then
+          color=$__BL_$__EMR_"   ✖  "$__NN_$color #BOLD RED BLINKING CROSS
+          nocolor_infos=$nocolor_infos"M"
+        fi
+
+
       fi
-
-
-      #? UNTRACKED FILES -> underlined
-      if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-        color=$color$__UN_
-        nocolor_infos=$nocolor_infos"U"
-      fi
-
-      color=$color$branchname$__NN_
-      nocolor=$branchname
-
-      # ---------- UNMERGED FILES -------------
-      if [ $(git ls-files -u | wc -l ) -gt 0 ]
-      then
-        color=$__BL_$__EMR_"   ✖  "$__NN_$color #BOLD RED BLINKING CROSS
-        nocolor_infos=$nocolor_infos"M"
-      fi
-
-
+    else
+      #we're inside the .git dir
+        color=$color$__B_"<.git>" #BLUE
+        nocolor="<.git>"
+        nocolor_infos="G"
     fi
-
   else
     return 0
   fi
