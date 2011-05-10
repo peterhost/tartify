@@ -324,8 +324,9 @@ function __gitps1_branch()
 
 
       fi
+
+    # SPECIAL_CASE: we're inside the .git dir
     else
-      #we're inside the .git dir
         color=$color$__B_"<.git>" #BLUE
         nocolor="<.git>"
         nocolor_infos="G"
