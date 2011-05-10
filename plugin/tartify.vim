@@ -340,20 +340,11 @@ endfunction
 
 
 if has("autocmd")
+  autocmd VimEnter * call s:defineUserColors() | call s:resetTartification()
   autocmd ColorScheme * call s:resetTartification()
 endif
 
-call s:defineUserColors()
-call s:resetTartification()
 
-
-"
-" GLOBAL_FUNCTION: : overload original styles with
-" user-defined ones (for vimrc & such)
-"
-function g:tartify_update_colors()
-  call s:resetTartification()
-endfunction
 
 "2}}}
 
@@ -789,3 +780,4 @@ endfunction
 
 
 "1}}}
+" vim:foldmethod=marker
