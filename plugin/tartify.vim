@@ -429,6 +429,7 @@ set statusline+=%{StatuslineGitTartify('branch','unpushed')}
 set statusline+=%{StatuslineGitTartify('branch','unpushedWithUntracked')}
 set statusline+=%{StatuslineGitTartify('branch','ok')}
 set statusline+=%{StatuslineGitTartify('branch','okWithUntracked')}
+set statusline+=%{StatuslineGitTartify('branch','insideGitDir')}
 
 set statusline+=%3*
 set statusline+=%{StatuslineGitTartify('remotes')}
@@ -444,7 +445,7 @@ set statusline+=%*
         "         "unmerged"
 
 "
-" 23 ITEMS LEFT
+" 22 ITEMS LEFT
 "
 
 "display a warning if &et is wrong, or we have mixed-indenting
@@ -602,10 +603,11 @@ function! StatuslineGitTartify(item, ...)
         "         only the branchname + colors
         "
         "
-        "         "unstaged",   "unstagedWithUntracked",
-        "         "uncommited", "uncommitedWithUntracked",
-        "         "unpushed",   "unpushedWithUntracked",
-        "         "ok",         "okWithUntracked"
+        "         "unstaged",     "unstagedWithUntracked",
+        "         "uncommited",   "uncommitedWithUntracked",
+        "         "unpushed",     "unpushedWithUntracked",
+        "         "ok",           "okWithUntracked",
+        "         "insideGitDir"
         "
         "
         "        > this will return a "M" symbol which will be prepended
@@ -621,9 +623,11 @@ function! StatuslineGitTartify(item, ...)
         "
         "   where $nocolor_info is a string between 1 and 3 characters:
         "
-        "     nocolor_info = "(S|C|P|O)(U)?(M)?"
+        "     nocolor_info = "(S|C|P|O|G)(U)?(M)?"
         "
         "         S "unstaged", C "uncommited", P "unpushed", O "allisOK",
+        "           G "insideDotGit"
+        "
         "         U "untracked", M "unmerged"
         "
         "
@@ -632,7 +636,7 @@ function! StatuslineGitTartify(item, ...)
                      \"unstaged|unstagedWithUntracked|
                      \uncommited|uncommitedWithUntracked|
                      \unpushed|unpushedWithUntracked|
-                     \ok|okWithUntracked|
+                     \ok|okWithUntracked|insideGitDir|
                      \unmerged"
         if  !match(l:branchstate, l:arglist)
           return "BAD arg" . l:branchstate
@@ -646,7 +650,7 @@ function! StatuslineGitTartify(item, ...)
           let l:unmerged_status   = ""
 
           for b:tmp_str in split(l:args[0], '\zs')
-            if match(b:tmp_str, '^[SCPO]$')
+            if match(b:tmp_str, '^[SCPOG]$')
               let l:commit_status = b:tmp_str
             endif
             if match(b:tmp_str, '^U$')
