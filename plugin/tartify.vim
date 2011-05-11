@@ -387,6 +387,15 @@ endfunction
 "
 
 function! s:smartHighligths()
+  "let l:bgTmp = (&background)? &background : "dark"
+
+
+  "if exists(&background)
+    "let l:bgTmp = &background
+  "else
+    "let l:bgTmp = "dark"
+  "endif
+
 
   " using the global setting &background
   for [l:nb, l:val] in items(g:tartify_adaptativeHighlights[&background])
@@ -442,15 +451,27 @@ endfunction
 "
 "
 function! s:resetTartification()
+  call s:defineUserColors()
   call s:statuslineHighlightConcat()
   call s:smartHighligths()
 endfunction
 
+" Activate the nested autocmd only after all scripts/plugins are loaded,
+" otherwise called before the statusline theme (g:tartify_adaptativeHighlights) is
+"defined (by s:defineUserColors() )
 
 if has("autocmd")
-  autocmd VimEnter * call s:defineUserColors() | call s:resetTartification()
-  autocmd ColorScheme * call s:resetTartification()
+  "autocmd VimEnter *
+        "\   call s:defineUserColors()
+        "\ | call s:resetTartification()
+        "\ | autocmd ColorScheme * call s:resetTartification()
+
+  autocmd VimEnter *
+        \   call s:resetTartification()
+        \ | autocmd ColorScheme * call s:resetTartification()
+
 endif
+
 
 
 
@@ -460,6 +481,9 @@ endif
 
 
 "1}}}
+
+
+"______________________________________________________________________________
 " -------- StatusLine setup ------------{{{1
 " -------- StatusLine directives ------{{{2
 "
