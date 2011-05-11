@@ -219,38 +219,75 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 " s:smartHighligths will then generate the {CurrentColorscheme}compatible
 " Statusbar Highlights for you in User1,...,User9
 
-" Nota Bene : the generated User{N} highlight groups  will overload the
-" current Colorscheme's "StatusLine Highlight group" (ie: adding underline on
-" an (already) underlined statusbar highlight group, as per definition of your
-" current ColorScheme, won't do nothing more)
+" NOTE: the generated User{N} highlight groups  will overload the
+"       current Colorscheme's "StatusLine Highlight group"
+" IE: adding a hue or format directive will add up to the statusbar default,
+"     for this precise UserN group.
+" EX: adding a "format='underline'" to color "1" when your statusbar highlight
+"     group has "term=italic cterm=italic,bold gui=undercurl ", will result in
+"     "term=underline,italic cterm=underline,italic,bold gui=underline,undercurl"
+"     for the color "User1"
+"
+"
+"   let g:tartify_adaptativeHighlights  = {
+"        \'light': {
+"          \ 1: {'hue': 'lightblue',   'format': 'underline,italic'},
+"          \ 2: {'hue': 'blue',        'format': ''},
+"          \ 3: {'hue': 'lightred',    'format': 'underline,italic'},
+"          \ 4: {'hue': 'red',         'format': 'underline,italic'},
+"          \ 5: {'hue': 'lightgreen',  'format': 'underline,italic'},
+"          \ 6: {'hue': 'green',       'format': 'underline,italic'},
+"          \ 7: {'hue': 'magenta',     'format': 'underline,italic'},
+"          \ 8: {'hue': 'lightyellow', 'format': ''},
+"          \ 9: {'hue': 'yellow',      'format': ''}
+"          \ },
+"      \'dark': {
+"          \ 1: {'hue': 'blue',        'format': 'underline,italic'},
+"          \ 2: {'hue': 'darkblue',    'format': ''},
+"          \ 3: {'hue': 'red',         'format': 'underline,italic'},
+"          \ 4: {'hue': 'darkred',     'format': 'underline,italic'},
+"          \ 5: {'hue': 'green',       'format': 'underline,italic'},
+"          \ 6: {'hue': 'darkgreen',   'format': 'underline,italic'},
+"          \ 7: {'hue': 'magenta',     'format': 'underline,italic'},
+"          \ 8: {'hue': 'yellow',      'format': ''},
+"          \ 9: {'hue': 'darkyellow',  'format': ''}
+"          \ }
+"      \}
+
 function! s:defineUserColors()
-  let g:tartify_adaptativeHighlights  = {
-        \'light': {
-          \ 1: {'hue': 'lightblue',   'format': 'underline,italic'},
-          \ 2: {'hue': 'blue',        'format': ''},
-          \ 3: {'hue': 'lightred',    'format': 'underline,italic'},
-          \ 4: {'hue': 'red',         'format': 'underline,italic'},
-          \ 5: {'hue': 'lightgreen',  'format': 'underline,italic'},
-          \ 6: {'hue': 'green',       'format': 'underline,italic'},
-          \ 7: {'hue': 'magenta',     'format': 'underline,italic'},
-          \ 8: {'hue': 'lightyellow', 'format': ''},
-          \ 9: {'hue': 'yellow',      'format': ''}
-          \ },
-      \'dark': {
-          \ 1: {'hue': 'blue',        'format': 'underline,italic'},
-          \ 2: {'hue': 'darkblue',    'format': ''},
-          \ 3: {'hue': 'red',         'format': 'underline,italic'},
-          \ 4: {'hue': 'darkred',     'format': 'underline,italic'},
-          \ 5: {'hue': 'green',       'format': 'underline,italic'},
-          \ 6: {'hue': 'darkgreen',   'format': 'underline,italic'},
-          \ 7: {'hue': 'magenta',     'format': 'underline,italic'},
-          \ 8: {'hue': 'yellow',      'format': ''},
-          \ 9: {'hue': 'darkyellow',  'format': ''}
-          \ }
-      \}
+
+  "check if custom theme exists for current colorscheme
+  let l:themefile = s:tart_themeDir . g:colors_name . ".vim"
+  if filereadable(l:themefile)
+    execute "source " . l:themefile
+  else
+    execute "source " . s:tart_defaultTheme
+  endif
+
+  "overwrite Theme colors with user defined ones if they exist
+  if exists("g:tartify_forceColor")
+    call s:forceRCcolors("light")
+    call s:forceRCcolors("dark")
+  endif
 endfunction
 
 
+" Force (possible) color directives from a rc file (vimrc,...)
+function! s:forceRCcolors(background)
+  if exists("g:tartify_forceColor[a:background]")
+    call Decho("->PROCESSING " . a:background)
+    for [l:nb, l:val] in items(g:tartify_forceColor[a:background])
+        if exists("l:val.hue")
+          let g:tartify_adaptativeHighlights[a:background][l:nb].hue = l:val.hue
+          call Decho("--->ADDED " . l:val.hue)
+        endif
+        if exists("l:val.format")
+          let g:tartify_adaptativeHighlights[a:background][l:nb].format = l:val.format
+          call Decho("--->ADDED " . l:val.format)
+        endif
+    endfo
+  endif
+endfunction
 
 "2}}}
 " -------- Leech ColorScheme ----------{{{2
