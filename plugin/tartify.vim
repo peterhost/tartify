@@ -106,21 +106,40 @@ if $__tartify_shell_loaded != 1
 endif
 
 "}}}
-" Store possible former statusline for restoration{{{
-if &statusline != ""
-  call s:errmsg("THERE IS A STATUSLINE")
-  let g:tartify_slbackup = escape(&statusline, " ")
-else
-  call s:errmsg("NO STATUSLINE")
-  "fallback to (little-more-than-)default statusline
-  let g:tartify_slbackup ='%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P'
-endif
-"}}}
-
 
 
 
 "1}}}
+
+
+
+"______________________________________________________________________________
+" -------- Initialization -------------{{{1
+" MISC globs{{{
+
+let s:install_dir         = expand('<sfile>:p:h')
+let s:tart_themeDir       = s:install_dir . '/../tarts/themes/'
+let s:tart_defaultTheme   = s:install_dir . '/../tarts/themes/default.vim'
+
+" used in RC files 
+let g:tartify_forceColor = {'light': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:{}}, 'dark': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:{}} }
+
+
+
+
+"}}}
+" Store former statusline for restoration in Toggling{{{
+if &statusline != ""
+  call Decho("THERE IS A STATUSLINE")
+  let g:tartify_slbackup = escape(&statusline, " ")
+else
+  call Decho("NO STATUSLINE")
+  "fallback to (little-more-than-)default statusline
+  let g:tartify_slbackup ='%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P'
+endif
+
+
+
 
 
 
