@@ -46,22 +46,35 @@
 
 
 "-------------------------------TRIVIA-----------------------------------------
-" Authoritative References in the matter of Status Line for Vim :
+" Authoritative References in the matter of Status Line for Vim, alas for your
+" chastized ears, are chaps from the pr0n business:
 " http://got-ravings.blogspot.com/2008/08/vim-pr0n-making-statuslines-that-own.html
 " http://got-ravings.blogspot.com/2008/10/vim-pr0n-statusline-whitespace-flags.html
+"         (A F*$!NG LOT was stolen from those two references)
 " http://www.reddit.com/r/vim/comments/e19bu/whats_your_status_line/
-"         (A F*$!NG LOT was stolen from the first two references)
 "------------------------------------------------------------------------------
 
 
+" TODO:
+"
+"   *** move code to autoload and prevent tartify to fully load if autostart
+"       is disabled (which is the default)
+"
+"   *   custom :tartify command, with autocompletion, like :colorscheme
+"
+"
 
+let s:production = 0  "0: dev mode, 1: production mode
+                      " (dev mode deactivates loaded_tartify)
+
+"______________________________________________________________________________
 " -------- Preliminay Checks ----------{{{1
 "Only load once{{{
 " Check if we should continue loading
-"if exists( "loaded_tartify" )
-"  finish
-"endif
-"let loaded_tartify= 1
+if exists( "loaded_tartify" ) && s:production == 1
+  finish
+endif
+let loaded_tartify= 1
 
 "}}}
 "Helper function{{{
