@@ -141,11 +141,8 @@ endif
 
 
 
-
-
-" -------- VIMRC directives -----------{{{1
-
-" Show Tartify's statusline at vim startup ?{{{2
+"}}}
+" INIT -> Show Tartify's statusline at vim startup ?{{{2
 "       0  : hidden
 "       1  : visible
 
@@ -158,8 +155,9 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "1}}}
 
 
+"______________________________________________________________________________
 " -------- SMART User{N} Colors -------{{{1
-" -------- ABOUT Auto-StatusL coloring {{{2
+" -------- WTF ------------------------{{{2
 " --------------------------------------------------------------------------
 "
 " PROBLEM1: When coloring Vim's StatusLine, we have two options :
