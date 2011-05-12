@@ -643,7 +643,7 @@ function! s:tartify_set_statusline()
   set statusline+=%{StatuslineGitTartify('branch','insideGitDir')}
 
   set statusline+=%3*
-  set statusline+=%{StatuslineGitTartify('remotes')}
+  set statusline+=%{StatuslineGitTartify('remote')}
 
   set statusline+=%4*
   set statusline+=%{StatuslineGitTartify('stash')}
@@ -791,7 +791,7 @@ function! StatuslineGitTartify(item, ...)
   " as the pr0n master once said, "we gawts to cache"
   " (all this calling external bash function is resource intensive and
   " suboptimall too)
-  if !exists("b:statusline_tartify_repo")
+  if !exists("b:statusline_tartifyGIT")
     let l:cdlocaldir = "cd `dirname " . shellescape(expand('%:p')) . "`; "
     "
     " These shell functions have to exist in Vim's environment
@@ -807,30 +807,37 @@ function! StatuslineGitTartify(item, ...)
     " to also return additional infos about the branch (unstaged
     " files,...)
     "
-    let b:statusline_tartify_repo     = system( l:cdlocaldir . "__gitps1_repo_name TRUE")
-    let b:statusline_tartify_branch   = system( l:cdlocaldir . "__gitps1_branch TRUE TRUE"   )
-    let b:statusline_tartify_remotes  = system( l:cdlocaldir . "__gitps1_remote TRUE"  )
-    let b:statusline_tartify_stash    = system( l:cdlocaldir . "__gitps1_stash TRUE"    )
+    let b:statusline_tartifyGIT = {}
+    "  execute predefined shell commands
+    "     __gitps1_repo_name TRUE"
+    "     __gitps1_branch TRUE TRUE"
+    "     __gitps1_remote TRUE"
+    "     __gitps1_stash TRUE"
+    for l:key in ['repo_name', 'branch', 'remote', 'stash']
+      let b:statusline_tartifyGIT[l:key] = system( l:cdlocaldir . "__gitps1_" . l:key . " TRUE")
+      "Catchall :unexpected error from shell function (report please)
+      if !v:shell_error == 0
+        echomsg "TARTIFY: GITPS1 ERROR [" . l:key . "][". v:shell_error . "] RES=" . b:statusline_tartifyGIT[l:key]
+      endif
+    endfo
+
   endif
 
   "PROCESSING
   "
   "no a git repo
-  if b:statusline_tartify_repo == ""
+  if b:statusline_tartifyGIT['repo_name'] == ""
     return ""
 
-  "Catchall :unexpected error from shell function (report please)
-  elseif !v:shell_error == 0
-    return " -ERROR- "
 
   "git repo, all fine
   else
     if a:item == "repository"
-      return b:statusline_tartify_repo
-    elseif a:item == "remotes"
-      return b:statusline_tartify_remotes
+      return b:statusline_tartifyGIT['repo_name']
+    elseif a:item == "remote"
+      return b:statusline_tartifyGIT['remote']
     elseif a:item == "stash"
-      return b:statusline_tartify_stash
+      return b:statusline_tartifyGIT['stash']
     elseif a:item == "branch"
       "
       " "branch" calls for a second argument!
@@ -889,7 +896,7 @@ function! StatuslineGitTartify(item, ...)
           return "BAD arg" . l:branchstate
         else
             " 1) separate $nocolor_info from $branch_name
-          let l:args = split(b:statusline_tartify_branch, '|')
+          let l:args = split(b:statusline_tartifyGIT['branch'], '|')
 
           " 2) split $nocolor_info
           let l:commit_status     = ""
@@ -923,11 +930,11 @@ endfunction
 
 
 "recalculate the Gitps1 when idle, and after saving
-autocmd cursorhold,CursorHoldI,bufwritepost * unlet! b:statusline_tartify_repo
+autocmd cursorhold,CursorHoldI,bufwritepost * unlet! b:statusline_tartifyGIT
 
 "next one too slow for my taste :
 "recalculate Gitps1 when idle, after saving, on window change
-"autocmd cursorhold,CursorHoldI,bufwritepost,InsertLeave,WinEnter,WinLeave * unlet! b:statusline_tartify_repo
+"autocmd cursorhold,CursorHoldI,bufwritepost,InsertLeave,WinEnter,WinLeave * unlet! b:statusline_tartifyGIT
 
 
 
