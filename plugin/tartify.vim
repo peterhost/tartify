@@ -277,8 +277,9 @@ function! s:loadTheme()
   call Decho("loadTheme()")
   "check if custom theme exists for current colorscheme
   let l:themefile         = s:tart_themeDir . g:colors_name . ".vim"
-
+  "
   "Overwrite with User prefered theme ?
+  "
   if exists("g:tartify_forceTheme")
     let l:altThemefile = s:tart_themeDir . g:tartify_forceTheme . ".vim"
     if filereadable(l:altThemefile)
@@ -287,8 +288,9 @@ function! s:loadTheme()
       call s:errmsg("TARTIFY: Unknown theme '" . l:altThemefile ."' (in 'let g:tartify_forceTheme=...')")
     endif
   endif
-
+  "
   "Load Theme
+  "
   if filereadable(l:themefile)
     execute "source " . l:themefile
 
@@ -297,18 +299,21 @@ function! s:loadTheme()
       call s:errmsg("TARTIFY: theme '" . g:tartify_forceTheme ."' is not a correct TARTIFY theme")
       execute "source " . s:tart_defaultTheme
     endif
-
+  "
   "Fallback on default Theme
+  "
   else
     execute "source " . s:tart_defaultTheme
   endif
-
+  "
   "overwrite Theme colors with user defined ones if they exist
+  "
   if exists("g:tartify_forceColor")
     call s:forceRCcolors("light")
     call s:forceRCcolors("dark")
   endif
 endfunction
+
 
 
 " Force (possible) color directives from a rc file (vimrc,...)

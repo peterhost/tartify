@@ -20,6 +20,6 @@ let g:tartify_adaptativeHighlights  = {
         \ 6: {'hue': 'darkgreen',   'format': 'underline,italic'},
         \ 7: {'hue': 'magenta',     'format': 'underline,italic'},
         \ 8: {'hue': 'yellow',      'format': ''},
-        \ 9: {'hue': 'darkyellow',  'format': ''}
+        \ 9: {'hue': 'darkyellow',  'format': 'bold'}
         \ }
     \}
