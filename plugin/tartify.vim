@@ -273,7 +273,7 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "      \}
 
 function! s:defineUserColors()
-
+  call Decho("defineUserColors()")
   "check if custom theme exists for current colorscheme
   let l:themefile = s:tart_themeDir . g:colors_name . ".vim"
   if filereadable(l:themefile)
@@ -390,10 +390,36 @@ function! s:statuslineHighlightConcat()"
   "setup the global (script-scoped) variable
   let s:statusLineHighlightExtract = l:result
 
+  "warn User if colorscheme is improper
+  call s:detectBuggyColorScheme()
+
 endfunction
 
 
+" Detect when one argument of highlight group StatusLine or StatusLineNC has
+" the value "reverse" and the other one hasn't
+function! s:detectBuggyColorScheme()
 
+  let l:statuslineNC_ID    = synIDtrans(hlID("StatusLineNC"))
+  let l:listargs = [ "term", "cterm", "gui" ]
+
+  for l:key in l:listargs
+    let l:testArgument = synIDattr(l:statuslineNC_ID, "reverse", l:key)
+    call Decho("  DETECTBUG KEY=" . l:key . " - NC " . l:testArgument . " - orig: " . s:statusLineGroupAttr[l:key])
+    if  ( l:testArgument == 1 && s:statusLineGroupAttr[l:key] !~ "reverse") ||
+       \( l:testArgument != 1 && s:statusLineGroupAttr[l:key] =~ "reverse")
+
+      let l:ttt = "TARTIFY : incompatibility detected with colorscheme "
+            \ . g:colors_name . " in '" . l:key . "' highlight argument (':help tartify' for more)"
+      call Decho("----> BUG!!!")
+
+      redraw
+      echohl ErrorMsg
+      echomsg l:ttt
+      echohl None
+    endif
+  endfo
+endfunction
 
 
 
