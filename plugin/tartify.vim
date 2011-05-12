@@ -746,10 +746,8 @@ let s:buffNameToAvoid = '__Tag_List__\|COMMIT_EDITMSG'
 
 "TODO: try use the ":~" modifier for path pattern
 function! CleverInsert(expandme, ...)
-  let l:fname = expand("%f")
-  if match(l:fname, s:buffNameToAvoid) >= 0
-    return ""
-  endif
+
+  if match(expand("%f"), s:buffNameToAvoid) >= 0 | return "" | endif
 
   "if expand('%H') >= 0
   ""if expand("%H") == "HLP" && a:1 == "TOTO"
@@ -782,10 +780,7 @@ endfunction
 
 function! StatuslineGitTartify(item, ...)
 
-  let l:fname = expand("%f")
-  if match(l:fname, s:buffNameToAvoid) >= 0
-    return ""
-  endif
+  if match(expand("%f"), s:buffNameToAvoid) >= 0 | return "" | endif
 
   " CACHING
   " as the pr0n master once said, "we gawts to cache"
