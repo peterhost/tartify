@@ -273,12 +273,32 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "          \ }
 "      \}
 
-function! s:defineUserColors()
-  call Decho("defineUserColors()")
+function! s:loadTheme()
+  call Decho("loadTheme()")
   "check if custom theme exists for current colorscheme
-  let l:themefile = s:tart_themeDir . g:colors_name . ".vim"
+  let l:themefile         = s:tart_themeDir . g:colors_name . ".vim"
+
+  "Overwrite with User prefered theme ?
+  if exists("g:tartify_forceTheme")
+    let l:altThemefile = s:tart_themeDir . g:tartify_forceTheme . ".vim"
+    if filereadable(l:altThemefile)
+      let l:themefile = l:altThemefile
+    else
+      call s:errmsg("TARTIFY: Unknown theme '" . l:altThemefile ."' (in 'let g:tartify_forceTheme=...')")
+    endif
+  endif
+
+  "Load Theme
   if filereadable(l:themefile)
     execute "source " . l:themefile
+
+    "Valid Theme ?
+    if ! exists("g:tartify_adaptativeHighlights")
+      call s:errmsg("TARTIFY: theme '" . g:tartify_forceTheme ."' is not a correct TARTIFY theme")
+      execute "source " . s:tart_defaultTheme
+    endif
+
+  "Fallback on default Theme
   else
     execute "source " . s:tart_defaultTheme
   endif
@@ -500,18 +520,18 @@ endfunction
 "
 "
 function! s:resetTartification()
-  call s:defineUserColors()
+  call s:loadTheme()
   call s:statuslineHighlightConcat()
   call s:smartHighligths()
 endfunction
 
 " Activate the nested autocmd only after all scripts/plugins are loaded,
 " otherwise called before the statusline theme (g:tartify_adaptativeHighlights) is
-"defined (by s:defineUserColors() )
+"defined (by s:loadTheme() )
 
 if has("autocmd")
   "autocmd VimEnter *
-  "      \   call s:defineUserColors()
+  "      \   call s:loadTheme()
   "      \ | call s:resetTartification()
   "      \ | call Decho("VIMENTER")
   "      \ | autocmd ColorScheme * call s:resetTartification()
