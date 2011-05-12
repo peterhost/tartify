@@ -189,7 +189,7 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "    custom "User{N}" highlight groups
 "
 "
-" WARN: BIG GOTCHA
+" WARN: BIG GOTCHA 1
 "
 "       if the StatusLine Highlight contains :
 "         - term=reverse
@@ -199,7 +199,25 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "        have to be substituted one for another, when leeching colors from a
 "        highlight group.
 "
+"       BIG GOTCHA 2
+
+"       Quite a few colorschemes out there won't work well with tartify. Main
+"       reason is bad use of StatuslineNC (or see it another way, a small bug
+"       in Vim).
 "
+"       Implicitely, User{N} highlight groups are belong to the StatusLine
+"       highlight group :
+"
+"       When using a User{N} in a statusline, Vim automatically does a
+"       substraction between the StatusLine and StatusLineNC highlights when
+"       calculating the resulting User{N} highlight for a non-active window.
+"
+"       But if the StatusLine contains "gui=reverse" and StatusLineNC doesn't,
+"       when rendering the statusline for an inactive window, Vim removes the
+"       "reverse" directive from User{N}, but does not swap the fg and bg
+"       colors hardcoded in User{N}, back, and UGLINESS ENSUES
+"
+"       SOLUTION: Tartify will warn you
 
 
 
