@@ -506,12 +506,14 @@ endfunction
 
 if has("autocmd")
   "autocmd VimEnter *
-        "\   call s:defineUserColors()
-        "\ | call s:resetTartification()
-        "\ | autocmd ColorScheme * call s:resetTartification()
+  "      \   call s:defineUserColors()
+  "      \ | call s:resetTartification()
+  "      \ | call Decho("VIMENTER")
+  "      \ | autocmd ColorScheme * call s:resetTartification()
 
   autocmd VimEnter *
         \   call s:resetTartification()
+        \ | call Decho("VIMENTER")
         \ | autocmd ColorScheme * call s:resetTartification()
 
 endif
