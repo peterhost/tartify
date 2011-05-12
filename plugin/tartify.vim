@@ -79,8 +79,9 @@ let loaded_tartify= 1
 "}}}
 "Helper function{{{
 function! s:errmsg(msg)
+  redraw
   echohl ErrorMsg
-  echo a:msg
+  echomsg a:msg
   echohl None
 endfunction
 
