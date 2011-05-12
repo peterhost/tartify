@@ -121,7 +121,7 @@ let s:install_dir         = expand('<sfile>:p:h')
 let s:tart_themeDir       = s:install_dir . '/../tarts/themes/'
 let s:tart_defaultTheme   = s:install_dir . '/../tarts/themes/default.vim'
 
-" used in RC files 
+" used in RC files
 let g:tartify_forceColor = {'light': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:{}}, 'dark': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:{}} }
 
 
