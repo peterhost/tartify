@@ -406,13 +406,17 @@ function! s:detectBuggyColorScheme()
   for l:key in l:listargs
     let l:testArgument = synIDattr(l:statuslineNC_ID, "reverse", l:key)
     call Decho("  DETECTBUG KEY=" . l:key . " - NC " . l:testArgument . " - orig: " . s:statusLineGroupAttr[l:key])
-    if  ( l:testArgument == 1 && s:statusLineGroupAttr[l:key] !~ "reverse") ||
-       \( l:testArgument != 1 && s:statusLineGroupAttr[l:key] =~ "reverse")
-
-      let l:ttt = "TARTIFY : incompatibility detected with colorscheme "
-            \ . g:colors_name . " in '" . l:key . "' highlight argument (':help tartify' for more)"
+    let l:ttt = "TARTIFY : incompatibility detected with colorscheme " . g:colors_name
+    if  ( l:testArgument == 1 && s:statusLineGroupAttr[l:key] !~ "reverse")
+      let l:ttt .=  " ('reverse' present in StatusLineNC (" . l:key . "=...), not in StatusLine)  (':help tartify' for more)"
       call Decho("----> BUG!!!")
-
+      redraw
+      echohl ErrorMsg
+      echomsg l:ttt
+      echohl None
+    elseif ( l:testArgument != 1 && s:statusLineGroupAttr[l:key] =~ "reverse")
+      let l:ttt .=  " ('reverse' present in StatusLine (" . l:key . "=...), not in StatusLineNC)  (':help tartify' for more)"
+      call Decho("----> BUG!!!")
       redraw
       echohl ErrorMsg
       echomsg l:ttt
@@ -702,6 +706,9 @@ endif
 
 
 "1}}}
+
+
+"______________________________________________________________________________
 " -------- Functions ------------------{{{1
 
 
