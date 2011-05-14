@@ -574,11 +574,6 @@ function! s:tartify_set_statusline()
   "statusline setup
   set statusline=
 
-  "marker for minimized window
-  set statusline+=%5*
-  set statusline+=%{IsMinimized()}
-  set statusline+=%*
-
   "show the mode we are in
   "TODO : only highlight insert mode
   set statusline+=%{(mode()=='i')?'[i]\ ':''}
@@ -656,7 +651,7 @@ function! s:tartify_set_statusline()
           "         "unmerged"
 
   "
-  " 21 ITEMS LEFT
+  " 20 ITEMS LEFT
   "
 
   "display a warning if &et is wrong, or we have mixed-indenting
@@ -696,6 +691,15 @@ function! s:tartify_set_statusline()
   set statusline+=%*,      "reset color
   set statusline+=%l/%L   "cursor line/total lines
   set statusline+=\ %P    "percent through file
+
+  set statusline+=%6*
+  set statusline+=\ %{StatuslineAutoCollapsibleMark()}    "window b:autoCollapsible value
+
+  "marker for minimized window
+  set statusline+=%5*
+  set statusline+=%{IsMinimized()}
+  set statusline+=%*
+
   set laststatus=2        " Always show status line
 
 
@@ -738,6 +742,27 @@ endif
 " -------- Functions ------------------{{{1
 
 
+"visual marker if minimized window
+function! IsMinimized()
+  if winheight(0) <= &winminheight
+    return '[↓]'
+  else
+    return ''
+  endif
+endfunction
+
+
+"Visual marker if window is autocollapsible
+function! StatuslineAutoCollapsibleMark()
+  if exists("b:autoCollapsible") &&  winheight(0) > &winminheight
+    return '[↑⇈]'
+    "return b:autoCollapsible
+  else
+    return ""
+  endif
+endfunction
+
+
 " Only way I've found to gather in one function a branching condition
 " for the displaying of the %f,%h,... items in the statusline. Not
 " optimal, but does the job
@@ -763,15 +788,6 @@ endfunction
 
 
 
-
-"visual marker if minimized window
-function! IsMinimized()
-  if winheight(0) <= &winminheight
-    return '[↓]'
-  else
-    return ''
-  endif
-endfunction
 
 
 
