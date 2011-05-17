@@ -184,22 +184,26 @@ function __gitps1_stash()
   local notartify=$1   #TRUE for no color
   local color
   local nocolor
-  #? are we inside a GIT repo's working tree
-  if `git rev-parse --is-inside-work-tree`
+  #? are we inside a GIT repo
+  if git rev-parse --git-dir >/dev/null 2>&1
   then
-    if [ $(git stash list | wc -l) -gt 0 ]
+    #? are we inside a GIT repo's working tree
+    if `git rev-parse --is-inside-work-tree`
     then
+      if [ $(git stash list | wc -l) -gt 0 ]
+      then
 
-      # One star per stash
-      color="${_NN_}${_EMY_}"
-      nocolor="  "
-      for (( i=0; i< $(git stash list | wc -l); i++ ))
-      do
-        nocolor=$nocolor"☆ "
-      done
-      nocolor=$nocolor"   "
-      color="$color$nocolor""${_NN_}"
+        # One star per stash
+        color="${_NN_}${_EMY_}"
+        nocolor="  "
+        for (( i=0; i< $(git stash list | wc -l); i++ ))
+        do
+          nocolor=$nocolor"☆ "
+        done
+        nocolor=$nocolor"   "
+        color="$color$nocolor""${_NN_}"
 
+      fi
     fi
   fi
   [ $notartify ] &&  echo -ne $nocolor || echo -e $color
