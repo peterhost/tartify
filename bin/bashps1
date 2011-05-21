@@ -106,7 +106,9 @@
 
 
 
-
+# SHELL detection
+__thisShell=`ps $$ | grep $$ | awk '{ print $5 }'`
+[[ "$__thisShell" =~ bash ]] || exit 1
 
 #------------------------------------------------------------------------------
 #
@@ -232,12 +234,48 @@ __define_PS1_colors
 #             HELPER FUNCTIONS
 #
 #------------------------------------------------------------------------------
+#
+
+# NOTE: we support only BASH for the moment
+#
+## Darwin detection
+#if uname -s | grep "Darwin" >/dev/null 2>&1
+#then
+#  __OSflavor="Darwin" # macos
+#fi
+
+## SHELL detection
+#__thisShell=`ps $$ | grep $$ | awk '{ print $5 }'`
+
+## fix "echo -e" (non)implementation for SH on OSX
+
+#function __echoe(){
+#  [[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" == sh ]] && echo $1 || echo -e $1
+#}
+#function __echone(){
+#  [[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" == sh ]] && echo -n $1 || echo -e $1
+#}
+
+
+
+
+#[[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" =~ sh ]] && {
+#    eval "__echoe(){ echo \$1 }"
+#    eval "__echone(){ echo -n \$1 }"
+#  } || {
+#    eval "__echoe(){ echo -e \$1 }"
+#    eval "__echone(){ echo -ne \$1 }"
+#  }
+
+
+
 #count the nb of commits between two branches of two repositorie
 #   ex: __gitps1_diff_count HEAD origin/master
 #   ex: __gitps1_diff_count upstream/dev HEAD
 function __gitps1_diff_count() {
     echo "$(git rev-list $1..$2 2>/dev/null | awk 'END {print NR}')"
 }
+
 
 #------------------------------------------------------------------------------
 #
@@ -517,6 +555,7 @@ export -f __gitps1_repo_name
 export -f __gitps1_branch
 export -f __gitps1_remote
 export -f __gitps1_stash
+#export -f __echoe
 export __tartify_shell_loaded=1
 
 
