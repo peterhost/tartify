@@ -253,7 +253,7 @@ function __gitps1_repo_name()
   if git rev-parse --git-dir >/dev/null 2>&1
   then
     # Print the REPO's name
-    color="\n${__DM_}${_K_}"
+    color="\n${__DM_}${__K_}"
     nocolor=$(echo `cd $(git rev-parse --git-dir); cd ../;pwd` | sed 's,.*/,,' | tr -d '\n')
     color=$color$nocolor
     color=$color"/${__NN_}"
