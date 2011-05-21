@@ -38,20 +38,85 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 #
 #------------------------------------------------------------------------------
+#
+# USAGE :
+#
+#
+#PS1="${__PS1NN_}${__PS1EMK_}[${__PS1UC_}\u${__PS1EMK_}@${__PS1EMUC_}\h ${__PS1C_}\${NEW_PWD}${__PS1EMK_}] \$"
+#PROMPT_COMMAND=tartify
+#
+#
+#
+#------------------------------------------------------------------------------
+#
+# ISSUE : Line Wrapping Calculation
+#
+#     Two things that I know of can confuse line wrapping (when browsing
+#     command history with long lines, for ex) :
+#
+#       1 - non-printable characters in the PS1 variable have to be "escaped"
+#       by enclosing them between a pair of escaped brackets :
+#
+#           \[\033[0;30m\]   instead of  \033[0;30m
+#
+#       2 - function calls inside the PS1 variable that issue non-printable
+#       characters
+#
+#           "\$(myFunc)"
+#
+#       need to be issued on a line prior to the last line of the PS1 variable,
+#       otherwise they will confuse wrapping too
+#
+#       (SEE:http://hintsforums.macworld.com/archive/index.php/t-17068.html)
+#
+#
+#------------------------------------------------------------------------------
+#
+# NOTA :
+#          Special Character Codes
+#          \a – an ASCII bell character (07)
+#          \d – the date in “Weekday Month Date” format (e.g., “Tue May 26″)
+#          \D{format} – the format is passed to strftime(3) and the result is inserted into the prompt string; an empty format results in a locale-specific time representation. The braces are required
+#          \e – an ASCII escape character (033)  (hence : \e and \033 are equivalent)
+#          \h – the hostname up to the first `.’
+#          \H – the hostname
+#          \j – the number of jobs currently managed by the shell
+#          \l – the basename of the shell’s terminal device name
+#          \n – newline
+#          \r – carriage return
+#          \s – the name of the shell, the basename of $0 (the portion following the final slash)
+#          \t – the current time in 24-hour HH:MM:SS format
+#          \T – the current time in 12-hour HH:MM:SS format
+#          \@ – the current time in 12-hour am/pm format
+#          \A – the current time in 24-hour HH:MM format
+#          \u – the username of the current user
+#          \v – the version of bash (e.g., 2.00)
+#          \V – the release of bash, version + patchelvel (e.g., 2.00.0)
+#          \w – the current working directory
+#          \W – the basename of the current working directory
+#          \! – the history number of this command
+#          \# – the command number of this command
+#          \$ – if the effective UID is 0, a #, otherwise a $
+#          \nnn – the character corresponding to the octal number nnn
+#          \\ – a backslash
+#          \[ - begin a sequence of non-printing characters, which could be used to embed a terminal control sequence into the prompt
+#          \] – end a sequence of non-printing characters
+#
+#          (http://www.wiredrevolution.com/bash-programming/customize-the-bash-ps1-command-prompt)
 
-# -----------------------------------------------------------------------------
-# COLOR VARS : declare those ANSI color codes in variables ONCE and for ALL
-#              (mostly used in 'echo -ne' statements thoughout this .bashrc)
-#              this somewhat pollutes the GLOBAL SCOPE but the variable names
+
+
+
+
+#------------------------------------------------------------------------------
+#
+# COLOR VARS : declare those ANSI color codes in variables ONCE and for ALL.
+#              This somewhat pollutes the GLOBAL SCOPE but the variable names
 #              are (thought to be) unique enough so that won't cause problems
 #
-# NB1 : \e and \033 are equivalent
-
-# NB2 : in the PS1 line, ANSI codes escapes need be wrapped in an escaped pair
-#       of brackets so as not to confuse the line wrapping calculation :
-#       "\[\033[0;30m\]" instead of "\033[0;30m"
-#       (SEE:http://hintsforums.macworld.com/archive/index.php/t-17068.html)
-
+# Define Colors (to be used in standard echo & printf commands)
+#
+#------------------------------------------------------------------------------
 function __define_echo_ne_colors() {
   # regular colors
   export __K_="\033[0;30m"    # black
@@ -93,131 +158,92 @@ function __define_echo_ne_colors() {
   export __BLQ_="\033[25m" #END blink
   export __RVQ_="\033[27m" #END reverse
   # default user colors
-  export __UC_=$_G_                         # user's color
-  export __EMUC_=$_EMG_                     # user's bold color
-  export __ERRUC_=$_R_                      # user's ERROR color
-  export __ERREMUC_=$_EMR_                  # user's bold ERROR color
+  export __UC_=$__G_                         # user's color
+  export __EMUC_=$__EMG_                     # user's bold color
+  export __ERRUC_=$__R_                      # user's ERROR color
+  export __ERREMUC_=$__EMR_                  # user's bold ERROR color
   # root colors
-  [ $UID -eq "0" ] && __UC_=$_R_           # root's color
-  [ $UID -eq "0" ] && __EMUC_=$_EMR_       # root's bold color
-  [ $UID -eq "0" ] && __ERRUC_=$_K_        # root's ERROR color
-  [ $UID -eq "0" ] && __ERREMUC_=$_EMK_    # root's bold ERROR color
-
-
-
+  [ $UID -eq "0" ] && __UC_=$__R_           # root's color
+  [ $UID -eq "0" ] && __EMUC_=$__EMR_       # root's bold color
+  [ $UID -eq "0" ] && __ERRUC_=$__K_        # root's ERROR color
+  [ $UID -eq "0" ] && __ERREMUC_=$__EMK_    # root's bold ERROR color
 }
 __define_echo_ne_colors
-
-
+#
+#
+# Define Colors (to be used in the PS1 variable)
 function __define_PS1_colors() {
   # regular colors
-  export __K_="\[\e[0;30m\]"    # black
-  export __R_="\[\e[0;31m\]"    # red
-  export __G_="\[\e[0;32m\]"    # green
-  export __Y_="\[\e[0;33m\]"    # yellow
-  export __B_="\[\e[0;34m\]"    # blue
-  export __M_="\[\e[0;35m\]"    # magenta
-  export __C_="\[\e[0;36m\]"    # cyan
-  export __W_="\[\e[0;37m\]"    # white
+  export __PS1K_="\[\e[0;30m\]"    # black
+  export __PS1R_="\[\e[0;31m\]"    # red
+  export __PS1G_="\[\e[0;32m\]"    # green
+  export __PS1Y_="\[\e[0;33m\]"    # yellow
+  export __PS1B_="\[\e[0;34m\]"    # blue
+  export __PS1M_="\[\e[0;35m\]"    # magenta
+  export __PS1C_="\[\e[0;36m\]"    # cyan
+  export __PS1W_="\[\e[0;37m\]"    # white
   # empahsized (bolded) colors
-  export __EMK_="\[\e[1;30m\]"
-  export __EMR_="\[\e[1;31m\]"
-  export __EMG_="\[\e[1;32m\]"
-  export __EMY_="\[\e[1;33m\]"
-  export __EMB_="\[\e[1;34m\]"
-  export __EMM_="\[\e[1;35m\]"
-  export __EMC_="\[\e[1;36m\]"
-  export __EMW_="\[\e[1;37m\]"
+  export __PS1EMK_="\[\e[1;30m\]"
+  export __PS1EMR_="\[\e[1;31m\]"
+  export __PS1EMG_="\[\e[1;32m\]"
+  export __PS1EMY_="\[\e[1;33m\]"
+  export __PS1EMB_="\[\e[1;34m\]"
+  export __PS1EMM_="\[\e[1;35m\]"
+  export __PS1EMC_="\[\e[1;36m\]"
+  export __PS1EMW_="\[\e[1;37m\]"
   # background colors
-  export __BGK_="\[\e[40m\]"
-  export __BGR_="\[\e[41m\]"
-  export __BGG_="\[\e[42m\]"
-  export __BGY_="\[\e[43m\]"
-  export __BGB_="\[\e[44m\]"
-  export __BGM_="\[\e[45m\]"
-  export __BGC_="\[\e[46m\]"
-  export __BGW_="\[\e[47m\]"
+  export __PS1BGK_="\[\e[40m\]"
+  export __PS1BGR_="\[\e[41m\]"
+  export __PS1BGG_="\[\e[42m\]"
+  export __PS1BGY_="\[\e[43m\]"
+  export __PS1BGB_="\[\e[44m\]"
+  export __PS1BGM_="\[\e[45m\]"
+  export __PS1BGC_="\[\e[46m\]"
+  export __PS1BGW_="\[\e[47m\]"
   # styles
-  export __NN_="\[\e[0m\]"  # unsets color to term's fg color
-  export __EM_="\[\e[1m\]"  #bold
-  export __DM_="\[\e[2m\]"  #dim
-  export __UN_="\[\e[4m\]"  #underline
-  export __BL_="\[\e[5m\]"  #blink
-  export __RV_="\[\e[7m\]"  #reverse
-  export __EMQ_="\[\e[21m\]" #END bold
-  export __DMQ_="\[\e[22m\]" #END dim
-  export __UNQ_="\[\e[24m\]" #END underline
-  export __BLQ_="\[\e[25m\]" #END blink
-  export __RVQ_="\[\e[27m\]" #END reverse
+  export __PS1NN_="\[\e[0m\]"  # unsets color to term's fg color
+  export __PS1EM_="\[\e[1m\]"  #bold
+  export __PS1DM_="\[\e[2m\]"  #dim
+  export __PS1UN_="\[\e[4m\]"  #underline
+  export __PS1BL_="\[\e[5m\]"  #blink
+  export __PS1RV_="\[\e[7m\]"  #reverse
+  export __PS1EMQ_="\[\e[21m\]" #END bold
+  export __PS1DMQ_="\[\e[22m\]" #END dim
+  export __PS1UNQ_="\[\e[24m\]" #END underline
+  export __PS1BLQ_="\[\e[25m\]" #END blink
+  export __PS1RVQ_="\[\e[27m\]" #END reverse
   # default user colors
-  export __UC_=$_G_                         # user's color
-  export __EMUC_=$_EMG_                     # user's bold color
-  export __ERRUC_=$_R_                      # user's ERROR color
-  export __ERREMUC_=$_EMR_                  # user's bold ERROR color
+  export __PS1UC_=$__PS1G_                         # user's color
+  export __PS1EMUC_=$__PS1EMG_                     # user's bold color
+  export __PS1ERRUC_=$__PS1R_                      # user's ERROR color
+  export __PS1ERREMUC_=$__PS1EMR_                  # user's bold ERROR color
   # root colors
-  [ $UID -eq "0" ] && __UC_=$_R_           # root's color
-  [ $UID -eq "0" ] && __EMUC_=$_EMR_       # root's bold color
-  [ $UID -eq "0" ] && __ERRUC_=$_K_        # root's ERROR color
-  [ $UID -eq "0" ] && __ERREMUC_=$_EMK_    # root's bold ERROR color
+  [ $UID -eq "0" ] && __PS1UC_=$__PS1R_           # root's color
+  [ $UID -eq "0" ] && __PS1EMUC_=$__PS1EMR_       # root's bold color
+  [ $UID -eq "0" ] && __PS1ERRUC_=$__PS1K_        # root's ERROR color
+  [ $UID -eq "0" ] && __PS1ERREMUC_=$__PS1EMK_    # root's bold ERROR color
+}
+__define_PS1_colors
 
 
 
+#------------------------------------------------------------------------------
+#
+#             HELPER FUNCTIONS
+#
+#------------------------------------------------------------------------------
+#count the nb of commits between two branches of two repositorie
+#   ex: __gitps1_diff_count HEAD origin/master
+#   ex: __gitps1_diff_count upstream/dev HEAD
+function __gitps1_diff_count() {
+    echo "$(git rev-list $1..$2 2>/dev/null | awk 'END {print NR}')"
 }
 
-# -----------------------------------------------------------------------------
-# BASH PROMPT
-
-
-__last_exit=0
-
-function bash_prompt_command() {
-  #First, store last_exit
-  __last_exit="$?" # keep here.. so we get the last command
-  # How many characters of the $PWD should be kept
-  local pwdmaxlen=25
-  # Indicate that there has been dir truncation
-  local trunc_symbol=".."
-  local dir=${PWD##*/}
-  pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
-  NEW_PWD=${PWD/#$HOME/\~}
-  local pwdoffset=$(( ${#NEW_PWD} - pwdmaxlen ))
-  if [ ${pwdoffset} -gt "0" ]
-  then
-      NEW_PWD=${NEW_PWD:$pwdoffset:$pwdmaxlen}
-      NEW_PWD=${trunc_symbol}/${NEW_PWD#*/}
-  fi
-
-  # CONSISTENT HISTORY across shells
-  # only in case .bash_history exists and is non-empty
-  if [ -f ~/.bash_history ] && [[ "$(cat ~/.bash_history 2>&1 | wc -l)" -gt 0 ]]; then
-    #history -a #store each command in the history as soon as it's executed
-    history -a;history -c; history -r; #store; clear; reload ---> makes history consistent across shells
-  fi
-
-  # UPDATE TERMINAL window TITLE
-    #echo -n -e "\033]0;${USER}@$(hostname): ${NEW_PWD}\007"
-    echo -n -e "\033]0;$(hostname): ${NEW_PWD}\007"
-}
-
-
-
-
-
-
-function __ps1_marker() {
-  # setup marker that acts off of last exit code
-  local marker
-  if [ 0 -eq $__last_exit ]; then   #! __last_exit is a global variable
-    marker="${__UC_}"
-  else
-    marker="${__ERRUC_}"
-  fi
-  marker="${marker}\$${__NN_}"
-  echo -e $marker
-}
-
-
-
+#------------------------------------------------------------------------------
+#
+#             GIT PS1 commands
+#
+#------------------------------------------------------------------------------
 function __gitps1_repo_name()
 {
   local notartify=$1   #TRUE for no color
@@ -234,9 +260,6 @@ function __gitps1_repo_name()
   fi
   [ $notartify ] &&  echo -ne $nocolor || echo -ne $color
 }
-
-
-
 
 
 function __gitps1_stash()
@@ -270,38 +293,26 @@ function __gitps1_stash()
 }
 
 
-
-
-
-#count the nb of commits between two branches of two repositorie
-#   ex: __gitps1_diff_count HEAD origin/master
-#   ex: __gitps1_diff_count upstream/dev HEAD
-function __gitps1_diff_count() {
-    echo "$(git rev-list $1..$2 2>/dev/null | awk 'END {print NR}')"
-}
-
-
-
-# COLORED mode
-#
-# unstaged modifications :              RED
-# uncommited material :                 MAGENTA
-# unpushed commits to tracked remote :  YELLOW
-# all is commited and pushed :          GREEN
-#
-# untracked files :                     UNDERLINED
-#
-# inside .git dir :                     BLUE
-#
-# NON COLORED mode
-# optionnal return value $nocolor_infos
-#
-#   nocolor_info="(S|C|P|O|G)(U)?(M)?"
-#       S:unstaged, C:uncommited, P:unpushed, O:allisOK,G:insideDotGit
-#       U:untracked, M:unmerged
-#
 function __gitps1_branch()
 {
+  # COLORED mode
+  #
+  # unstaged modifications :              RED
+  # uncommited material :                 MAGENTA
+  # unpushed commits to tracked remote :  YELLOW
+  # all is commited and pushed :          GREEN
+  #
+  # untracked files :                     UNDERLINED
+  #
+  # inside .git dir :                     BLUE
+  #
+  # NON COLORED mode
+  # optionnal return value $nocolor_infos
+  #
+  #   nocolor_info="(S|C|P|O|G)(U)?(M)?"
+  #       S:unstaged, C:uncommited, P:unpushed, O:allisOK,G:insideDotGit
+  #       U:untracked, M:unmerged
+  #
 
   local notartify=$1   #TRUE for no color
   local givemeinfos=$2 #TRUE prepends $nocolor_info"|" to the result
@@ -405,12 +416,7 @@ function __gitps1_branch()
 }
 
 
-
-
-
-
-
-function __gitps1_remote
+function __gitps1_remote()
 {
 
   local notartify=$1   #TRUE for no color
@@ -495,33 +501,27 @@ function __gitps1_remote
 }
 
 
+function tartify()
+{
+    echo -e "$(__gitps1_repo_name)$(__gitps1_branch)  $(__gitps1_remote) $(__gitps1_stash)"
 
-
-
-## return a string containing all the infos about the current git repo in
-## a format parseable by our vimscript
-#function __gitps1_vim() {
-  #__fromvim=1
-  #local vimstatusline = $(__gitps1_repo_name)"|"$(__gitps1_branch)"|"$(__gitps1_remote)"|"$(__gitps1_stash)
-  #unset __fromvim
-#}
-
-# GOTCHA : http://hintsforums.macworld.com/archive/index.php/t-17068.html
-# SOLUTION : always escape the brackets of ANSI color sequences in the PS1 variable
-#            so that they are excluded from line wrapping calculation
-
-function __kk(){
-  echo -n "\["$1"\]"
 }
 
-PS1="\$(__gitps1_repo_name)\$(__gitps1_branch)  \$(__gitps1_remote) \$(__gitps1_stash)$(__kk $__NN_)\n[$(__kk $__UC_ )\u$(__kk $_EMK_ )@$(__kk $_EMUC_ )\h $(__kk $_C_ )\${NEW_PWD}$(__kk $_EMK_ )]\$(__ps1_marker) "
-
-
-PROMPT_COMMAND=bash_prompt_command
+#------------------------------------------------------------------------------
+#
+#             EXPORTING (for use in other things : Vim,...)
+#
+#------------------------------------------------------------------------------
 export -f __gitps1_diff_count
 export -f __gitps1_repo_name
 export -f __gitps1_branch
 export -f __gitps1_remote
 export -f __gitps1_stash
 export __tartify_shell_loaded=1
+
+
+
+
+
+
 
