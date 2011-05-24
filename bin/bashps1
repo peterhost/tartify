@@ -267,40 +267,6 @@ __define_PS1_colors
 #
 #------------------------------------------------------------------------------
 #
-
-# NOTE: we support only BASH for the moment
-#
-## Darwin detection
-#if uname -s | grep "Darwin" >/dev/null 2>&1
-#then
-#  __OSflavor="Darwin" # macos
-#fi
-
-## SHELL detection
-#__thisShell=`ps $$ | grep $$ | awk '{ print $5 }'`
-
-## fix "echo -e" (non)implementation for SH on OSX
-
-#function __echoe(){
-#  [[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" == sh ]] && echo $1 || echo -e $1
-#}
-#function __echone(){
-#  [[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" == sh ]] && echo -n $1 || echo -e $1
-#}
-
-
-
-
-#[[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" =~ sh ]] && {
-#    eval "__echoe(){ echo \$1 }"
-#    eval "__echone(){ echo -n \$1 }"
-#  } || {
-#    eval "__echoe(){ echo -e \$1 }"
-#    eval "__echone(){ echo -ne \$1 }"
-#  }
-
-
-
 #count the nb of commits between two branches of two repositorie
 #   ex: __gitps1_diff_count HEAD origin/master
 #   ex: __gitps1_diff_count upstream/dev HEAD
@@ -308,6 +274,35 @@ function __gitps1_diff_count() {
     echo "$(git rev-list $1..$2 2>/dev/null | awk 'END {print NR}')"
 }
 
+
+# Display the help message
+function __tart_usage(){
+  echo -e "
+  ${__UN_}Usage${__UNQ_} is : ${__EM_}tartify${__EMQ_} [${__Y_}options${__NN_}]
+
+  ${__UN_}Options${__UNQ_} : is a single word (case insensitive) containing any of the following letters :
+      ${__Y_}[Elements]${__NN_}
+      ${__Y_}n${__NN_}       repository ${__EMY_}N${__NN_}ame
+      ${__Y_}b${__NN_}       ${__EMY_}B${__NN_}ranch name
+      ${__Y_}r${__NN_}       ${__EMY_}R${__NN_}emotes info
+      ${__Y_}s${__NN_}       ${__EMY_}S${__NN_}tash info
+      ${__Y_}l${__NN_}       ${__EMY_}L${__NN_}ast commit info
+
+      ${__Y_}[Modes]${__NN_}
+      ${__Y_}t${__NN_}       shor${__EMY_}T${__NN_}er    less verbose
+      ${__Y_}a${__NN_}       ${__EMY_}A${__NN_}lternate  marking
+      ${__Y_}o${__NN_}       ${__EMY_}O${__NN_}ldschool  __GITPS1 mode
+      ${__Y_}v${__NN_}       ${__EMY_}V${__NN_}im mode   result formated for the Vim tartify plugin
+
+      ${__Y_}h|?${__NN_}     ${__EMY_}H${__NN_}elp (display this help message, and ignore the rest)
+
+  ${__UN_}Default${__UNQ_} (no option) : is equivalent to
+
+      ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
+
+
+"
+}
 
 #------------------------------------------------------------------------------
 #
