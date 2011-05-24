@@ -260,6 +260,28 @@ function __define_PS1_colors() {
 __define_PS1_colors
 
 
+#------------------------------------------------------------------------------
+# TARTIFY PARAMETERS : those can all be adapted by your needs
+#------------------------------------------------------------------------------
+
+# $ stash nostash
+# * unstaged
+# + staged
+# % untracked       -> underline
+
+export TARTIFY_STASHCHAR="☆"
+
+# COLORS/STYLES
+export TARTIFY_STYLE_UNTRACKED=${__UN_}     # Untracked Files     : UNDERLINED
+export TARTIFY_TIMETOCOMMIT=24              # Max nb hours between commits
+                                            # (default is 0)
+export TARTIFY_STYLE_TIMETOCOMMIT=${__EM_}  # Style when commit is overdue
+
+
+export TARTIFY_COLOR_UNSTAGED=${__R_}       # Unstaged Changes    :           RED
+export TARTIFY_COLOR_ALLSTAGED=${__M_}      # Changes & All Changes Staged  : MAGENTA
+export TARTIFY_COLOR_COMMITEDNOTPUSHED=${__EMY_}  # Unpushed commit     :     YELLOW
+export TARTIFY_COLOR_CLEAN=${__G_}          # commits pushed, no change     : GREEN
 
 #------------------------------------------------------------------------------
 #
@@ -346,7 +368,7 @@ function __gitps1_stash()
         nocolor="  "
         for (( i=0; i< $(git stash list | wc -l); i++ ))
         do
-          nocolor=$nocolor"☆ "
+          nocolor=$nocolor$TARTIFY_STASHCHAR" "
         done
         nocolor=$nocolor"   "
         color="$color$nocolor""${_NN_}"
