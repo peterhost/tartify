@@ -566,10 +566,50 @@ function __gitps1_remote()
 }
 
 
+function __gitps1_timeLastCommit(){
+  echo ""
+}
+
+
+#------------------------------------------------------------------------------
+#
+#             TARTIFY
+#
+#------------------------------------------------------------------------------
 function tartify()
 {
-    echo -e "$(__gitps1_repo_name)$(__gitps1_branch)  $(__gitps1_remote) $(__gitps1_stash)"
+  # To Lower Case
+  local argstr=`echo $1 | tr '[A-Z]' '[a-z]'`
+  # Help
+  [[ "$argstr" =~ ? || "$argstr" =~ h ]] && { __tart_usage; return 0; }
 
+  # Empty arg (default)
+  [ ${#argstr} == 0 ] && argstr="nbrsl"
+
+  # Vim mode
+  local $vimmode
+  [[ "${#argstr}" =~ v ]] && vimmode=1
+
+  local tartAnswer=""
+  local i
+  for ((i=0;i<${#argstr};i++))
+  do
+    local ch=${argstr:$i:1}
+    case $ch in
+      n) tartAnswer=$tartAnswer$(__gitps1_repo_name);;
+      b) tartAnswer=$tartAnswer$(__gitps1_branch);;
+      r) tartAnswer=$tartAnswer$(__gitps1_remote);;
+      s) tartAnswer=$tartAnswer$(__gitps1_stash);;
+      l) tartAnswer=$tartAnswer$(__gitps1_timeLastCommit);;
+      o) ;;
+      v) ;;
+      *) echo "Unknown option \"$ch\""; __tart_usage; return 1 ;;
+    esac
+  done
+
+
+  #echo -e "$(__gitps1_repo_name)$(__gitps1_branch)  $(__gitps1_remote) $(__gitps1_stash)"
+  echo -e $tartAnswer
 }
 
 #------------------------------------------------------------------------------
@@ -582,6 +622,7 @@ export -f __gitps1_repo_name
 export -f __gitps1_branch
 export -f __gitps1_remote
 export -f __gitps1_stash
+export -f tartify
 #export -f __echoe
 export __tartify_shell_loaded=1
 
