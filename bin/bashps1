@@ -39,9 +39,22 @@
 #
 #------------------------------------------------------------------------------
 #
-# USAGE :
+
+# USAGE : Just call the tartify() function from the command line
+#
+#         PROMPT integration : call tartify() inside your $PS1. Examples:
+#
+#           PS1="\$(tartify) [\u@\h]\$ "
+#           PS1="\$(tartify)\n[\u@\h]\$ "
+#           ...
+#
+#         You can also pass arguments to tartify() to make it display only
+#         certain informations
+#
+#           tartify -h
 #
 #
+
 #PS1="${__PS1NN_}${__PS1EMK_}[${__PS1UC_}\u${__PS1EMK_}@${__PS1EMUC_}\h ${__PS1C_}\${NEW_PWD}${__PS1EMK_}] \$"
 #PROMPT_COMMAND=tartify
 #
@@ -49,7 +62,11 @@
 #
 #------------------------------------------------------------------------------
 #
-# ISSUE : Line Wrapping Calculation
+# ISSUE :
+#
+#   * no support for SVN upstream
+#
+#   * Line Wrapping Calculation
 #
 #     Two things that I know of can confuse line wrapping (when browsing
 #     command history with long lines, for ex) :
@@ -106,18 +123,33 @@
 
 
 
+#------------------------------------------------------------------------------
+#
+#             SHELL DETECTION
+#
+#------------------------------------------------------------------------------
 # SHELL detection
 __thisShell=`ps $$ | grep $$ | awk '{ print $5 }'`
-[[ "$__thisShell" =~ bash ]] || exit 1
+
+# Darwin detection
+if uname -s | grep "Darwin" >/dev/null 2>&1
+then
+  __OSflavor="Darwin" # macos
+fi
+
+# BAIL if using SH on OSX, (scrambles "echo -ne" commands)
+[[ "$__OSflavor" =~ Darwin  &&  "$__thisShell" == sh ]] && exit 1
 
 #------------------------------------------------------------------------------
 #
+#             MISC GLOBAL VARIABLES
+#
+#------------------------------------------------------------------------------
 # COLOR VARS : declare those ANSI color codes in variables ONCE and for ALL.
 #              This somewhat pollutes the GLOBAL SCOPE but the variable names
 #              are (thought to be) unique enough so that won't cause problems
 #
 # Define Colors (to be used in standard echo & printf commands)
-#
 #------------------------------------------------------------------------------
 function __define_echo_ne_colors() {
   # regular colors
