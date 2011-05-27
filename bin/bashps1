@@ -146,13 +146,14 @@ fi
 #             MISC GLOBAL VARIABLES
 #
 #------------------------------------------------------------------------------
+
+__tartify_define_colors() {
 # COLOR VARS : declare those ANSI color codes in variables ONCE and for ALL.
 #              This somewhat pollutes the GLOBAL SCOPE but the variable names
 #              are (thought to be) unique enough so that won't cause problems
 #
 # Define Colors (to be used in standard echo & printf commands)
-#------------------------------------------------------------------------------
-function __define_echo_ne_colors() {
+
   # regular colors
   export __K_="\033[0;30m"    # black
   export __R_="\033[0;31m"    # red
@@ -203,116 +204,88 @@ function __define_echo_ne_colors() {
   [ $UID -eq "0" ] && __ERRUC_=$__K_        # root's ERROR color
   [ $UID -eq "0" ] && __ERREMUC_=$__EMK_    # root's bold ERROR color
 }
-__define_echo_ne_colors
-#
-#
-# Define Colors (to be used in the PS1 variable)
-function __define_PS1_colors() {
-  # regular colors
-  export __PS1K_="\[\e[0;30m\]"    # black
-  export __PS1R_="\[\e[0;31m\]"    # red
-  export __PS1G_="\[\e[0;32m\]"    # green
-  export __PS1Y_="\[\e[0;33m\]"    # yellow
-  export __PS1B_="\[\e[0;34m\]"    # blue
-  export __PS1M_="\[\e[0;35m\]"    # magenta
-  export __PS1C_="\[\e[0;36m\]"    # cyan
-  export __PS1W_="\[\e[0;37m\]"    # white
-  # empahsized (bolded) colors
-  export __PS1EMK_="\[\e[1;30m\]"
-  export __PS1EMR_="\[\e[1;31m\]"
-  export __PS1EMG_="\[\e[1;32m\]"
-  export __PS1EMY_="\[\e[1;33m\]"
-  export __PS1EMB_="\[\e[1;34m\]"
-  export __PS1EMM_="\[\e[1;35m\]"
-  export __PS1EMC_="\[\e[1;36m\]"
-  export __PS1EMW_="\[\e[1;37m\]"
-  # background colors
-  export __PS1BGK_="\[\e[40m\]"
-  export __PS1BGR_="\[\e[41m\]"
-  export __PS1BGG_="\[\e[42m\]"
-  export __PS1BGY_="\[\e[43m\]"
-  export __PS1BGB_="\[\e[44m\]"
-  export __PS1BGM_="\[\e[45m\]"
-  export __PS1BGC_="\[\e[46m\]"
-  export __PS1BGW_="\[\e[47m\]"
-  # styles
-  export __PS1NN_="\[\e[0m\]"  # unsets color to term's fg color
-  export __PS1EM_="\[\e[1m\]"  #bold
-  export __PS1DM_="\[\e[2m\]"  #dim
-  export __PS1UN_="\[\e[4m\]"  #underline
-  export __PS1BL_="\[\e[5m\]"  #blink
-  export __PS1RV_="\[\e[7m\]"  #reverse
-  export __PS1EMQ_="\[\e[21m\]" #END bold
-  export __PS1DMQ_="\[\e[22m\]" #END dim
-  export __PS1UNQ_="\[\e[24m\]" #END underline
-  export __PS1BLQ_="\[\e[25m\]" #END blink
-  export __PS1RVQ_="\[\e[27m\]" #END reverse
-  # default user colors
-  export __PS1UC_=$__PS1G_                         # user's color
-  export __PS1EMUC_=$__PS1EMG_                     # user's bold color
-  export __PS1ERRUC_=$__PS1R_                      # user's ERROR color
-  export __PS1ERREMUC_=$__PS1EMR_                  # user's bold ERROR color
-  # root colors
-  [ $UID -eq "0" ] && __PS1UC_=$__PS1R_           # root's color
-  [ $UID -eq "0" ] && __PS1EMUC_=$__PS1EMR_       # root's bold color
-  [ $UID -eq "0" ] && __PS1ERRUC_=$__PS1K_        # root's ERROR color
-  [ $UID -eq "0" ] && __PS1ERREMUC_=$__PS1EMK_    # root's bold ERROR color
+
+
+__tartify_init_globs(){
+# TARTIFY PARAMETERS : adapt to your needs
+
+
+
+
+# // TIME
+export TARTIFY_TIME_BUGME=TRUE                  # TRUE : will color the 'time since last commit' string and
+                                                #        apply the TARTIFY_STYLE_SHOULDCOMMIT style to the
+                                                #        branch name
+export TARTIFY_TIME_COULDCOMMIT=3600            #     nb seconds after which you COULD  commit
+export TARTIFY_TIME_SHOULDCOMMIT=86400          # Max nb seconds after which you SHOULD commit
+                                                # (default is 86400, 24hours)
+export TARTIFY_STYLE_SHOULDCOMMIT=${__EM_}      # Style when commit is overdue     BOLD
+                                                # (applied to branchname)
+
+                                                # colors applied to the 'time elapsed since last commit' string
+export TARTIFY_COLOR_TIME_APLENTY=${__G_}       #                                  GREEN
+export TARTIFY_COLOR_TIME_COULDCOMMIT=${__Y_}   #                                  YELLOW
+export TARTIFY_COLOR_TIME_SHOULDCOMMIT=${__R_}  #                                  RED
+
+# //BRANCH
+export TARTIFY_STRING_NOBRANCH="nobranch"       # "branch name" replacement string for empty repository
+export TARTIFY_STRING_DOTGIT="<.git>"           # "branch name" replacement string for .git directory
+export TARTIFY_STRING_BARE="<BARE>"             # "branch name" replacement string for bare .git directory
+
+export TARTIFY_STYLE_UNTRACKED=${__UN_}         # Untracked Files                  UNDERLINED
+
+export TARTIFY_COLOR_UNSTAGED=${__EMR_}         # unstaged changes (first 2 chars) BOLD RED
+export TARTIFY_COLOR_STAGED=${__M_}             # staged changes                   MAGENTA
+export TARTIFY_COLOR_AHEADOFREMOTE=${__Y_}      # tracked remote behind HEAD       YELLOW
+export TARTIFY_COLOR_UPTODATE=${__G_}           # tracked remote == HEAD           GREEN
+export TARTIFY_COLOR_NOREMTRACK=${__B_}         # no remote tracking branch        BLUE
+
+export TARTIFY_COLOR_DOTGIT=${__C_}             # inside .git dir                  CYAN
+
+export TARTIFY_STRING_UNMERGED="✖ "             # there are unmerged files
+export TARTIFY_COLOR_UNMERGED=${__BL_}${__EMR_} # unmerged files                   BOLD RED BLINKING
+                                                #                                  (yeah, obnoxious)
+# // REPOSITORY
+export TARTIFY_COLOR_REPONAME=${__DM_}${__K_}   # repository's "name"              DIM GREY
+
+# // REMOTES
+export TARTIFY_STRING_ORIGIN="O"                # marker for remote repo called 'origin'
+export TARTIFY_STRING_UPSTREAM="U"              # marker for remote repo called 'upstream'
+export TARTIFY_STRING_REMOTE="⇧"                # generic marker for remote repo
+
+export TARTIFY_STRING_TRACKING="➝"              # marker for tracked branch
+export TARTIFY_COLOR_REMOTE_ORIGIN=${__G_}      # repository's "name"              GREEN
+export TARTIFY_COLOR_REMOTE_UPSTREAM=${__M_}    # repository's "name"              MAGENTA
+export TARTIFY_COLOR_REMOTE_OTHER=${__Y_}       # repository's "name"              YELLOW
+
+
+export TARTIFY_COLOR_REMOTE_AHEAD=${__G_}       # nb commits ahead of remote       GREEN
+export TARTIFY_COLOR_REMOTE_BEHIND=${__R_}      # nb commits behind of remote      RED
+
+
+# // STASH
+export TARTIFY_COUNTSTASHES=TRUE                # TRUE/FALSE (!: counting them takes ~50ms more)
+export TARTIFY_STRING_STASH="☆"                 # marker for stash
+export TARTIFY_COLOR_STASH_NOCOUNT=${__Y_}       # color when not counting          YELLOW
+export TARTIFY_COLOR_STASH_COUNT=${__EMY_}       # color in "count mode"            BOLD YELLOW
 }
-__define_PS1_colors
 
 
-#------------------------------------------------------------------------------
-# TARTIFY PARAMETERS : those can all be adapted by your needs
-#------------------------------------------------------------------------------
-
-export TARTIFY_ORIGIN_CHAR="O"              # marker for remote repo called 'origin'
-export TARTIFY_UPSTREAM_CHAR="U"            # marker for remote repo called 'upstream'
-export TARTIFY_REMOTE_CHAR="⇧"              # generic marker for remote repo
-
-export TARTIFY_TRACKING_CHAR="➝"            # marker for tracked branch
-
-export TARTIFY_STASH_CHAR="☆"               # marker for stash
-export TARTIFY_COUNTSTASHES=0               # 0: count stashes, 1 don't
-
-export TARTIFY_NOBRANCH_CHAR="nobranch"   # "branch name" replacement string for empty repository
-#export TARTIFY_NOBRANCH_CHAR="∅"            # "branch name" replacement string for empty repository
-export TARTIFY_DOTGIT_CHAR="<.git>"         # "branch name" replacement string for .git directory
-export TARTIFY_BARE_CHAR="<BARE>"           # "branch name" replacement string for bare .git directory
-
-export TARTIFY_UNMERGED_CHAR="✖ "           # there are unmerged files
-
-export TARTIFY_TIMETOCOMMIT=24              # Max nb hours between commits
-
-                                            # (default is 0)
-# COLORS/STYLES
-export TARTIFY_STYLE_UNTRACKED=${__UN_}     # Untracked Files                 UNDERLINED
-export TARTIFY_STYLE_TIMETOCOMMIT=${__EM_}  # Style when commit is overdue    BOLD
-
-export TARTIFY_COLOR_UNSTAGED=${__R_}       # unstaged changes                RED
-export TARTIFY_COLOR_STAGED=${__M_}         # staged changes                  MAGENTA
-export TARTIFY_COLOR_AHEADOFREMOTE=${__Y_}  # tracked remote behind HEAD      YELLOW
-export TARTIFY_COLOR_UPTODATE=${__G_}       # tracked remote == HEAD          GREEN
-export TARTIFY_COLOR_NOREMTRACK=${__B_}     # no remote tracking branch       BLUE
-
-export TARTIFY_COLOR_DOTGIT=${__C_}         # inside .git dir                 CYAN
-
-export TARTIFY_COLOR_UNMERGED=${__BL_}${__EMR_} # unmerged files              BOLD RED BLINKING
-                                                # (yeah, obnoxious)
 #------------------------------------------------------------------------------
 #
 #             HELPER FUNCTIONS
 #
 #------------------------------------------------------------------------------
 #
+__tartify_diff_count() {
 #count the nb of commits between two branches of two repositorie
-#   ex: __gitps1_diff_count HEAD origin/master
-#   ex: __gitps1_diff_count upstream/dev HEAD
-function __gitps1_diff_count() {
+#   ex: __tartify_diff_count HEAD origin/master
+#   ex: __tartify_diff_count upstream/dev HEAD
     echo "$(git rev-list $1..$2 2>/dev/null | awk 'END {print NR}')"
 }
 
 
-function __gitps1_find_tracked(){
+__tartify_find_tracked(){
   local __branchname=$1
   # find (possible) tracked remote for current branch in repository
   for remotename in $(git remote show); do
@@ -323,33 +296,38 @@ function __gitps1_find_tracked(){
   done
 }
 
+
+__tartify_usage(){
 # Display the help message
-function __tart_usage(){
   echo -e "
-  ${__UN_}Description${__UNQ_} : One-Liner extended GIT status
+  ${__UN_}Description${__UNQ_} : One-Liner extended GIT status (for your prompt, screen
+                statusline, ...)
 
   ${__UN_}Usage${__UNQ_} is : ${__EM_}tartify${__EMQ_} [${__Y_}options${__NN_}]
 
-  ${__UN_}Options${__UNQ_} : is a single word (case insensitive) containing any of the following letters :
-      ${__Y_}[Elements]${__NN_}
+  ${__UN_}Options${__UNQ_} : is a single word (case insensitive) containing
+            any of the following letters :
+
+      ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
+
       ${__Y_}n${__NN_}       repository ${__EMY_}N${__NN_}ame
       ${__Y_}b${__NN_}       ${__EMY_}B${__NN_}ranch name
       ${__Y_}r${__NN_}       ${__EMY_}R${__NN_}emotes info
       ${__Y_}s${__NN_}       ${__EMY_}S${__NN_}tash info
       ${__Y_}l${__NN_}       ${__EMY_}L${__NN_}ast commit info
 
-      ${__Y_}[Modes]${__NN_}
-      ${__Y_}t${__NN_}       shor${__EMY_}T${__NN_}er    less verbose (not yet implemented)
+      ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
+
       ${__Y_}c${__NN_}       no${__EMY_}C${__NN_}olor    strip all colors (whatever the result)
-      ${__Y_}o${__NN_}       ${__EMY_}O${__NN_}ldschool  __GITPS1 mode
+      ${__Y_}o${__NN_}       ${__EMY_}O${__NN_}ldschool  __git_ps1 mode
       ${__Y_}v${__NN_}       ${__EMY_}V${__NN_}im mode   result formated for the Vim tartify plugin
                          (color info appended to result)
 
-      mode order of precedence: ${__EMY_}v${__NN_} > ${__EMY_}o${__NN_} > ${__EMY_}t${__NN_}
-      no${__EMY_}C${__NN_}olor mode: only works alone or in cunjunction with shor${__EMY_}T${__NN_}er
 
+      ${__Y_}[Help]${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
-      ${__Y_}h|?${__NN_}     ${__EMY_}H${__NN_}elp (display this help message, and ignore the rest)
+      ${__Y_}h|?${__NN_}     ${__EMY_}H${__NN_}elp      display this help message
+      ${__Y_}e${__NN_}       ${__EMY_}E${__NN_}nv help  list customizable environment variables
 
   ${__UN_}Default${__UNQ_}   tartify   : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
             tartify o : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}obsr${__NN_}
@@ -358,12 +336,70 @@ function __tart_usage(){
 "
 }
 
+
+__tartify_get_sec_lastcommit() {
+# get the unix timestamp for the lastest commit (seconds)
+# copied from https://github.com/xtrementl/dev-bash-git-ps1.git
+    local now="$(date +%s)"
+    local last_commit="$(git log --format='%at' -1 2>/dev/null)"
+    if [ -z "$last_commit" ]; then # probably initial git init, no commits
+        return
+    fi
+    if [ 0 -lt "$now" ] && [ 0 -lt "$last_commit" ]; then
+        echo "$((now - last_commit))"
+    fi
+}
+
+
+__tartify_reformat_timestamp(){
+# prints a relative-formatted time string from unix timestamp
+# arg: unix timestamp in seconds
+# optional arg: true to include coloring
+# copied from https://github.com/xtrementl/dev-bash-git-ps1.git
+    local secs="$1"
+    local yrs="$(( $secs / 31557600 ))"
+    local div="$(( $secs % 31557600 ))"
+    local days="$(( div / 86400 ))"
+    div="$(( $secs % 86400 ))"
+    local hrs="$(( $div / 3600 ))"
+    div="$(( $secs % 3600 ))"
+    local mins="$(( $div / 60 ))"
+
+    # create the formatted time string
+    local timestr
+    [ 0 -lt "$yrs" ] && timestr="${yrs}y"
+    if [ 0 -lt "$days" ]; then
+        [ -n "$timestr" ] && timestr="$timestr,"
+        timestr="${days}d"
+    fi
+    if [ 0 -lt "$hrs" ]; then
+        [ -n "$timestr" ] && timestr="$timestr,"
+        timestr="${timestr}${hrs}h"
+    fi
+    [ -n "$timestr" ] && timestr="${timestr},"
+    timestr="${timestr}${mins}m"
+
+    # add a hint of color
+    if [ -n "$2" ] && [ $TARTIFY_TIME_BUGME == TRUE ]; then
+        local color
+        if [ $TARTIFY_TIME_SHOULDCOMMIT -lt "$secs" ]; then # 30 mins
+            color=$TARTIFY_COLOR_TIME_SHOULDCOMMIT
+        elif [ $TARTIFY_TIME_COULDCOMMIT -lt "$secs" ]; then # 10 mins
+            color=$TARTIFY_COLOR_TIME_COULDCOMMIT
+        else
+            color=$TARTIFY_COLOR_TIME_APLENTY
+        fi
+        timestr="${color}${timestr}${__NN_}"
+    fi
+    echo "$timestr"
+}
+
 #------------------------------------------------------------------------------
 #
 #             GIT PS1 commands
 #
 #------------------------------------------------------------------------------
-function __gitps1_repo_name()
+__tartify_repo_name()
 {
   local nocolors=$1   #TRUE for no color
   local color
@@ -372,7 +408,7 @@ function __gitps1_repo_name()
   if git rev-parse --git-dir >/dev/null 2>&1
   then
     # Print the REPO's name
-    color="\n${__DM_}${__K_}"
+    color=$TARTIFY_COLOR_REPONAME
     nocolor=$(echo `cd $(git rev-parse --git-dir); cd ../;pwd` | sed 's,.*/,,' | tr -d '\n')
     color=$color$nocolor
     color=$color"/${__NN_}"
@@ -381,36 +417,7 @@ function __gitps1_repo_name()
 }
 
 
-function __gitps1_stash()
-{
-  local nocolors=$1   #TRUE for no color
-  local color
-  local nocolor
-  #? are we inside a GIT repo
-  if git rev-parse --git-dir >/dev/null 2>&1; then
-    #? are we inside a GIT repo's working tree
-    if `git rev-parse --is-inside-work-tree`; then
-      if [ $(git stash list | wc -l) -gt 0 ]; then
-
-        # One star per stash
-        color="${_NN_}${_EMY_}"
-        nocolor="  "
-        for (( i=0; i< $(git stash list | wc -l); i++ ))
-        do
-          nocolor=$nocolor$TARTIFY_STASHCHAR" "
-        done
-        nocolor=$nocolor"   "
-        color="$color$nocolor""${_NN_}"
-
-        [[ "$mode" =~ OLDSCHOOL ]] && nocolor="%"
-      fi
-    fi
-  fi
-  [ $nocolors ] &&  echo -ne $nocolor || echo -e $color
-}
-
-
-function __gitps1_branch()
+__tartify_branch()
 {
   # OLDSCHOOL mode
   #
@@ -446,6 +453,7 @@ function __gitps1_branch()
   local style_untracked # special style in case of untracked files
   local nocolor
   local nocolor_infos   # store color infos in an easilly parseable string
+
   ##? GIT repo
   if git rev-parse --git-dir >/dev/null 2>&1
   then
@@ -453,66 +461,66 @@ function __gitps1_branch()
     local remotelogentries
     local branchname=$(git branch 2>/dev/null| sed -n '/^\*/s/^\* //p')
     color=${__NN_}
+
     #? WORKING TREE
     if `git rev-parse --is-inside-work-tree`; then
-      #? NON-EMPTY repo
-      if [ $(ls $gitdir_/refs/heads/ | wc -l) -gt 0 ]; then
 
-        # --------- WORKING DIR STATE--------
-        #? UNSTAGED modifs
-        if ! git diff --quiet >/dev/null 2>&1; then
-          color_unstaged=$TARTIFY_COLOR_UNSTAGED
-          [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"U"
-          [[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"*"
-        fi
-
-        # ---------- INDEX STATE-------------
-        #? Empty INDEX
-        if [ !  $(git diff  --cached | wc -l) -gt 0  ]; then
-          # ASSUME tracked remote, uptodate with HEAD
-          color_base=$TARTIFY_COLOR_UPTODATE
-          [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"O"
-
-          #? TRACKED Remote
-          local hastrackedremote=`__gitps1_find_tracked $branchname`
-          if [ $hastrackedremote != "" ]; then
-            #? branch's HEAD ahead of tracked remote's
-            remotelogentries=$(git log origin/$branchname.. | wc -l )
-            if [ $remotelogentries  -gt 0 ]; then
-              color_base=$TARTIFY_COLOR_AHEADOFREMOTE
-              [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"A"
-            fi
-          # NO TRACKED remote
-          else
-            color_base=$TARTIFY_COLOR_NOREMTRACK
-            [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"N"
-          fi
-
-        # NON-Empty INDEX
-        else
-          color_base=$TARTIFY_COLOR_STAGED
-          [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"S"
-          [[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"+"
-        fi
-
-
-        # ---------- UNMERGED FILES -------------
-        if [ $(git ls-files -u | wc -l ) -gt 0 ]
-        then
-          color=$TARTIFY_COLOR_UNMERGED$TARTIFY_UNMERGED_CHAR$color
-          nocolor=$TARTIFY_UNMERGED_CHAR
-          [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"M"
-          #[[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"M"
-        fi
-
-
-      # EMPTY repo
-      else
-        branchname=$TARTIFY_NOBRANCH_CHAR
+      #? EMPTY repo
+      if [ $(ls $gitdir_/refs/heads/ | wc -l) == 0 ]; then
+        branchname=$TARTIFY_STRING_NOBRANCH
         color_base=$TARTIFY_COLOR_NOREMTRACK
         [[ "$mode" =~ VIM ]] && nocolor_infos="E"
         #[[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos="E"
       fi
+
+      # --------- WORKING DIR STATE--------
+      #? UNSTAGED modifs
+      if ! git diff --quiet >/dev/null 2>&1; then
+        color_unstaged=$TARTIFY_COLOR_UNSTAGED
+        [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"U"
+        [[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"*"
+      fi
+
+      # ---------- INDEX STATE-------------
+      #? Empty INDEX
+      if [ !  $(git diff  --cached | wc -l) -gt 0  ]; then
+        # ASSUME tracked remote, uptodate with HEAD
+        color_base=$TARTIFY_COLOR_UPTODATE
+        [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"O"
+
+        #? TRACKED Remote
+        local hastrackedremote=`__tartify_find_tracked $branchname`
+        if [ $hastrackedremote != "" ]; then
+          #? branch's HEAD ahead of tracked remote's
+          remotelogentries=$(git log origin/$branchname.. | wc -l )
+          if [ $remotelogentries  -gt 0 ]; then
+            color_base=$TARTIFY_COLOR_AHEADOFREMOTE
+            [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"A"
+          fi
+        # NO TRACKED remote
+        else
+          color_base=$TARTIFY_COLOR_NOREMTRACK
+          [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"N"
+        fi
+
+      # NON-Empty INDEX
+      else
+        color_base=$TARTIFY_COLOR_STAGED
+        [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"S"
+        [[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"+"
+      fi
+
+
+      # ---------- UNMERGED FILES -------------
+      if [ $(git ls-files -u | wc -l ) -gt 0 ]
+      then
+        color=$TARTIFY_COLOR_UNMERGED$TARTIFY_STRING_UNMERGED$color
+        nocolor=$TARTIFY_STRING_UNMERGED
+        [[ "$mode" =~ VIM ]] && nocolor_infos=$nocolor_infos"M"
+        #[[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"M"
+      fi
+
+
 
       # UNTRACKED FILES
       if [ -n "$(git ls-files --others --exclude-standard)" ]; then
@@ -526,11 +534,11 @@ function __gitps1_branch()
     else
 			# BARE repo
 			if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
-        branchname=$TARTIFY_BARE_CHAR
+        branchname=$TARTIFY_STRING_BARE
         [[ "$mode" =~ VIM ]] && nocolor_infos="B"
       # Non-BARE repo
       else
-        branchname=$TARTIFY_DOTGIT_CHAR
+        branchname=$TARTIFY_STRING_DOTGIT
         [[ "$mode" =~ VIM ]] && nocolor_infos="G"
       fi
       color_base=$TARTIFY_COLOR_DOTGIT
@@ -565,7 +573,7 @@ function __gitps1_branch()
 }
 
 
-function __gitps1_remote()
+__tartify_remote()
 {
   # OLDSCHOOL :
   #
@@ -600,9 +608,9 @@ function __gitps1_remote()
         # special markers for origin and upstream
         # nb: a tracked remote is preceded by a little ➝ symbol
         case $remotename in
-            origin)   marker="O"; marker_color="${__G_}"   ;;  #green
-          upstream)   marker="U"; marker_color="${__M_}"   ;;  #magenta
-                  *)   marker="⇧"; marker_color="${__Y_}"   ;;  #yellow
+            origin)   marker="O"; marker_color=$TARTIFY_COLOR_REMOTE_ORIGIN   ;;
+          upstream)   marker="U"; marker_color=$TARTIFY_COLOR_REMOTE_UPSTREAM ;;
+                 *)   marker="⇧"; marker_color=$TARTIFY_COLOR_REMOTE_OTHER    ;;
         esac
 
         # CURRENT BRANCH is tracked to CURRENT REMOTE ?
@@ -613,26 +621,26 @@ function __gitps1_remote()
                               { before_traked=" ➝${__EM_} "; after_tracked="${_EMQ_}";
                                 before_untraked=" "; after_untracked=""; }
         else
-          before_traked=""; after_tracked="";before_traked=" "; after_tracked=""; 
+          before_traked=""; after_tracked="";before_traked=" "; after_tracked="";
         fi
 
 
         # nb of commits AHEAD/BEHIND
-        local ahead_count="$(__gitps1_diff_count $remotename/$branchname HEAD)"
-        local behind_count="$(__gitps1_diff_count HEAD $remotename/$branchname)"
+        local ahead_count="$(__tartify_diff_count $remotename/$branchname HEAD)"
+        local behind_count="$(__tartify_diff_count HEAD $remotename/$branchname)"
         local diffcount=""
         local diffcountnocol=""
         if [ 0 -lt "$ahead_count" ]; then
-            diffcount="${__G_}${ahead_count}"
+            diffcount="${TARTIFY_COLOR_REMOTE_AHEAD}${ahead_count}"
             diffcountnocol="+${ahead_count}"
         fi
 
         if [ 0 -lt "$behind_count" ]; then
-            [ -n "$diffcount" ] && { 
+            [ -n "$diffcount" ] && {
                     diffcount="${diffcount}${marker_color}/"
                     diffcountnocol="${diffcountnocol}/"
                   }
-            diffcount="${diffcount}${__R_}${behind_count}"
+            diffcount="${diffcount}${TARTIFY_COLOR_REMOTE_BEHIND}${behind_count}"
             diffcountnocol="${diffcountnocol}-${behind_count}"
         fi
 
@@ -653,44 +661,87 @@ function __gitps1_remote()
 }
 
 
-function __gitps1_timeLastCommit(){
-  echo ""
+#optimized
+__tartify_stash()
+{
+  local nocolors=$1   #TRUE for no color
+  local color
+  local nocolor
+  #? are we inside a GIT repo
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    #? are we inside a GIT repo's working tree
+    if `git rev-parse --is-inside-work-tree`; then
+
+      git rev-parse --verify refs/stash >/dev/null 2>&1 && {
+        if $TARTIFY_COUNTSTASHES; then
+          # One star per stash
+          color=$TARTIFY_COLOR_STASH_COUNT
+          nocolor="  "
+          #! `git stash list | wc -l` adds about 50ms
+          for (( i=0; i< $(git stash list | wc -l); i++ ))
+          do
+            nocolor=$nocolor$TARTIFY_STRING_STASH" "
+          done
+          nocolor=$nocolor" "
+        else
+          color=$TARTIFY_COLOR_STASH_NOCOUNT
+          nocolor=$TARTIFY_STRING_STASH
+        fi
+        color=$color$nocolor${__NN_}
+
+        [[ "$mode" =~ OLDSCHOOL ]] && nocolor="$"
+      }
+    fi
+  fi
+  [ $nocolors ] &&  echo -ne $nocolor || echo -e $color
 }
 
+
+__tartify_timelastcommit(){
+  # calc relative time diff of last commit
+  local secs="$(__tartify_get_sec_lastcommit)"
+  [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs true)"
+}
 
 #------------------------------------------------------------------------------
 #
 #             TARTIFY
 #
 #------------------------------------------------------------------------------
-function tartify()
+
+tartify()
 {
   # To Lower Case
   local argstr=`echo $1 | tr '[A-Z]' '[a-z]'`
   # Help
-  [[ "$argstr" =~ ? || "$argstr" =~ h ]] && { __tart_usage; return 0; }
+  [[ "$argstr" =~ ? || "$argstr" =~ h ]] && { __tartify_usage; return 0; }
+  [[ "$argstr" =~ e ]] && {
+    echo -ne "\nTartify's ENVIRONMENT variables are currently set to :"
+    __TART_env=`env | grep "^TARTIFY_" |   sed 's/\(\\033\[\([0-9];\)*[0-9]*m\)\{1,2\}/&##########\\\\033\[0m/g' | sed 's/$/\\\\n/g' | sort -df `
+    echo -ne "\n\n "$__TART_env | awk -F"=" '{printf("%-'35s' %'0s'\n", $1,$2)}'
+    return 0
+  }
   # Empty arg (default)
   [ ${#argstr} == 0 ] && argstr="nbrsl"
 
-  local separator
+  local separator=" "
   local nocolor
   local mode
   # No Colors MODE : strip all color info, whatever the result
-  [[ "$argstr" =~ v ]] && { 
+  [[ "$argstr" =~ v ]] && {
       nocolor=TRUE
   }
   # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
-  [[ "$argstr" =~ v ]] && { 
+  [[ "$argstr" =~ v ]] && {
       separator="#"
       nocolor=TRUE
       mode="VIM"
   }
   # OldSchool MODE : no color, branch results with $*+, stash results with %
-  [[ "$argstr" =~ o ]] && { 
+  [[ "$argstr" =~ o ]] && {
       # tartify o == tartify bsr
       [ ${#argstr} == 1 ] && argstr="bsr"
 
-      export TARTIFY_STASHCHAR="%"
       separator=" "
       nocolor=TRUE
       mode="OLDSCHOOL"
@@ -702,19 +753,20 @@ function tartify()
   do
     local ch=${argstr:$i:1}
     case $ch in
-      n) tartAnswer=$tartAnswer$separator$(__gitps1_repo_name $nocolor);;
-      b) tartAnswer=$tartAnswer$separator$(__gitps1_branch $nocolor $mode);;
-      r) tartAnswer=$tartAnswer$separator$(__gitps1_remote $nocolor);;
-      s) tartAnswer=$tartAnswer$separator$(__gitps1_stash $nocolor);;
-      l) tartAnswer=$tartAnswer$separator$(__gitps1_timeLastCommit $nocolor);;
+      n) tartAnswer=$tartAnswer$separator$(__tartify_repo_name $nocolor);;
+      b) tartAnswer=$tartAnswer$separator$(__tartify_branch $nocolor $mode);;
+      r) tartAnswer=$tartAnswer$separator$(__tartify_remote $nocolor);;
+      s) tartAnswer=$tartAnswer$separator$(__tartify_stash $nocolor);;
+      l) tartAnswer=$tartAnswer$separator$(__tartify_timelastcommit $nocolor);;
+      c) ;;
       o) ;;
       v) ;;
-      *) echo "Unknown option \"$ch\""; __tart_usage; return 1 ;;
+      *) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
     esac
   done
 
 
-  #echo -e "$(__gitps1_repo_name)$(__gitps1_branch)  $(__gitps1_remote) $(__gitps1_stash)"
+  #echo -e "$(__tartify_repo_name)$(__tartify_branch)  $(__tartify_remote) $(__tartify_stash)"
   echo -e $tartAnswer
 }
 
@@ -723,13 +775,22 @@ function tartify()
 #             EXPORTING (for use in other things : Vim,...)
 #
 #------------------------------------------------------------------------------
-export -f __gitps1_diff_count
-export -f __gitps1_repo_name
-export -f __gitps1_branch
-export -f __gitps1_remote
-export -f __gitps1_stash
+__tartify_define_colors
+__tartify_init_globs
+
+export -f __tartify_diff_count
+export -f __tartify_find_tracked
+export -f __tartify_usage
+export -f __tartify_get_sec_lastcommit
+export -f __tartify_reformat_timestamp
+
+export -f __tartify_repo_name
+export -f __tartify_branch
+export -f __tartify_remote
+export -f __tartify_stash
+export -f __tartify_timelastcommit
+
 export -f tartify
-#export -f __echoe
 export __tartify_shell_loaded=1
 
 
