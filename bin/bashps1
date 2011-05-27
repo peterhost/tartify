@@ -70,7 +70,7 @@
 #   * Line Wrapping Calculation
 #
 #     Two things that I know of can confuse line wrapping (when browsing
-#     command history with long lines, for ex) :
+#     command history with long lines, for ex) in the PS1 variable :
 #
 #       1 - non-printable characters in the PS1 variable have to be "escaped"
 #       by enclosing them between a pair of escaped brackets :
@@ -83,9 +83,33 @@
 #           "\$(myFunc)"
 #
 #       need to be issued on a line prior to the last line of the PS1 variable,
-#       otherwise they will confuse wrapping too
+#       otherwise they will confuse wrapping too. Hence, your PS1 better look
+#       something like :
+#
+#         PS1="\$(tartify)\n$ "
+#
 #
 #       (SEE:http://hintsforums.macworld.com/archive/index.php/t-17068.html)
+#
+#    * Quick n dirty benchmark
+#      loop over 1000 executions of `tartify` on a 3.06GHz Intel Core 2 Duo Imac
+#      without any methodology
+#
+#       **execution-time (ms)**
+#       _____________________________________________________________
+#      |    REPO   | TINY       | SMALL     | MEDIUM    | LARGE      |
+#      |           | ms   %     | ms   %    | ms   %    | ms   %     |
+#      |___________|____________|___________|___________|____________|
+#      |    remote | 48   25%   | 59   29%  | 92   27%  | 93  23%    |
+#      |   1 stash | 56   30%   | 56   28%  | 179  52%  | 202 50%    |
+#      |    branch | 60   32%   | 63   31%  | 46   13%  | 81  20%    |
+#      |      repo | 14    7%   | 13    6%  | 13    4%  | 14   3%    |
+#      |  timelast | 11    6%   | 11    5%  | 12    3%  | 12   3%    |
+#      |           |            |           |           |            |
+#      |     total | 189        | 202       | 342       | 402        |
+#      |           |            |           |           |            |
+#      | __git_ps1 |            |           |           | 63         |
+#      |___________|____________|___________|___________|____________|
 #
 #
 #------------------------------------------------------------------------------
