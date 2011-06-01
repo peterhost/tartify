@@ -639,7 +639,7 @@ __tartify_branch()
         branchname=$TARTIFY_STRING_DOTGIT
         [[ "$mode" =~ VIM ]] && nocolor_infos="G"
       fi
-      color_base=$TARTIFY_COLOR_DOTGIT
+      color_base=$TARTIFY_COLOR_GITDIR
     fi
 
     # Highlight the first two characters of branch name with $color_unstaged
@@ -824,12 +824,12 @@ tartify()
     return 0
   }
   # Empty arg (default)
+
+  [[ "$argstr" == "w" ]] && argstr="nbrslw"
+  [[ "$argstr" == "o" ]] && argstr="obsr"
   [ ${#argstr} == 0 ] && argstr="nbrsl"
 
-  [[ "${argstr}" == "w" ]] && argstr="nbrslw"
-  [ ${#argstr} == 0 ] && argstr="nbrsl"
-
-  local separator=" "
+  local separator
   local nocolor
   local mode
   # No Colors MODE : strip all color info, whatever the result
@@ -844,8 +844,6 @@ tartify()
   }
   # OldSchool MODE : no color, branch results with $*+, stash results with %
   [[ "$argstr" =~ o ]] && {
-      # tartify o == tartify bsr
-      [ ${#argstr} == 1 ] && argstr="bsr"
 
       separator=" "
       nocolor=TRUE
@@ -865,9 +863,11 @@ tartify()
       l) tartAnswer=$tartAnswer$separator$(__tartify_timelastcommit $nocolor);;
       c) ;;
       o) ;;
+      p) ;;
       v) ;;
       w) ;;
-      *) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
+      #*) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
+      *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch;;
     esac
   done
 
@@ -875,7 +875,11 @@ tartify()
 
   #newline (for use in PS1)
   #[[ "$argstr" =~ w ]] && echo -ne $tartAnswer"\\n" || echo -ne $tartAnswer
-  [[ "$argstr" =~ w ]] && printf "%s\n" $tartAnswer || printf "%s" $tartAnswer
+  #[[ "$argstr" =~ w ]] && printf "%s\n" $tartAnswer || printf "%s" $tartAnswer
+  local testforblank=${tartAnswer// /}
+  [ ${#testforblank} != 0 ] && echo -ne $tartAnswer
+  #[[ "$argstr" =~ w ]] && echo -ne "\n"
+  if [[ "$argstr" =~ w ]];then echo -ne "\n";fi
 
 }
 
@@ -909,7 +913,16 @@ export __tartify_shell_loaded=1
 
 
 
+### Check to make sure it is not sourced:
+#Prog=myscript.sh
+#if [ $(basename $0) = $Prog ]; then
+#   exit 1  # not sourced
+#fi
 
 
-
+# REMOVE ANSI ESCAPE from string
+# MACOS
+# echo  $TOTO | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+# LINUX
+#               sed -r
 
