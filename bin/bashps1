@@ -390,13 +390,15 @@ __tartify_usage(){
   ${__UN_}Options${__UNQ_} is : a CASE-SENSITIVE sequence of characters.
 
       * The following characters are reserved tartify commands :
-         ${__Y_}nbrslcovh?e${__NN_}
+         ${__Y_}nbrslqcopvh?e${__NN_}
       * any other character will be printed "as is", including spaces. You can use
-        those to format the output of the tarttify command
+      those to format the output of the tarttify command (as delimiters,...)
+              \`tartify [r]b - l\` will output \"[repository]master - 12m\"
 
-          ex: \`tartify [r]b - l\` will output \"[repository]master - 12m\"
-              if you need multiple spaces, escape them \"\ \" :
-           \`tartify [r]b -\ \ l\` will output \"[repository]master -  12m\"
+      * if you need multiple spaces, escape them \"\ \" :
+              \`tartify [r]b -\ \ l\` will output \"[repository]master -  12m\"
+
+      * following characters need to be escaped  ${__Y_}()<>;*\"\'\`#&|~)${__NN_}
 
 
       ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
@@ -411,15 +413,17 @@ __tartify_usage(){
 
       ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
 
+      ${__Y_}q${__NN_}       ${__EMY_}Q${__NN_}uiet      only update variables, no output
       ${__Y_}c${__NN_}       no${__EMY_}C${__NN_}olor    strip all colors (whatever the result)
       ${__Y_}o${__NN_}       ${__EMY_}O${__NN_}ldschool  __git_ps1 mode
+      ${__Y_}p${__NN_}       ${__EMY_}P${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
       ${__Y_}v${__NN_}       ${__EMY_}V${__NN_}im mode   result formated for the Vim tartify plugin
                          (color info appended to result)
 
 
       ${__Y_}[Help]${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
-      ${__Y_}h|?${__NN_}     ${__EMY_}H${__NN_}elp      display this help message
+      ${__Y_}h${__NN_}     ${__EMY_}H${__NN_}elp      display this help message
       ${__Y_}e${__NN_}       ${__EMY_}E${__NN_}nv help  list customizable environment variables
 
   ${__UN_}Default${__UNQ_}   tartify   : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
