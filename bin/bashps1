@@ -796,9 +796,12 @@ __tartify_stash()
 
 
 __tartify_timelastcommit(){
-  # calc relative time diff of last commit
-  local secs="$(__tartify_get_sec_lastcommit)"
-  [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs true)"
+  #? are we inside a GIT repo
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    # calc relative time diff of last commit
+    local secs="$(__tartify_get_sec_lastcommit)"
+    [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs true)"
+  fi
 }
 
 #------------------------------------------------------------------------------
