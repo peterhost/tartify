@@ -302,6 +302,59 @@ __tartify_define_colors() {
   [ $UID -eq "0" ] && __ERREMUC_=$__EMK_    # root's bold ERROR color
 }
 
+# (PS1-escaped ansi escapes)
+__tartify_define_PS1_colors() {
+  # regular colors
+  export __PS1K_="\[\e[0;30m\]"    # black
+  export __PS1R_="\[\e[0;31m\]"    # red
+  export __PS1G_="\[\e[0;32m\]"    # green
+  export __PS1Y_="\[\e[0;33m\]"    # yellow
+  export __PS1B_="\[\e[0;34m\]"    # blue
+  export __PS1M_="\[\e[0;35m\]"    # magenta
+  export __PS1C_="\[\e[0;36m\]"    # cyan
+  export __PS1W_="\[\e[0;37m\]"    # white
+  # empahsized (bolded) colors
+  export __PS1EMK_="\[\e[1;30m\]"
+  export __PS1EMR_="\[\e[1;31m\]"
+  export __PS1EMG_="\[\e[1;32m\]"
+  export __PS1EMY_="\[\e[1;33m\]"
+  export __PS1EMB_="\[\e[1;34m\]"
+  export __PS1EMM_="\[\e[1;35m\]"
+  export __PS1EMC_="\[\e[1;36m\]"
+  export __PS1EMW_="\[\e[1;37m\]"
+  # background colors
+  export __PS1BGK_="\[\e[40m\]"
+  export __PS1BGR_="\[\e[41m\]"
+  export __PS1BGG_="\[\e[42m\]"
+  export __PS1BGY_="\[\e[43m\]"
+  export __PS1BGB_="\[\e[44m\]"
+  export __PS1BGM_="\[\e[45m\]"
+  export __PS1BGC_="\[\e[46m\]"
+  export __PS1BGW_="\[\e[47m\]"
+  # styles
+  export __PS1NN_="\[\e[0m\]"  # unsets color to term's fg color
+  export __PS1EM_="\[\e[1m\]"  #bold
+  export __PS1DM_="\[\e[2m\]"  #dim
+  export __PS1UN_="\[\e[4m\]"  #underline
+  export __PS1BL_="\[\e[5m\]"  #blink
+  export __PS1RV_="\[\e[7m\]"  #reverse
+  export __PS1EMQ_="\[\e[21m\]" #END bold
+  export __PS1DMQ_="\[\e[22m\]" #END dim
+  export __PS1UNQ_="\[\e[24m\]" #END underline
+  export __PS1BLQ_="\[\e[25m\]" #END blink
+  export __PS1RVQ_="\[\e[27m\]" #END reverse
+  # default user colors
+  export __PS1UC_=$__PS1G_                         # user's color
+  export __PS1EMUC_=$__PS1EMG_                     # user's bold color
+  export __PS1ERRUC_=$__PS1R_                      # user's ERROR color
+  export __PS1ERREMUC_=$__PS1EMR_                  # user's bold ERROR color
+  # root colors
+  [ $UID -eq "0" ] && __PS1UC_=$__PS1R_           # root's color
+  [ $UID -eq "0" ] && __PS1EMUC_=$__PS1EMR_       # root's bold color
+  [ $UID -eq "0" ] && __PS1ERRUC_=$__PS1K_        # root's ERROR color
+  [ $UID -eq "0" ] && __PS1ERREMUC_=$__PS1EMK_    # root's bold ERROR color
+}
+__define_PS1_colors
 
 __tartify_init_globs(){
 # TARTIFY PARAMETERS : adapt to your needs
