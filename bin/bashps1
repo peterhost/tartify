@@ -849,9 +849,11 @@ tartify()
   }
   # Empty arg (default)
 
-  [[ "$argstr" == "w" ]] && argstr="nbrslw"
-  [[ "$argstr" == "o" ]] && argstr="obsr"
-  [ ${#argstr} == 0 ] && argstr="nbrsl"
+  [[ "$argstr" == "w" ]] && argstr="nbrslw"                        #newline after
+  [[ "$argstr" == "W" ]] && argstr="nbrslW"                        #newline before
+  [[ "$argstr" == "Ww" || "$argstr" == "wW" ]] && argstr="nbrslwW" #newline BOTH
+  [[ "$argstr" == "o" ]] && argstr="obsr"                          #oldschool
+  [ ${#argstr} == 0 ] && argstr="nbrsl"                            #no args
 
   local separator
   local nocolor
@@ -890,6 +892,7 @@ tartify()
       p) ;;
       v) ;;
       w) ;;
+      W) ;;
       #*) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
       *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch;;
     esac
@@ -897,20 +900,19 @@ tartify()
 
   #echo -e "$(__tartify_repo_name)$(__tartify_branch)  $(__tartify_remote) $(__tartify_stash)"
 
-  #newline (for use in PS1)
-  #[[ "$argstr" =~ w ]] && echo -ne $tartAnswer"\\n" || echo -ne $tartAnswer
-  #[[ "$argstr" =~ w ]] && printf "%s\n" $tartAnswer || printf "%s" $tartAnswer
-  local testforblank=${tartAnswer// /}
-  [ ${#testforblank} != 0 ] && echo -ne $tartAnswer
-  #[[ "$argstr" =~ w ]] && echo -ne "\n"
-  if [[ "$argstr" =~ w ]];then echo -ne "\n";fi
+  # TODO: this test sucks
+  # remove ansi escapes
+  local testforblank=$(echo  $tartAnswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
+  testforblank=${testforblank/ //}
 
+  # only do something if answer is not empty
+  [ ${#testforblank} != 0 ] && {
+    [[ "$argstr" =~ W ]] && echo -ne "\n" # linebreak before
+    echo -ne $tartAnswer
+    [[ "$argstr" =~ w ]] && echo -ne "\n" # linebreak after
+  }
 }
 
-# enable whitespace, any non command character is a separator
-#tartify2()
-#{
-#}
 
 #------------------------------------------------------------------------------
 #
