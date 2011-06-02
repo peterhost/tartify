@@ -539,31 +539,47 @@ __tartify_repo_name()
 
 __tartify_branch()
 {
+  # ARGUMENTS : $nocolor : FALSE|TRUE                (optionnal)
+  #             $mode    : OLDSCHOOL|VIM|QUIET|PS1   (optionnal)
+  #
   # OLDSCHOOL mode
   #
-  #   * unstaged
-  #   + staged
-  #   % untracked
+  #   Return value:
+  #
+  #    * unstaged
+  #    + staged
+  #    % untracked
   #
   # VIM mode
   #
-  #   $nocolor_infos prepended to branch name
+  #   Return value:
   #
-  #   nocolor_infos =~ /[U]?[SAONGBE][T]?[M]?/
+  #     $nocolor_infos prepended to branch name
   #
-  #       [U]nstaged modif(s)
+  #     nocolor_infos =~ /[U]?[SAONGBE][T]?[M]?/
   #
-  #       [S]taged modif(s),
-  #       [A]head of remote     & nothing staged
-  #       [O]K (remote == HEAD) & nothing staged
-  #       [N]o tracked remote   & nothing staged
-  #       inside .[G]it directory (branch info irrelevant)
-  #       inside  [B]are repository (branch info irrelevant)
-  #       [E]mpty repository (no branch)
+  #        [U]nstaged modif(s)
   #
-  #       un[T]racked files,
-  #       un[M]erged files
+  #        [S]taged modif(s),
+  #        [A]head of remote     & nothing staged
+  #        [O]K (remote == HEAD) & nothing staged
+  #        [N]o tracked remote   & nothing staged
+  #        inside .[G]it directory (branch info irrelevant)
+  #        inside  [B]are repository (branch info irrelevant)
+  #        [E]mpty repository (no branch)
   #
+  #        un[T]racked files,
+  #        un[M]erged files
+  #
+  # QUIET mode
+  #
+  # PS1 mode
+  #
+  #   will use on-the-fly variable-NAMES creation
+  #
+  #     TOTO=2
+  #     TATA=TO
+  #     TITI=$(eval "printf "%s" "\$${TATA}TO"")
 
   local nocolors=$1     #TRUE for no color
   local mode=$2         #either VIM or OLDSCHOOL
@@ -848,7 +864,6 @@ tartify()
     echo -ne "\n\n "$__TART_env | awk -F"=" '{printf("%-'35s' %'0s'\n", $1,$2)}'
     return 0
   }
-  # Empty arg (default)
 
   [[ "$argstr" == "w" ]] && argstr="nbrslw"                        #newline after
   [[ "$argstr" == "W" ]] && argstr="nbrslW"                        #newline before
@@ -871,11 +886,19 @@ tartify()
   }
   # OldSchool MODE : no color, branch results with $*+, stash results with %
   [[ "$argstr" =~ o ]] && {
-
       separator=" "
       nocolor=TRUE
       mode="OLDSCHOOL"
   }
+  # Quiet mode (only update the __TART4PS1* variables)
+  [[ "$argstr" =~ q ]] && {
+      mode="QUIET"
+  }
+  # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
+  [[ "$argstr" =~ q ]] && {
+      mode="PS1"
+  }
+
 
   local tartAnswer=""
   local i
@@ -891,6 +914,7 @@ tartify()
       c) ;;
       o) ;;
       p) ;;
+      q) ;;
       v) ;;
       w) ;;
       W) ;;
