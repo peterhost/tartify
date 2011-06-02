@@ -67,10 +67,30 @@
 #   * no support for SVN upstream (as I don't use SVN), feel free to augment
 #     this script
 #
+#
+
+#   * conditionnal newline : there is no such thing in a prompt. Either a
+#   newline is hardcoded in the prompt, or it's not. All linebreak(s) inserted
+#   by an external command called in the PS1 variable via "$(command)" are
+#   stripped out when $PS1 is evaluated.
+#
+#   Solution: if you need a multiline prompt, with the 'tartify' line only
+#   inserted if you're being in a 'git' repository, consider using a
+#   PROMPT_COMMAND like this :
+#
+#     prompt_command(){
+#       ...
+#       tartify w
+#     }
+#     PROMPT_COMMAND=prompt_command
+#
+#   The 'w' option to tartify issues a newline if the contents of \`tartify\`
+#   is not an empty string.
+#
 #   * Line Wrapping Calculation
 #
 #     The one thing (that I know of) which confuse line wrapping (when browsing
-#     command history with long lines, for ex) is non-printable characters 
+#     command history with long lines, for ex) is non-printable characters
 #     (such as ansi escape color codes, cursor movement,...). So:
 #
 #       1 - non-printable characters in the PS1 variable have to be "escaped"
@@ -403,28 +423,29 @@ __tartify_usage(){
 
       ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
 
-      ${__Y_}n${__NN_}       repository ${__EMY_}N${__NN_}ame
-      ${__Y_}b${__NN_}       ${__EMY_}B${__NN_}ranch name
-      ${__Y_}r${__NN_}       ${__EMY_}R${__NN_}emotes info
-      ${__Y_}s${__NN_}       ${__EMY_}S${__NN_}tash info
-      ${__Y_}l${__NN_}       ${__EMY_}L${__NN_}ast commit info
+      ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame
+      ${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name
+      ${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes info
+      ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info
+      ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info
 
-      ${__Y_}w${__NN_}       ne${__EMY_}W${__NN_}line append newline
+      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line append newline
+      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line prepend newline
 
       ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
 
-      ${__Y_}q${__NN_}       ${__EMY_}Q${__NN_}uiet      only update variables, no output
-      ${__Y_}c${__NN_}       no${__EMY_}C${__NN_}olor    strip all colors (whatever the result)
-      ${__Y_}o${__NN_}       ${__EMY_}O${__NN_}ldschool  __git_ps1 mode
-      ${__Y_}p${__NN_}       ${__EMY_}P${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
-      ${__Y_}v${__NN_}       ${__EMY_}V${__NN_}im mode   result formated for the Vim tartify plugin
+      ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update variables, no output
+      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor    strip all colors (whatever the result)
+      ${__Y_}o${__NN_}       ${__EMY_}o${__NN_}ldschool  __git_ps1 mode
+      ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
+      ${__Y_}v${__NN_}       ${__EMY_}v${__NN_}im mode   result formated for the Vim tartify plugin
                          (color info appended to result)
 
 
       ${__Y_}[Help]${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
-      ${__Y_}h${__NN_}     ${__EMY_}H${__NN_}elp      display this help message
-      ${__Y_}e${__NN_}       ${__EMY_}E${__NN_}nv help  list customizable environment variables
+      ${__Y_}h${__NN_}     ${__EMY_}h${__NN_}elp      display this help message
+      ${__Y_}e${__NN_}       ${__EMY_}e${__NN_}nv help  list customizable environment variables
 
   ${__UN_}Default${__UNQ_}   tartify   : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
             tartify w : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrslw${__NN_}
