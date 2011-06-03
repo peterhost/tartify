@@ -520,18 +520,6 @@ __tartify_usage(){
 }
 
 
-__tartify_get_sec_lastcommit() {
-# get the unix timestamp for the lastest commit (seconds)
-# copied from https://github.com/xtrementl/dev-bash-git-ps1.git
-    local now="$(date +%s)"
-    local last_commit="$(git log --format='%at' -1 2>/dev/null)"
-    if [ -z "$last_commit" ]; then # probably initial git init, no commits
-        return
-    fi
-    if [ 0 -lt "$now" ] && [ 0 -lt "$last_commit" ]; then
-        echo "$((now - last_commit))"
-    fi
-}
 
 
 __tartify_reformat_timestamp(){
@@ -562,20 +550,39 @@ __tartify_reformat_timestamp(){
     [ -n "$timestr" ] && timestr="${timestr},"
     timestr="${timestr}${mins}m"
 
+    # TODO: 
+    # TARTIFY_STYLE_TIME_COULDCOMMIT
+    # TARTIFY_STYLE_TIME_SHOULDCOMMIT
+    # TARTIFY_TIME_DISPLAY
+    # TARTIFY_STRING_TIME_DISPLAY
+
     # add a hint of color
     if [ -n "$2" ] && [ -n "$TARTIFY_TIME_BUGME" ]; then
         local color
         if [ $TARTIFY_TIME_SHOULDCOMMIT -lt "$secs" ]; then # 30 mins
-            color=$TARTIFY_COLOR_TIME_SHOULDCOMMIT
+            color=$TARTIFY_COLOR_TIME_ACTIVITY_NON
         elif [ $TARTIFY_TIME_COULDCOMMIT -lt "$secs" ]; then # 10 mins
-            color=$TARTIFY_COLOR_TIME_COULDCOMMIT
+            color=$TARTIFY_COLOR_TIME_ACTIVITY_LOW
         else
-            color=$TARTIFY_COLOR_TIME_APLENTY
+            color=$TARTIFY_COLOR_TIME_ACTIVITY_HIGH
         fi
         timestr="${color}${timestr}${__NN_}"
     fi
     echo "$timestr"
 }
+
+
+#------------------------------------------------------------------------------
+#
+#             GIT TESTS
+#
+#------------------------------------------------------------------------------
+
+__git_tests(){
+  __T4TT_IS_GIT="git rev-parse --git-dir >/dev/null 2>&1" #echoes nothing
+  __T4TT_GIT_DIR="git rev-parse --git-dir 2>/dev/null"    #echoes path to .git dir || nothing
+}
+
 
 #------------------------------------------------------------------------------
 #
@@ -584,18 +591,17 @@ __tartify_reformat_timestamp(){
 #------------------------------------------------------------------------------
 __tartify_repo_name()
 {
-  local nocolors=$1   #TRUE for no color
+  local gitdir=$1
+  local updir=""; [ $2 == "false" ] && updir="/.." #don't go 1 level up for bare repo
+  local nocolors=$3   #TRUE for no color
   local color
-  local nocolor
-  #? are we inside a GIT repo
-  if git rev-parse --git-dir >/dev/null 2>&1
-  then
-    # Print the REPO's name
-    color=$TARTIFY_COLOR_REPONAME
-    nocolor=$(echo `cd $(git rev-parse --git-dir); cd ../;pwd` | sed 's,.*/,,' | tr -d '\n')
-    color=$color$nocolor
-    color=$color"/${__NN_}"
-  fi
+
+  # Print the REPO's name
+  color=$TARTIFY_COLOR_REPONAME
+  nocolor=$(echo `cd $gitdir$updir; pwd` | sed 's,.*/,,' | tr -d '\n')
+  color=$color$nocolor
+  color=$color"/${__NN_}"
+
   [ $nocolors ] &&  echo -ne $nocolor || echo -ne $color
 }
 
@@ -644,8 +650,10 @@ __tartify_branch()
   #     TATA=TO
   #     TITI=$(eval "printf "%s" "\$${TATA}TO"")
 
-  local nocolors=$1     #TRUE for no color
-  local mode=$2         #either VIM or OLDSCHOOL
+  local gitdir=$1
+  local isbare=$2    #TRUE for BARE repository
+  local nocolors=$3   #TRUE for no color
+  local mode=$4       #either VIM | OLDSCHOOL | QUIET | PS1
   local color
   local color_base      # branch name base color
   local color_unstaged  # first 2 chars of branch name in case of unstaged modifs
@@ -653,10 +661,8 @@ __tartify_branch()
   local nocolor
   local nocolor_infos   # store color infos in an easilly parseable string
 
-  ##? GIT repo
-  if git rev-parse --git-dir >/dev/null 2>&1
+  if [ -d $gitdir ] # protection
   then
-    local gitdir_=`git rev-parse --git-dir`
     local remotelogentries
     local branchname=$(git branch 2>/dev/null| sed -n '/^\*/s/^\* //p')
     color=${__NN_}
@@ -665,11 +671,11 @@ __tartify_branch()
     if `git rev-parse --is-inside-work-tree`; then
 
       #? EMPTY repo
-      if [ $(ls $gitdir_/refs/heads/ | wc -l) == 0 ]; then
+      if [ $(ls $gitdir/refs/heads/ | wc -l) == 0 ]; then
         branchname=$TARTIFY_STRING_NOBRANCH
-        color_base=$TARTIFY_COLOR_NOREMTRACK
+        color_base=$TARTIFY_COLOR_NOCOMMITYET
         [[ "$mode" =~ VIM ]] && nocolor_infos="E"
-        #[[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos="E"
+        [[ "$mode" =~ OLDSCHOOL ]] && nocolor_infos=$nocolor_infos"#"
       fi
 
       # --------- WORKING DIR STATE--------
@@ -732,7 +738,7 @@ __tartify_branch()
     # SPECIAL_CASE: we're inside the .git dir
     else
 			# BARE repo
-			if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
+			if [ $isbare == "true" ]; then
         branchname=$TARTIFY_STRING_BARE
         [[ "$mode" =~ VIM ]] && nocolor_infos="B"
       # Non-BARE repo
@@ -778,7 +784,8 @@ __tartify_remote()
   #
   #    #:no upstream
 
-  local nocolors=$1   #TRUE for no color
+  local gitdir=$1     #NOT USED HERE, kept for consistency
+  local nocolors=$2   #TRUE for no color
   local color
   local nocolor
   #? are we inside a GIT repo
@@ -863,7 +870,8 @@ __tartify_remote()
 #optimized
 __tartify_stash()
 {
-  local nocolors=$1   #TRUE for no color
+  local gitdir=$1     #NOT USED HERE, kept for consistency
+  local nocolors=$2   #TRUE for no color
   local color
   local nocolor
   #? are we inside a GIT repo
@@ -897,10 +905,23 @@ __tartify_stash()
 
 
 __tartify_timelastcommit(){
+  local gitdir=$1     #NOT USED HERE, kept for consistency
+
   #? are we inside a GIT repo
   if git rev-parse --git-dir >/dev/null 2>&1; then
     # calc relative time diff of last commit
-    local secs="$(__tartify_get_sec_lastcommit)"
+    local secs="$(
+      # get the unix timestamp for the lastest commit (seconds)
+      # copied from https://github.com/xtrementl/dev-bash-git-ps1.git
+          local now="$(date +%s)"
+          local last_commit="$(git log --format='%at' -1 2>/dev/null)"
+          if [ -z "$last_commit" ]; then # probably initial git init, no commits
+              return
+          fi
+          if [ 0 -lt "$now" ] && [ 0 -lt "$last_commit" ]; then
+              echo "$((now - last_commit))"
+          fi
+    )"
     [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs true)"
   fi
 }
@@ -928,76 +949,118 @@ tartify()
     return 0
   }
 
-  [[ "$argstr" == "w" ]] && argstr="nbrslw"                        #newline after
-  [[ "$argstr" == "W" ]] && argstr="nbrslW"                        #newline before
-  [[ "$argstr" == "Ww" || "$argstr" == "wW" ]] && argstr="nbrslwW" #newline BOTH
-  [[ "$argstr" == "o" ]] && argstr="obsr"                          #oldschool
-  [ ${#argstr} == 0 ] && argstr="nbrsl"                            #no args
-
-  local separator
-  local nocolor
-  local mode
-  # No Colors MODE : strip all color info, whatever the result
-  [[ "$argstr" =~ v ]] && {
-      nocolor=TRUE
-  }
-  # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
-  [[ "$argstr" =~ v ]] && {
-      separator="#"
-      nocolor=TRUE
-      mode="VIM"
-  }
-  # OldSchool MODE : no color, branch results with $*+, stash results with %
-  [[ "$argstr" =~ o ]] && {
-      separator=" "
-      nocolor=TRUE
-      mode="OLDSCHOOL"
-  }
-  # Quiet mode (only update the __TART4PS1* variables)
-  [[ "$argstr" =~ q ]] && {
-      mode="QUIET"
-  }
-  # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
-  [[ "$argstr" =~ q ]] && {
-      mode="PS1"
-  }
 
 
-  local tartAnswer=""
-  local i
-  for ((i=0;i<${#argstr};i++))
-  do
-    local ch=${argstr:$i:1}
-    case $ch in
-      n) tartAnswer=$tartAnswer$separator$(__tartify_repo_name $nocolor);;
-      b) tartAnswer=$tartAnswer$separator$(__tartify_branch $nocolor $mode);;
-      r) tartAnswer=$tartAnswer$separator$(__tartify_remote $nocolor);;
-      s) tartAnswer=$tartAnswer$separator$(__tartify_stash $nocolor);;
-      l) tartAnswer=$tartAnswer$separator$(__tartify_timelastcommit $nocolor);;
-      c) ;;
-      o) ;;
-      p) ;;
-      q) ;;
-      v) ;;
-      w) ;;
-      W) ;;
-      #*) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
-      *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch;;
-    esac
-  done
+  local gitdir=`git rev-parse --git-dir 2>/dev/null`  # only used by __tartify_repo_name(), __tartify_branch()
+  [ $? == 0 ] && {
 
-  #echo -e "$(__tartify_repo_name)$(__tartify_branch)  $(__tartify_remote) $(__tartify_stash)"
+    #Perform all cheap 'git' tests now
+    local insidegitdir="$(git rev-parse --is-inside-git-dir 2>/dev/null)"
+    local isbare=`git rev-parse --is-bare-repository 2>/dev/null`
+    local isinsideworktree="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
+    #Only inside WorkDir (unstaged test): git diff --no-ext-diff --quiet --exit-code || w="*"
 
-  # TODO: this test sucks
-  # remove ansi escapes
-  local testforblank=$(echo  $tartAnswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
-  testforblank=${testforblank/ //}
+		#if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
+		#  if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
+		#    c="BARE:"
+		#  else
+		#    b="GIT_DIR!"
+		#  fi
+		#elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
+		#  if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
+		#    if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
+		#      git diff --no-ext-diff --quiet --exit-code || w="*"
+		#      if git rev-parse --quiet --verify HEAD >/dev/null; then
+		#        git diff-index --cached --quiet HEAD -- || i="+"
+		#      else
+		#        i="#"
+		#      fi
+		#    fi
+		#  fi
+		#  if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
+		#          git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
+		#  fi
 
-  # only do something if answer is not empty
-  [ ${#testforblank} != 0 ] && {
-    [[ "$argstr" =~ W ]] && echo -ne "\n" # linebreak before
-    echo -ne $tartAnswer
-    [[ "$argstr" =~ w ]] && echo -ne "\n" # linebreak after
+		#  if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
+		#     if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+		#        u="%"
+		#     fi
+		#  fi
+
+
+
+
+    [[ "$argstr" == "w" ]] && argstr="nbrslw"                        #newline after
+    [[ "$argstr" == "W" ]] && argstr="nbrslW"                        #newline before
+    [[ "$argstr" == "Ww" || "$argstr" == "wW" ]] && argstr="nbrslwW" #newline BOTH
+    [[ "$argstr" == "o" ]] && argstr="obsr"                          #oldschool
+    [ ${#argstr} == 0 ] && argstr="nbrsl"                            #no args
+
+    local separator
+    local nocolor
+    local mode
+    # No Colors MODE : strip all color info, whatever the result
+    [[ "$argstr" =~ v ]] && {
+        nocolor=TRUE
+    }
+    # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
+    [[ "$argstr" =~ v ]] && {
+        separator="#"
+        nocolor=TRUE
+        mode="VIM"
+    }
+    # OldSchool MODE : no color, branch results with $*+, stash results with %
+    [[ "$argstr" =~ o ]] && {
+        separator=" "
+        nocolor=TRUE
+        mode="OLDSCHOOL"
+    }
+    # Quiet mode (only update the __TART4PS1* variables)
+    [[ "$argstr" =~ q ]] && {
+        mode="QUIET"
+    }
+    # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
+    [[ "$argstr" =~ q ]] && {
+        mode="PS1"
+    }
+
+
+    local tartAnswer=""
+    local i
+    for ((i=0;i<${#argstr};i++))
+    do
+      local ch=${argstr:$i:1}
+      case $ch in
+        n) tartAnswer=$tartAnswer$separator$( __tartify_repo_name      $gitdir $isbare  $nocolor);;
+        b) tartAnswer=$tartAnswer$separator$( __tartify_branch         $gitdir $isbare  $nocolor $mode);;
+        r) tartAnswer=$tartAnswer$separator$( __tartify_remote         $gitdir           $nocolor);;
+        s) tartAnswer=$tartAnswer$separator$( __tartify_stash          $gitdir           $nocolor);;
+        l) tartAnswer=$tartAnswer$separator$( __tartify_timelastcommit $gitdir           $nocolor);;
+        c) ;;
+        o) ;;
+        p) ;;
+        q) ;;
+        v) ;;
+        w) ;;
+        W) ;;
+        #*) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
+        *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch;;
+      esac
+    done
+
+    #echo -e "$(__tartify_repo_name)$(__tartify_branch)  $(__tartify_remote) $(__tartify_stash)"
+
+    # TODO: this test sucks
+    # remove ansi escapes
+    local testforblank=$(echo  $tartAnswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
+    testforblank=${testforblank/ //}
+
+    # only do something if answer is not empty
+    [ ${#testforblank} != 0 ] && {
+      [[ "$argstr" =~ W ]] && echo -ne "\n" # linebreak before
+      echo -ne $tartAnswer
+      [[ "$argstr" =~ w ]] && echo -ne "\n" # linebreak after
+    }
   }
 }
 
@@ -1013,7 +1076,6 @@ __tartify_init_globs
 export -f __tartify_diff_count
 export -f __tartify_find_tracked
 export -f __tartify_usage
-export -f __tartify_get_sec_lastcommit
 export -f __tartify_reformat_timestamp
 
 export -f __tartify_repo_name
