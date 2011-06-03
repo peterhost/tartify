@@ -360,71 +360,81 @@ __tartify_init_globs(){
 # TARTIFY PARAMETERS : adapt to your needs
 
 
-
+# // OVERWRITE
+export TARTIFY_OW=""                             # a string containing tartify command-line params. If non empty, will
+                                                 # overwrite any arguments the tartify command receives
 
 # // TIME
-export TARTIFY_TIME_BUGME=TRUE                  # non empty : will color the 'time since last commit' string and
-                                                #             apply the TARTIFY_STYLE_SHOULDCOMMIT style to the
-                                                #             branch name
-export TARTIFY_TIME_COULDCOMMIT=3600            #     nb seconds after which you COULD  commit
-export TARTIFY_TIME_SHOULDCOMMIT=86400          # Max nb seconds after which you SHOULD commit
-                                                # (default is 86400, 24hours)
-export TARTIFY_STYLE_SHOULDCOMMIT=${__EM_}      # Style when commit is overdue     BOLD
-                                                # (applied to branchname)
+export TARTIFY_TIME_BUGME=TRUE                   # non empty : will color and style the 'time since last commit' string
+export TARTIFY_TIME_DISPLAY=LONG                 # LONG (min, hours, days) SHORT (mine | hours | days) CHAR (cf. next var)
+export TARTIFY_STRING_TIME_DISPLAY="⟳ "               # string to display in case prec. var == CHAR
 
-                                                # colors applied to the 'time elapsed since last commit' string
-export TARTIFY_COLOR_TIME_APLENTY=${__G_}       #                                  GREEN
-export TARTIFY_COLOR_TIME_COULDCOMMIT=${__Y_}   #                                  YELLOW
-export TARTIFY_COLOR_TIME_SHOULDCOMMIT=${__R_}  #                                  RED
+                                                 # Uncommited changes (staged, unstaged)
+export TARTIFY_TIME_COULDCOMMIT=3600             #     *     nb seconds after which you COULD  commit
+export TARTIFY_TIME_SHOULDCOMMIT=86400           #     * Max nb seconds after which you SHOULD commit
+                                                 # (default is 86400, 24hours)
+
+
+                                                 # colors applied to the 'time elapsed since last commit'
+                                                 # string, in case of uncommited changes
+export TARTIFY_STYLE_TIME_COULDCOMMIT=${__UN_}   #                                  UNDERLINED
+export TARTIFY_STYLE_TIME_SHOULDCOMMIT=${__EM_}${__UN_} #                           BOLD UNDERLINED
+
+                                                 # styles applied to the 'time elapsed since last commit'
+                                                 # string in case of no uncommited changes
+export TARTIFY_COLOR_TIME_ACTIVITY_HIGH=${__G_}  #                                  GREEN
+export TARTIFY_COLOR_TIME_ACTIVITY_LOW=${__Y_}   #                                  YELLOW
+export TARTIFY_COLOR_TIME_ACTIVITY_NON=${__R_}   #                                  RED
 
 # //BRANCH
-export TARTIFY_STRING_NOBRANCH="nobranch"       # "branch name" replacement string for empty repository
-export TARTIFY_STRING_DOTGIT="<.git>"           # "branch name" replacement string for .git directory
-export TARTIFY_STRING_BARE="<BARE>"             # "branch name" replacement string for bare .git directory
+export TARTIFY_STRING_NOBRANCH="nobranch"        # "branch name" replacement string for empty repository
+export TARTIFY_STRING_DOTGIT="<.git>"            # "branch name" replacement string for .git directory
+export TARTIFY_STRING_BARE="<BARE>"              # "branch name" replacement string for bare .git directory
 
-export TARTIFY_STYLE_UNTRACKED=${__UN_}         # Untracked Files                  UNDERLINED
+export TARTIFY_STYLE_UNTRACKED=${__UN_}          # Untracked Files                  UNDERLINED
 
-export TARTIFY_COLOR_UNSTAGED=${__EMR_}         # unstaged changes (first 2 chars) BOLD RED
-export TARTIFY_COLOR_STAGED=${__M_}             # staged changes                   MAGENTA
-export TARTIFY_COLOR_AHEADOFREMOTE=${__Y_}      # tracked remote behind HEAD       YELLOW
-export TARTIFY_COLOR_UPTODATE=${__G_}           # tracked remote == HEAD           GREEN
-export TARTIFY_COLOR_NOREMTRACK=${__B_}         # no remote tracking branch        BLUE
+export TARTIFY_COLOR_UNSTAGED=${__EMR_}          # unstaged changes (first 2 chars) BOLD RED
+export TARTIFY_COLOR_STAGED=${__M_}              # staged changes                   MAGENTA
+export TARTIFY_COLOR_AHEADOFREMOTE=${__Y_}       # tracked remote behind HEAD       YELLOW
+export TARTIFY_COLOR_UPTODATE=${__G_}            # tracked remote == HEAD           GREEN
+export TARTIFY_COLOR_NOREMTRACK=${__B_}          # no remote tracking branch        BLUE
+export TARTIFY_COLOR_NOCOMMITYET=${__EMK_}       # empty repo, no commit yet        BOLD DIM GREY
 
-export TARTIFY_COLOR_GITDIR=${__C_}             # inside .git dir                  CYAN
-export TARTIFY_COLOR_EMPTY=${__C_}              # empty repo (no commit yet)       CYAN
+export TARTIFY_COLOR_GITDIR=${__C_}              # inside .git dir                  CYAN
+export TARTIFY_COLOR_EMPTY=${__C_}               # empty repo (no commit yet)       CYAN
 
-export TARTIFY_STRING_UNMERGED="✖ "             # there are unmerged files
-export TARTIFY_COLOR_UNMERGED=${__BL_}${__EMR_} # unmerged files                   BOLD RED BLINKING
-                                                #                                  (yeah, obnoxious)
+export TARTIFY_STRING_UNMERGED="✖ "              # there are unmerged files
+export TARTIFY_COLOR_UNMERGED=${__BL_}${__EMR_}  # unmerged files                   BOLD RED BLINKING
+                                                 #                                  (yeah, obnoxious)
 # // REPOSITORY
-export TARTIFY_COLOR_REPONAME=${__DM_}${__K_}   # repository's "name"              DIM GREY
+export TARTIFY_COLOR_REPONAME=${__DM_}${__K_}    # repository's "name"              DIM GREY
 
 # // REMOTES
-export TARTIFY_STRING_ORIGIN="O"                # marker for remote repo called 'origin'
-export TARTIFY_STRING_UPSTREAM="U"              # marker for remote repo called 'upstream'
-export TARTIFY_STRING_REMOTE="⇧ "               # generic marker for remote repo
-export TARTIFY_STRING_DIVERGE_SEP="/"           # separator for ahead/behind count
+export TARTIFY_STRING_ORIGIN="O"                 # marker for remote repo called 'origin'
+export TARTIFY_STRING_UPSTREAM="U"               # marker for remote repo called 'upstream'
+export TARTIFY_STRING_REMOTE="⇧ "                # generic marker for remote repo
+export TARTIFY_STRING_DIVERGE_SEP="/"            # separator for ahead/behind count
 
 export TARTIFY_STRING_TRACKING="➝ "              # marker for tracked branch
-export TARTIFY_COLOR_REMOTE_ORIGIN=${__G_}      # repository's "name"              GREEN
-export TARTIFY_COLOR_REMOTE_UPSTREAM=${__M_}    # repository's "name"              MAGENTA
-export TARTIFY_COLOR_REMOTE_OTHER=${__Y_}       # repository's "name"              YELLOW
+export TARTIFY_COLOR_REMOTE_ORIGIN=${__G_}       # repository's "name"              GREEN
+export TARTIFY_COLOR_REMOTE_UPSTREAM=${__M_}     # repository's "name"              MAGENTA
+export TARTIFY_COLOR_REMOTE_OTHER=${__Y_}        # repository's "name"              YELLOW
 
 
-export TARTIFY_COLOR_REMOTE_AHEAD=${__G_}       # nb commits ahead of remote       GREEN
-export TARTIFY_COLOR_REMOTE_BEHIND=${__R_}      # nb commits behind of remote      RED
+export TARTIFY_COLOR_REMOTE_AHEAD=${__G_}        # nb commits ahead of remote       GREEN
+export TARTIFY_COLOR_REMOTE_BEHIND=${__R_}       # nb commits behind of remote      RED
 
 
 # // STASH
-export TARTIFY_COUNTSTASHES=TRUE                # non empty: print 1 $TARTIFY_STRING_STASH per existing stash
-                                                # (WARN: this is slow process, add ~50ms computing time)
-export TARTIFY_STRING_STASH="☆ "                # marker for stash
-export TARTIFY_COLOR_STASH_NOCOUNT=${__Y_}      # color when not counting          YELLOW
-export TARTIFY_COLOR_STASH_COUNT=${__EMY_}      # color in "count mode"            BOLD YELLOW
+export TARTIFY_COUNTSTASHES=TRUE                 # non empty: print 1 $TARTIFY_STRING_STASH per existing stash
+                                                 # (WARN: this is slow process, add ~50ms computing time)
+export TARTIFY_STRING_STASH="☆ "                 # marker for stash
+export TARTIFY_COLOR_STASH_NOCOUNT=${__Y_}       # color when not counting          YELLOW
+export TARTIFY_COLOR_STASH_COUNT=${__EMY_}       # color in "count mode"            BOLD YELLOW
 }
 
 # // UNPARSED CHARS
-export TARTIFY_COLOR_DELIMITER=${__DM_}${__K_}  # color for delimiters              DIM GREY
+export TARTIFY_COLOR_DELIMITER=${__DM_}${__K_}   # color for (unparsed) delimiters  DIM GREY
 
 
 #------------------------------------------------------------------------------
