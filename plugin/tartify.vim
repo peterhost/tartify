@@ -1,3 +1,7 @@
+"______________________________________________________________________________
+" -------- WTF ------------------------{{{1
+"
+"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "
 "       Filename:  statusbar.vim
@@ -53,16 +57,24 @@
 "         (A F*$!NG LOT was stolen from those two references)
 " http://www.reddit.com/r/vim/comments/e19bu/whats_your_status_line/
 "------------------------------------------------------------------------------
-
-
-" TODO:
-"
-"   *** move code to autoload and prevent tartify to fully load if autostart
-"       is disabled (which is the default)
-"
-"   *   custom :tartify command, with autocompletion, like :colorscheme
 "
 "
+"
+"1}}}
+" TODO:{{{1
+"
+"   <***> move code to "autoload" and prevent tartify to fully load if autostart
+"         is disabled (which is the default)
+"
+"   <***> custom "tartify command", with autocompletion, like :colorscheme
+"
+"   <**>  "contrast" adjustment (+/-) based on Statusline guibg value for User{N}
+"         colors
+"
+"   <*>   "custom separator" for elements of a sequence, single sep. or pairs
+"         ( "-", "_", "[]",...)
+"
+"1}}}
 
 let s:production = 0  "0: dev mode, 1: production mode
                       " (dev mode deactivates loaded_tartify)
@@ -100,11 +112,11 @@ if has( "statusline" ) == 0
 endif
 
 "}}}
-" Bail if the environment does not contain the "Tartify shell functions"{{{
-if $__tartify_shell_loaded != 1
-    call s:errmsg("It seems that your environment does not contain Tartify's predefined functions. Tartify disabled (:h tartify for more)")
-  finish
-endif
+"" Bail if the environment does not contain the "Tartify shell functions"{{{
+"if $__tartify_shell_loaded != 1
+"    call s:errmsg("It seems that your environment does not contain Tartify's predefined functions. Tartify disabled (:h tartify for more)")
+"  finish
+"endif
 
 "}}}
 
@@ -112,14 +124,13 @@ endif
 
 "1}}}
 
-
-
 "______________________________________________________________________________
 " -------- Initialization -------------{{{1
 " MISC globs{{{
 
 let s:install_dir         = expand('<sfile>:p:h')
 let s:tart_themeDir       = s:install_dir . '/../tarts/themes/'
+let s:tart_pluginDir      = s:install_dir . '/../tarts/plugins/'
 let s:tart_defaultTheme   = s:install_dir . '/../tarts/themes/default.vim'
 
 " used in RC files
@@ -154,7 +165,6 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 
 
 "1}}}
-
 
 "______________________________________________________________________________
 " -------- SMART User{N} Colors -------{{{1
@@ -274,11 +284,15 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "      \}
 
 function! s:loadTheme()
+  "
+  "COLORS: load theme-specific User{N} colors
+  "
+  "
   call Decho("loadTheme()")
   "check if custom theme exists for current colorscheme
   let l:themefile         = s:tart_themeDir . g:colors_name . ".vim"
   "
-  "Overwrite with User prefered theme ?
+  " Force specific Theme ?
   "
   if exists("g:tartify_forceTheme")
     let l:altThemefile = s:tart_themeDir . g:tartify_forceTheme . ".vim"
@@ -289,7 +303,7 @@ function! s:loadTheme()
     endif
   endif
   "
-  "Load Theme
+  "Load ColorSheme's Theme (if any)
   "
   if filereadable(l:themefile)
     execute "source " . l:themefile
@@ -299,8 +313,9 @@ function! s:loadTheme()
       call s:errmsg("TARTIFY: theme '" . g:tartify_forceTheme ."' is not a correct TARTIFY theme")
       execute "source " . s:tart_defaultTheme
     endif
+
   "
-  "Fallback on default Theme
+  "Fallback to default Theme
   "
   else
     execute "source " . s:tart_defaultTheme
@@ -312,6 +327,16 @@ function! s:loadTheme()
     call s:forceRCcolors("light")
     call s:forceRCcolors("dark")
   endif
+  "
+  " SEQUENCE:
+  "
+  " Overwrite statusline Sequence with Theme's (if exists)
+  "
+  "call s:forceThemeSequence()
+  "
+  " Overwrite statusline Sequence with user defined if exists
+  "
+
 endfunction
 
 
@@ -332,6 +357,7 @@ function! s:forceRCcolors(background)
     endfo
   endif
 endfunction
+
 
 "2}}}
 " -------- Leech ColorScheme ----------{{{2
@@ -554,192 +580,90 @@ endif
 "2}}}
 
 
-
-
 "1}}}
 
-
 "______________________________________________________________________________
-" -------- StatusLine setup ------------{{{1
-" -------- StatusLine directives ------{{{2
+" -------- Plugins --------------------{{{1
+" -------- Initialization -------------{{{2
+
+
+
+" SEQUENCE: this is the default statusline provided by Tartify. It's heavy and
+" uses almost all the features provided.
 "
-" help  *statusline*
-" help  *filename-modifiers*
+" WTF:
+"
+" this variable stores misc statuslines, and enables to loop through them
+" a "theme" can define its own default sequence, and others
 
-"TODO:
-"     - incorporate an FileChangedShellPost warning for files changed outside
-"       of vim
+let g:tartify_sequence = {}
+let g:tartify_sequence.default = {}
 
-function! s:tartify_set_statusline()
-  "statusline setup
-  set statusline=
+let g:tartify_sequence.default.left = [
+      \ "insertmodeMark", "file_cut30",
+      \ "warn_non_unix", "warn_non_utf8", "helpf_tag", "file_type",
+      \ "warn_readonly", "warn_mofified", "GIT_repo", "GIT_branch",
+      \ "GIT_remote", "GIT_stash", "GIT_lastcommit", "warn_mixed_indent",
+      \ "warn_trail_space", "syntastic", "warn_paste" ]
 
-  "show the mode we are in
-  "TODO : only highlight insert mode
-  set statusline+=%{(mode()=='i')?'[i]\ ':''}
-
-  "set statusline+=%f       "tail of the filename
-  set statusline+=%.30{CleverInsert('%t')}
-
-  "display a warning if fileformat isnt unix
-  set statusline+=%#warningmsg#
-  set statusline+=%{&ff!='unix'?'['.&ff.']':''}
-  set statusline+=%*
-
-  "display a warning if file encoding isnt utf-8
-  set statusline+=%#warningmsg#
-  set statusline+=%{(&fenc!='utf-8'&&&fenc!='')?'['.&fenc.']':''}
-  set statusline+=%*
-
-  set statusline+=%h      "help file flag
-
-  set statusline+=%y      "filetype
-  "set statusline+=%{strlen(&ft)?&ft:'ZOMG'}
-  set statusline+=%8*
-  set statusline+=%y
+let g:tartify_sequence.default.right = [
+      \ "warn_long_lines", "curr_highlight", "autocollapse",
+      \ "minimized" ]
 
 
-  "set statusline+=%{CleverInsert('%y')}      "filetype
-  "set statusline+=%{CleverInsert('%y','TOTO')}      "filetype
-  set statusline+=%r      "read only flag
-  set statusline+=%#warningmsg#
-  set statusline+=%m      "modified flag
-  "set statusline+=%{CleverInsert('%m')}      "modified flag
-  set statusline+=%*
+" GLOBAL_OPTIONS: things that are too generic or don't fit anywhere else
+"
+" WTF:
+"
+" "smart" : statusline adapts to special buffers by not showing certain infos,
+" such as filename, git infos, mixed-indenting,...  (fugitive, NERDTree,...)
+"
+" "smartNtart" : same as before, plus some additional, buffer specific
+" tartification (help buffer,...) : title,...
+"
+" "nocolors" : self expl.
+"
+" "oldschool" : no colors, cryptic symbols & all
 
-
-  "" display current git branch
-  "set statusline+=%2*
-  "set statusline+=%{fugitive#statusline()}
-  "set statusline+=%*
-
-
-  set statusline+=%1*
-  set statusline+=%{StatuslineGitTartify('repository')}
-
-  " here I wished to reproduct the colored approach to showing the
-  " 'extras' (unstaged files, uncommited changes,...) in a colored
-  " way, as is done in the bashps1 shell script, instead of using
-  " the usual *+%^ symbols usual in GIT_PS1, as I never can
-  " remember which is which.
-  " So this too will be "**Tartified**"
-  "
-  set statusline+=%7*
-  "set statusline+=%#DiffAdd#
-  set statusline+=%{StatuslineGitTartify('branch','unstaged')}
-  set statusline+=%{StatuslineGitTartify('branch','unstagedWithUntracked')}
-  set statusline+=%{StatuslineGitTartify('branch','uncommited')}
-  set statusline+=%{StatuslineGitTartify('branch','TOTOLESALAUD')}
-  set statusline+=%{StatuslineGitTartify('branch','uncommitedWithUntracked')}
-  set statusline+=%{StatuslineGitTartify('branch','unpushed')}
-  set statusline+=%{StatuslineGitTartify('branch','unpushedWithUntracked')}
-  set statusline+=%{StatuslineGitTartify('branch','ok')}
-  set statusline+=%{StatuslineGitTartify('branch','okWithUntracked')}
-  set statusline+=%{StatuslineGitTartify('branch','insideGitDir')}
-
-  set statusline+=%3*
-  set statusline+=%{StatuslineGitTartify('remote')}
-
-  set statusline+=%4*
-  set statusline+=%{StatuslineGitTartify('stash')}
-
-  set statusline+=%*
-
-          "        > this will return a "M" symbol which will be prepended
-          "          to the branchname
-          "
-          "         "unmerged"
-
-  "
-  " 20 ITEMS LEFT
-  "
-
-  "display a warning if &et is wrong, or we have mixed-indenting
-  set statusline+=%#error#
-  set statusline+=%{StatuslineTabWarning()}
-  set statusline+=%*
-
-  set statusline+=%{StatuslineTrailingSpaceWarning()}
-
-  set statusline+=%#warningmsg#
-  set statusline+=%{SyntasticStatuslineFlag()}
-  set statusline+=%*
-
-  "display a warning if &paste is set
-  set statusline+=%#error#
-  set statusline+=%{&paste?'[paste]':''}
-  set statusline+=%*
+let g:tartify_globals = {}
+let g:tartify_globals.default = ["smart", "nocolors"]
 
 
 
-  if  exists("*SyntasticStatuslineFlag")
-  "ADDED
-    let g:syntastic_stl_format = '[%E{Err: %fe #%e}%B{, }%W{Warn: %fw #%w}]'
-    set statusline+=%#warningmsg#
-    set statusline+=%{SyntasticStatuslineFlag()}
-    set statusline+=%*
+
+"  2}}}
+" -------- activate SL sequence --------{{{2
+
+
+
+"TODO: ugly as shit, shorten that
+function! s:activateSequence()
+
+  " default
+  call Decho("Loading sequence : Default")
+  let g:tartify_sequence.this = g:tartify_sequence.default
+
+  " theme-specific sequences ENABLED
+  if ! exists("g:tartify_sequence_ignore")
+    "current Colorscheme has a corresp. Theme
+    if exists("g:tartify_sequence['g:colors_name']")
+      call Decho("Loading sequence : " . g:colors_name)
+      let g:tartify_sequence.this = g:tartify_sequence["g:colors_name"]
+    endif
   endif
 
-
-  set statusline+=%=      "left/right separator
-  set statusline+=%2*
-  set statusline+=%{StatuslineLongLineWarning()}
-  set statusline+=%*
-  set statusline+=%{StatuslineCurrentHighlight()}\ \ "current highlight
-  set statusline+=%9*     "custom color 9
-  set statusline+=%c     "cursor column
-  set statusline+=%*,      "reset color
-  set statusline+=%l/%L   "cursor line/total lines
-  set statusline+=\ %P    "percent through file
-
-  set statusline+=%6*
-  set statusline+=\ %{StatuslineAutoCollapsibleMark()}    "window b:autoCollapsible value
-
-  "marker for minimized window
-  set statusline+=%5*
-  set statusline+=%{IsMinimized()}
-  set statusline+=%*
-
-  set laststatus=2        " Always show status line
-
-
-endfunction
-
-
-"2}}}
-" -------- StatusLine Toggle ----------{{{2
-
-" Toggle between Tartify's statusline and the default one (or a user defined
-" one if one was set somewhere else)
-" GOTTA: map this baby to a key
-"
-function! g:tartify_statusline_toggle()
-  let s:tartify_show = (s:tartify_show == 0)? 1 : 0
-  set statusline=
-  if s:tartify_show == 0
-    " Restore last statusline
-    " (hack from daethorian on #vim)
-    exec "set stl=".g:tartify_slbackup
-  else
-    call s:tartify_set_statusline()
+  " user-defined sequence exists
+  if exists("g:tartify_sequence.user")
+    let g:tartify_sequence.this = g:tartify_sequence.user
   endif
 endfunction
 
-"we want that to happen when all else is done (vimrc,...)
-if has("autocmd")
-  autocmd VimEnter * if s:tartify_show == 1 | call s:tartify_set_statusline() | endif
-endif
+call s:activateSequence()
+
+
 
 "2}}}
-
-
-
-
-"1}}}
-
-
-"______________________________________________________________________________
-" -------- Functions ------------------{{{1
+" -------- Functions ------------------{{{2
 
 
 "visual marker if minimized window
@@ -767,12 +691,13 @@ endfunction
 " for the displaying of the %f,%h,... items in the statusline. Not
 " optimal, but does the job
 
-let s:buffNameToAvoid = '__Tag_List__\|COMMIT_EDITMSG'
+let g:tartify_buffNameToAvoid = '__Tag_List__\|COMMIT_EDITMSG'
+"let g:tartify_disablePlugin4Buf = { "'__Tag_List__\|COMMIT_EDITMSG'
 
 "TODO: try use the ":~" modifier for path pattern
 function! CleverInsert(expandme, ...)
 
-  if match(expand("%f"), s:buffNameToAvoid) >= 0 | return "" | endif
+  if match(expand("%f"), g:tartify_buffNameToAvoid) >= 0 | return "" | endif
 
   "if expand('%H') >= 0
   ""if expand("%H") == "HLP" && a:1 == "TOTO"
@@ -783,169 +708,6 @@ function! CleverInsert(expandme, ...)
   "return strpart(expand( "%:f" ) . " ", 0, 30)
   return expand( a:expandme ) . " "
 endfunction
-
-
-
-
-
-
-
-
-
-" TODO: add the "time since last commit"
-
-function! StatuslineGitTartify(item, ...)
-
-  if match(expand("%f"), s:buffNameToAvoid) >= 0 | return "" | endif
-
-  " CACHING
-  " as the pr0n master once said, "we gawts to cache"
-  " (all this calling external bash function is resource intensive and
-  " suboptimall too)
-  if !exists("b:statusline_tartifyGIT")
-    let l:cdlocaldir = "cd `dirname " . shellescape(expand('%:p')) . "`; "
-    "
-    " These shell functions have to exist in Vim's environment
-    " ie : you have sourced "/bin/bashps1" in your bashrc
-    "
-    " nota:
-    "
-    " 1) the "TRUE" arguments passed to the shell functions tell them
-    " to strip the ANSI color codes they throw by default for the PS1,
-    " from the return value
-    "
-    " 2) the second "TRUE" argument taken by __gitps1_branch tells it
-    " to also return additional infos about the branch (unstaged
-    " files,...)
-    "
-    let b:statusline_tartifyGIT = {}
-    "  execute predefined shell commands
-    "     __gitps1_repo_name TRUE"
-    "     __gitps1_branch TRUE TRUE"
-    "     __gitps1_remote TRUE"
-    "     __gitps1_stash TRUE"
-    for l:key in ['repo_name', 'branch', 'remote', 'stash']
-      let b:statusline_tartifyGIT[l:key] = system( l:cdlocaldir . "__gitps1_" . l:key . " TRUE")
-      "Catchall :unexpected error from shell function (report please)
-      if !v:shell_error == 0
-        echomsg "TARTIFY: GITPS1 ERROR [" . l:key . "][". v:shell_error . "] RES=" . b:statusline_tartifyGIT[l:key]
-      endif
-    endfo
-
-  endif
-
-  "PROCESSING
-  "
-  "no a git repo
-  if b:statusline_tartifyGIT['repo_name'] == ""
-    return ""
-
-
-  "git repo, all fine
-  else
-    if a:item == "repository"
-      return b:statusline_tartifyGIT['repo_name']
-    elseif a:item == "remote"
-      return b:statusline_tartifyGIT['remote']
-    elseif a:item == "stash"
-      return b:statusline_tartifyGIT['stash']
-    elseif a:item == "branch"
-      "
-      " "branch" calls for a second argument!
-      "
-      if len(a:000) != 1
-        return " -NEED 2nd ARG- "
-
-      " proceed
-      else
-        let l:branchstate = a:1
-        "
-        "   l:branchstate can have one of these values :
-        "
-        "       > each of the following, return the branchname and the
-        "         "set laststatus" command will apply a different color
-        "         to the result. The resulting status line snippet is
-        "         only the branchname + colors
-        "
-        "
-        "         "unstaged",     "unstagedWithUntracked",
-        "         "uncommited",   "uncommitedWithUntracked",
-        "         "unpushed",     "unpushedWithUntracked",
-        "         "ok",           "okWithUntracked",
-        "         "insideGitDir"
-        "
-        "
-        "        > this will return a "M" symbol which will be prepended
-        "          to the branchname
-        "
-        "         "unmerged"
-        "
-        "
-        "   the return value of shell function __gitps1_branch followed by two
-        "   "TRUE" arguments, is of the form :
-        "
-        "   "$nocolor_info|$branch_name"
-        "
-        "   where $nocolor_info is a string between 1 and 3 characters:
-        "
-        "     nocolor_info = "(S|C|P|O|G)(U)?(M)?"
-        "
-        "         S "unstaged", C "uncommited", P "unpushed", O "allisOK",
-        "           G "insideDotGit"
-        "
-        "         U "untracked", M "unmerged"
-        "
-        "
-
-         let l:arglist =
-                     \"unstaged|unstagedWithUntracked|
-                     \uncommited|uncommitedWithUntracked|
-                     \unpushed|unpushedWithUntracked|
-                     \ok|okWithUntracked|insideGitDir|
-                     \unmerged"
-        if  !match(l:branchstate, l:arglist)
-          return "BAD arg" . l:branchstate
-        else
-            " 1) separate $nocolor_info from $branch_name
-          let l:args = split(b:statusline_tartifyGIT['branch'], '|')
-
-          " 2) split $nocolor_info
-          let l:commit_status     = ""
-          let l:untracked_status  = ""
-          let l:unmerged_status   = ""
-
-          for b:tmp_str in split(l:args[0], '\zs')
-            if match(b:tmp_str, '^[SCPOG]$')
-              let l:commit_status = b:tmp_str
-            endif
-            if match(b:tmp_str, '^U$')
-              let l:untracked_status = b:tmp_str
-            endif
-            if match(b:tmp_str, '^M$')
-              let l:unmerged_status = b:tmp_str
-            endif
-          endfo
-
-          if l:branchstate == "unstaged" && l:commit_status == "S"
-            return l:args[1]
-          endif
-        endif
-      endif
-    endif
-  endif
-  return ""
-
-endfunction
-
-
-
-
-"recalculate the Gitps1 when idle, and after saving
-autocmd cursorhold,CursorHoldI,bufwritepost * unlet! b:statusline_tartifyGIT
-
-"next one too slow for my taste :
-"recalculate Gitps1 when idle, after saving, on window change
-"autocmd cursorhold,CursorHoldI,bufwritepost,InsertLeave,WinEnter,WinLeave * unlet! b:statusline_tartifyGIT
 
 
 
@@ -1052,6 +814,239 @@ function! s:Median(nums)
         return (nums[l/2] + nums[(l/2)-1]) / 2
     endif
 endfunction
+
+
+"2}}}
+
+
+
+
+"1}}}
+
+"______________________________________________________________________________
+" -------- StatusLine setup ------------{{{1
+" -------- StatusLine directives ------{{{2
+"
+" help  *statusline*
+" help  *filename-modifiers*
+
+"TODO:
+"     - incorporate an FileChangedShellPost warning for files changed outside
+"       of vim
+
+function! s:tartify_set_statusline()
+  "statusline setup
+  set statusline=
+
+  "show the mode we are in
+  "TODO : only highlight insert mode
+  set statusline+=%{(mode()=='i')?'[i]\ ':''}
+
+  "set statusline+=%f       "tail of the filename
+  set statusline+=%.30{CleverInsert('%t')}
+
+  "display a warning if fileformat isnt unix
+  set statusline+=%#warningmsg#
+  set statusline+=%{&ff!='unix'?'['.&ff.']':''}
+  set statusline+=%*
+
+  "display a warning if file encoding isnt utf-8
+  set statusline+=%#warningmsg#
+  set statusline+=%{(&fenc!='utf-8'&&&fenc!='')?'['.&fenc.']':''}
+  set statusline+=%*
+
+  set statusline+=%h      "help file flag
+
+  set statusline+=%y      "filetype
+  "set statusline+=%{strlen(&ft)?&ft:'ZOMG'}
+  set statusline+=%8*
+  set statusline+=%y
+
+
+  "set statusline+=%{CleverInsert('%y')}      "filetype
+  "set statusline+=%{CleverInsert('%y','TOTO')}      "filetype
+  set statusline+=%r      "read only flag
+  set statusline+=%#warningmsg#
+  set statusline+=%m      "modified flag
+  "set statusline+=%{CleverInsert('%m')}      "modified flag
+  set statusline+=%*
+
+
+  " display current git branch
+  "set statusline+=%2*
+  "set statusline+=%{fugitive#statusline()}
+  "set statusline+=%*
+
+
+
+call tartify#GITPS1#setstatusline()
+
+
+  ""_____________________________
+  "set statusline+=%1*
+  "set statusline+=%{tartify#GITPS1#statusline('repository')}
+
+  "" here I wished to reproduct the colored approach to showing the
+  "" 'extras' (unstaged files, uncommited changes,...) in a colored
+  "" way, as is done in the bashps1 shell script, instead of using
+  "" the usual *+%^ symbols usual in GIT_PS1, as I never can
+  "" remember which is which.
+  "" So this too will be "**Tartified**"
+  ""
+  "set statusline+=%7*
+  ""set statusline+=%#DiffAdd#
+  "set statusline+=%{tartify#GITPS1#statusline('branch','unstaged')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','unstagedWithUntracked')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','uncommited')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','TOTOLESALAUD')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','uncommitedWithUntracked')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','unpushed')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','unpushedWithUntracked')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','ok')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','okWithUntracked')}
+  "set statusline+=%{tartify#GITPS1#statusline('branch','insideGitDir')}
+
+  "set statusline+=%3*
+  "set statusline+=%{tartify#GITPS1#statusline('remote')}
+
+  "set statusline+=%4*
+  "set statusline+=%{tartify#GITPS1#statusline('stash')}
+
+  "set statusline+=%*
+
+          ""        > this will return a "M" symbol which will be prepended
+          ""          to the branchname
+          ""
+          ""         "unmerged"
+
+  "
+  " 20 ITEMS LEFT
+  "
+
+  "display a warning if &et is wrong, or we have mixed-indenting
+  set statusline+=%#error#
+  set statusline+=%{StatuslineTabWarning()}
+  set statusline+=%*
+
+  set statusline+=%{StatuslineTrailingSpaceWarning()}
+
+  set statusline+=%#warningmsg#
+  set statusline+=%{SyntasticStatuslineFlag()}
+  set statusline+=%*
+
+  "display a warning if &paste is set
+  set statusline+=%#error#
+  set statusline+=%{&paste?'[paste]':''}
+  set statusline+=%*
+
+
+
+  if  exists("*SyntasticStatuslineFlag")
+  "ADDED
+    let g:syntastic_stl_format = '[%E{Err: %fe #%e}%B{, }%W{Warn: %fw #%w}]'
+    set statusline+=%#warningmsg#
+    set statusline+=%{SyntasticStatuslineFlag()}
+    set statusline+=%*
+  endif
+
+
+  set statusline+=%=      "left/right separator
+  set statusline+=%2*
+  set statusline+=%{StatuslineLongLineWarning()}
+  set statusline+=%*
+  set statusline+=%{StatuslineCurrentHighlight()}\ \ "current highlight
+  set statusline+=%9*     "custom color 9
+  set statusline+=%c     "cursor column
+  set statusline+=%*,      "reset color
+  set statusline+=%l/%L   "cursor line/total lines
+  set statusline+=\ %P    "percent through file
+
+  set statusline+=%6*
+  set statusline+=\ %{StatuslineAutoCollapsibleMark()}    "window b:autoCollapsible value
+
+  "marker for minimized window
+  set statusline+=%5*
+  set statusline+=%{IsMinimized()}
+  set statusline+=%*
+
+  set laststatus=2        " Always show status line
+
+
+endfunction
+
+
+"2}}}
+" -------- StatusLine Toggle ----------{{{2
+
+" Toggle between Tartify's statusline and the default one (or a user defined
+" one if one was set somewhere else)
+" GOTTA: map this baby to a key
+"
+function! g:tartify_statusline_toggle()
+  let s:tartify_show = (s:tartify_show == 0)? 1 : 0
+  set statusline=
+  if s:tartify_show == 0
+    " Restore last statusline
+    " (hack from daethorian on #vim)
+    exec "set stl=".g:tartify_slbackup
+  else
+    call s:tartify_set_statusline()
+  endif
+endfunction
+
+
+"2}}}
+" -------- Statusline Switcher --------{{{2
+" -------- WTF ------------------------{{{3
+" The ease of switching between colorschemes in Vim is one of the editor's
+" best features. I wanted something like that for statuslines
+
+
+"TODO:
+command! -bar Tartify :call pathogen#helptags()
+
+
+"3}}}
+
+
+
+
+"2}}}
+" -------- Set SL Autocommand ---------{{{2
+
+
+"we want that to happen when all else is done (vimrc,...)
+if has("autocmd")
+  autocmd VimEnter * if s:tartify_show == 1 | call s:tartify_set_statusline() | endif
+endif
+
+
+
+"2}}}
+
+
+
+"1}}}
+
+
+"______________________________________________________________________________
+" -------- MISC helpers ---------------{{{1
+
+function! g:tartify_list(arg)
+  if match(a:arg , 'plug|plugin|plugins')
+    "for f in split(glob('/Users/plhoste/.vim/bundle/tartify/*' ), '\n')
+    for f in split(glob(s:tart_pluginDir . "*"), '\n')
+      call Decho(f)
+    endfor
+    "let l:dirlist = get(s:tart_pluginDir)
+    "let l:dirlist = split(glob("s:tart_pluginDir/*"), '\n')
+    "call Decho("Dir contains\n" .  l:dirlist )
+  else
+    call Decho("unknown arg for g:tart_pluginDir()")
+  endif
+endfunction
+
+
 
 
 "1}}}
