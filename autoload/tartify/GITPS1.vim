@@ -176,9 +176,13 @@ endfunction
 
 
 
-function tartify#GITPS1#tests()
+function tartify#gitps1#tests()
+endfunction
 
 
+
+function tartify#gitps1#cost()
+  return "20"
 endfunction
 
 
