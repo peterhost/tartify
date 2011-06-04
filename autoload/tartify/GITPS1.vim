@@ -81,6 +81,8 @@ function!  tartify#GITPS1#statusline(item, ...)
       return b:statusline_tartifyGIT['remote']
     elseif a:item == "stash"
       return b:statusline_tartifyGIT['stash']
+    elseif a:item == "time"
+      return b:statusline_tartifyGIT['time']
     elseif a:item == "branch"
       "
       " "branch" calls for a second argument!
@@ -113,7 +115,7 @@ function!  tartify#GITPS1#statusline(item, ...)
         "         "unmerged"
         "
         "
-        "   the return value of shell function __gitps1_branch followed by two
+        "   the return value of shell function __tartify_branch followed by two
         "   "TRUE" arguments, is of the form :
         "
         "   "$nocolor_info|$branch_name"
@@ -212,6 +214,9 @@ function tartify#GITPS1#setstatusline()
 
   set statusline+=%4*
   set statusline+=%{tartify#GITPS1#statusline('stash')}
+
+  set statusline+=%5*
+  set statusline+=%{tartify#GITPS1#statusline('time')}
 
   set statusline+=%*
 
