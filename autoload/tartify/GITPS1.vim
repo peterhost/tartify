@@ -2,54 +2,78 @@
 " -------- FUNCTIONS ------------------{{{1
 
 
+
 function!  tartify#GITPS1#statusline(item, ...)
 
   if match(expand("%f"), g:tartify_buffNameToAvoid) >= 0 | return "" | endif
 
   " CACHING
   " as the pr0n master once said, "we gawts to cache"
-  " (all this calling external bash function is resource intensive and
-  " suboptimall too)
   if !exists("b:statusline_tartifyGIT")
-    let l:cdlocaldir = "cd `dirname " . shellescape(expand('%:p')) . "`; "
     "
-    " These shell functions have to exist in Vim's environment
-    " ie : you have sourced "/bin/bashps1" in your bashrc
+    " we simply call the "tartify" shell script with the "v" option
     "
-    " nota:
+    "     tartify v
     "
-    " 1) the "TRUE" arguments passed to the shell functions tell them
-    " to strip the ANSI color codes they throw by default for the PS1,
-    " from the return value
+    " from wherever we might be (working dir), split the result, and
+    " process it
     "
-    " 2) the second "TRUE" argument taken by __gitps1_branch tells it
-    " to also return additional infos about the branch (unstaged
-    " files,...)
-    "
+
+    let l:cd_workdir = "cd `dirname " . shellescape(expand('%:p')) . "`; "
+    let s:tartifyShellScript = expand('<sfile>:p:h') . "/../../bin/tartify "
+    let b:tart_answer = system( l:cd_workdir . s:tartifyShellScript . "v")
+
+    "Catchall :unexpected error from shell function (report please)
+    let b:statusline_tartify_error = 0
+    if !v:shell_error == 0
+      echomsg "TARTIFY: GITPS1 ERROR [". v:shell_error . "] RES=" . b:tart_answer
+      let b:statusline_tartify_error = 1
+    endif
+
+    let b:tart_answer_split = split(b:tart_answer '#vimsplitsep#')
+
+
     let b:statusline_tartifyGIT = {}
-    "  execute predefined shell commands
-    "     __gitps1_repo_name TRUE"
-    "     __gitps1_branch TRUE TRUE"
-    "     __gitps1_remote TRUE"
-    "     __gitps1_stash TRUE"
-    for l:key in ['repo_name', 'branch', 'remote', 'stash']
-      let b:statusline_tartifyGIT[l:key] = system( l:cdlocaldir . "__gitps1_" . l:key . " TRUE")
-      "Catchall :unexpected error from shell function (report please)
-      if !v:shell_error == 0
-        echomsg "TARTIFY: GITPS1 ERROR [" . l:key . "][". v:shell_error . "] RES=" . b:statusline_tartifyGIT[l:key]
-      endif
+    let l:index=0
+    for l:key in ['repo_name', 'branch', 'remote', 'stash', 'time']
+      let b:statusline_tartifyGIT[l:key] = b:tart_answer_split[ l:index ]
+      "let b:statusline_tartifyGIT[l:key] = system( l:cd_workdir . "__tartify_" . l:key . " TRUE")
+      let l:index = l:index + 1
     endfo
+
+
+    "DEPREC:
+    "let b:statusline_tartifyGIT = {}
+    ""  execute predefined shell commands
+    ""     __tartify_repo_name TRUE"
+    ""     __tartify_branch TRUE TRUE"
+    ""     __tartify_remote TRUE"
+    ""     __tartify_stash TRUE"
+    "for l:key in ['repo_name', 'branch', 'remote', 'stash', 'time']
+    "  let b:statusline_tartifyGIT[l:key] = system( l:cd_workdir . "__tartify_" . l:key . " TRUE")
+    "  "Catchall :unexpected error from shell function (report please)
+    "  if !v:shell_error == 0
+    "    echomsg "TARTIFY: GITPS1 ERROR [" . l:key . "][". v:shell_error . "] RES=" . b:statusline_tartifyGIT[l:key]
+    "  endif
+    "endfo
 
   endif
 
   "PROCESSING
   "
-  "no a git repo
-  if b:statusline_tartifyGIT['repo_name'] == ""
+  "shell error    > return error and exit
+  if b:statusline_tartify_error == 1
+    if a:item == "repository"
+      return "TARTIFY-ERROR"
+    else
+      return ""
+    endif
+
+  "no a git repo  > return naught
+  elseif b:statusline_tartifyGIT['repo_name'] == ""
     return ""
 
-
-  "git repo, all fine
+  "git repo       > proceed
   else
     if a:item == "repository"
       return b:statusline_tartifyGIT['repo_name']
