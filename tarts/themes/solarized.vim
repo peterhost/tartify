@@ -23,3 +23,18 @@ let g:tartify_adaptativeHighlights  = {
         \ 9: {'hue': 'darkyellow',  'format': 'bold'}
         \ }
     \}
+
+let g:tartify_sequence.solarized = {}
+
+let g:tartify_sequence.solarized.left = [
+      \ "insertmodeMark", "file_cut30",
+      \ "warn_non_unix", "warn_non_utf8", "helpf_tag", "file_type",
+      \ "warn_readonly", "warn_mofified", "GIT_repo", "GIT_branch",
+      \ "GIT_remote", "GIT_stash", "GIT_lastcommit", "warn_mixed_indent",
+      \ "warn_trail_space", "syntastic"]
+
+let g:tartify_sequence.solarized.right = [
+      \ "warn_long_lines", "curr_highlight", "autocollapse",
+      \ "minimized" ]
+
+let g:tartify_globals.solarized = ["smart", "nocolors"]
