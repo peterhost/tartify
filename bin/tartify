@@ -1,7 +1,7 @@
 #!/bin/bash
 ##################################################################################
 #
-#       Filename:  bashps1
+#       Filename:  tartify
 #
 #    Description:  BASH PS1 with GIT support
 #
@@ -218,6 +218,25 @@
 #          \] – end a sequence of non-printing characters
 #
 #          (http://www.wiredrevolution.com/bash-programming/customize-the-bash-ps1-command-prompt)
+
+
+
+#------------------------------------------------------------------------------
+#
+#             PRELIMINARY CHECKS
+#
+#------------------------------------------------------------------------------
+# store command line params
+__tartify_args="$*"
+
+# Are we being sourced or executed ?
+Prog="tartify"
+__tartify_whocalled=
+if [ "$(basename $0 2>/dev/null )" = "$Prog" ]; then
+  __tartify_whocalled="exec"
+else
+  __tartify_whocalled="source"
+fi
 
 
 
@@ -1051,40 +1070,26 @@ tartify()
       [[ "$argstr" =~ w ]] && echo -ne "\n" # linebreak after
     }
   }
+  return 0
 }
 
 
 #------------------------------------------------------------------------------
-
-#             EXPORTING (for use in other things : Vim,...)
+#
+#             MAIN
 #
 #------------------------------------------------------------------------------
 __tartify_define_colors
 __tartify_init_globs
 
-#export -f __tartify_diff_count
-#export -f __tartify_find_tracked
-#export -f __tartify_usage
-#export -f __tartify_reformat_timestamp
-
-#export -f __tartify_repo_name
-#export -f __tartify_branch
-#export -f __tartify_remote
-#export -f __tartify_stash
-#export -f __tartify_timelastcommit
-
-#export -f tartify
+#DEPREC:
 #export __tartify_shell_loaded=1
 
+# in case the script in being executed and not sourced, run the main command
+  [ "$__tartify_whocalled" = "exec" ] && {
+    tartify $__tartify_args
+  }
 
-
-## Check to make sure it is not sourced:
-Prog=bashps2
-#if [ $(basename $0) = $Prog ]; then
-   #exit 1  # not sourced
-#fi
-#echo $(basename $0)
-echo $0
 
 # REMOVE ANSI ESCAPE from string
 # MACOS
