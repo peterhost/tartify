@@ -366,7 +366,8 @@ export TARTIFY_COLOR_TIME_ACTIVITY_LOW=${__Y_}   #                              
 export TARTIFY_COLOR_TIME_ACTIVITY_NON=${__R_}   #                                  RED
 
 # //BRANCH
-export TARTIFY_STRING_NOBRANCH="nobranch"        # "branch name" replacement string for empty repository
+#DEPREC:
+#export TARTIFY_STRING_NOBRANCH="nobranch"        # "branch name" replacement string for empty repository
 export TARTIFY_STRING_DOTGIT="GIT_DIR!"          # "branch name" replacement string for .git directory
 export TARTIFY_STRING_BARE="<BARE>"              # "branch name" replacement string for bare .git directory
 
@@ -381,6 +382,8 @@ export TARTIFY_COLOR_NOCOMMITYET=${__EMK_}       # empty repo, no commit yet    
 
 export TARTIFY_COLOR_GITDIR=${__C_}              # inside .git dir                  CYAN
 export TARTIFY_COLOR_EMPTY=${__C_}               # empty repo (no commit yet)       CYAN
+export TARTIFY_COLOR_MERGE_REBASE_CHERRY_BISECT=${__EMR_}  # color for the merge/rebase/cherry-pick/bisect status of current branch (if any)
+                                                 #                                  BOLD RED
 
 #TODO: unmerged : deprecated
 export TARTIFY_STRING_UNMERGED="✖ "              # there are unmerged files
@@ -416,6 +419,15 @@ export TARTIFY_COLOR_STASH_COUNT=${__EMY_}       # color in "count mode"        
 # // UNPARSED CHARS
 export TARTIFY_COLOR_DELIMITER=${__DM_}${__K_}   # color for (unparsed) delimiters  DIM GREY
 
+
+# TODO: (restrict that to OLDSCHOOL)
+# The usual environment variables from git-completion.bash still apply
+# in "OLDSCHOOL" mode
+#
+#     GIT_PS1_SHOWDIRTYSTATE
+#     GIT_PS1_SHOWSTASHSTATE
+#     GIT_PS1_SHOWUNTRACKEDFILES
+#     GIT_PS1_SHOWUPSTREAM
 }
 
 
@@ -432,7 +444,85 @@ __tartify_diff_count() {
     echo "$(git rev-list $1..$2 2>/dev/null | awk 'END {print NR}')"
 }
 
+__tartify__branchname_and_state(){
+  # assume _gitdir is a correct path to a ".git" directory
+  local _gitdir=$1
 
+  #----------------------------------------------------------------------------
+  #
+  # BEGIN
+  #
+  # chunk of original __git_ps1 (from bash_completion) tuned for tartify
+  #----------------------------------------------------------------------------
+  if [ -n "$_gitdir" ]; then
+    local r=""
+    local b=""
+    if [ -f "$_gitdir/rebase-merge/interactive" ]; then
+      r="|REBASE-i"
+      b="$(cat "$_gitdir/rebase-merge/head-name")"
+    elif [ -d "$_gitdir/rebase-merge" ]; then
+      r="|REBASE-m"
+      b="$(cat "$_gitdir/rebase-merge/head-name")"
+    else
+      if [ -d "$_gitdir/rebase-apply" ]; then
+        if [ -f "$_gitdir/rebase-apply/rebasing" ]; then
+          r="|REBASE"
+        elif [ -f "$_gitdir/rebase-apply/applying" ]; then
+          r="|AM"
+        else
+          r="|AM/REBASE"
+        fi
+      elif [ -f "$_gitdir/MERGE_HEAD" ]; then
+        r="|MERGING"
+      elif [ -f "$_gitdir/CHERRY_PICK_HEAD" ]; then
+        r="|CHERRY-PICKING"
+      elif [ -f "$_gitdir/BISECT_LOG" ]; then
+        r="|BISECTING"
+      fi
+
+      b="$(git symbolic-ref HEAD 2>/dev/null)" || {
+
+        b="$(
+        case "${GIT_PS1_DESCRIBE_STYLE-}" in
+        (contains)
+          git describe --contains HEAD ;;
+        (branch)
+          git describe --contains --all HEAD ;;
+        (describe)
+          git describe HEAD ;;
+        (* | default)
+          git describe --tags --exact-match HEAD ;;
+        esac 2>/dev/null)" ||
+
+        b="$(cut -c1-7 "$_gitdir/HEAD" 2>/dev/null)..." ||
+        b="unknown"
+        b="($b)"
+      }
+    fi
+  #----------------------------------------------------------------------------
+  #
+  # END
+  #
+  # chunk of original __git_ps1 (from bash_completion) tuned for tartify
+  #----------------------------------------------------------------------------
+  fi
+
+  printf "%s" $a'.'$b
+  # dirty way of returning 2 arguments
+  #
+  # '.' is a forbidden char for a branch name, we use it as a separator.
+  # Then, for further extraction :
+  #
+  #   result=$(__tartify__branchname_and_state $gitdir)
+  #   [ -n $result ] && {
+  #     $a=${result/%.!(.)/}
+  #     $b=${result/#!(.)./}
+  #     [ $b = $a ] && b=
+  #   }
+
+}
+
+#DEPREC
 __tartify_find_tracked(){
   local __branchname=$1
   # find (possible) tracked remote for current branch in repository
@@ -456,7 +546,7 @@ __tartify_usage(){
   ${__UN_}Options${__UNQ_} is : a CASE-SENSITIVE sequence of characters.
 
       * The following characters are reserved tartify commands :
-         ${__Y_}nbrslqcopvh?e${__NN_}
+         ${__Y_}bBcehlLnNopqrRsSuvwW${__NN_}
       * any other character will be printed "as is", including spaces. You can use
       those to format the output of the tarttify command (as delimiters,...)
               \`tartify [r]b - l\` will output \"[repository]master - 12m\"
@@ -469,19 +559,20 @@ __tartify_usage(){
 
       ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
 
-      ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame
-      ${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name
-      ${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes info
-      ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info
-      ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info
+      ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame     ${__Y_}N${__NN_}   same without colors
+      ${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name         ${__Y_}B${__NN_}          \` \`
+      ${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes info        ${__Y_}R${__NN_}          \` \`
+      ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info          ${__Y_}S${__NN_}          \` \`
+      ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info    ${__Y_}L${__NN_}          \` \`
 
       ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line append newline
       ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line prepend newline
 
       ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
 
+      ${__Y_}u${__NN_}       s${__EMY_}u${__NN_}ccint    short version
       ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update variables, no output
-      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor    strip all colors (whatever the result)
+      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor    strip all colors
       ${__Y_}o${__NN_}       ${__EMY_}o${__NN_}ldschool  __git_ps1 mode
       ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
       ${__Y_}v${__NN_}       ${__EMY_}v${__NN_}im mode   result formated for the Vim tartify plugin
@@ -491,7 +582,7 @@ __tartify_usage(){
       ${__Y_}[Help]${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
       ${__Y_}h${__NN_}     ${__EMY_}h${__NN_}elp      display this help message
-      ${__Y_}e${__NN_}       ${__EMY_}e${__NN_}nv help  list customizable environment variables
+      ${__Y_}e${__NN_}     ${__EMY_}e${__NN_}nv help  list customizable environment variables
 
   ${__UN_}Default${__UNQ_}   tartify   : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
             tartify w : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrslw${__NN_}
@@ -537,7 +628,8 @@ __tartify_reformat_timestamp(){
     # TARTIFY_STRING_TIME_DISPLAY
 
     # add a hint of color
-    if [ -n "$2" ] && [ -n "$TARTIFY_TIME_BUGME" ]; then
+    if [ "$2" = "false" ] && [ -n "$TARTIFY_TIME_BUGME" ]; then
+    #if [ -n "$2" ] && [ -n "$TARTIFY_TIME_BUGME" ]; then
         local color
         if [ $TARTIFY_TIME_SHOULDCOMMIT -lt "$secs" ]; then # 30 mins
             color=$TARTIFY_COLOR_TIME_ACTIVITY_NON
@@ -549,18 +641,6 @@ __tartify_reformat_timestamp(){
         timestr="${color}${timestr}${__NN_}"
     fi
     echo "$timestr"
-}
-
-
-#------------------------------------------------------------------------------
-#
-#             GIT TESTS
-#
-#------------------------------------------------------------------------------
-
-__git_tests(){
-  __T4TT_IS_GIT="git rev-parse --git-dir >/dev/null 2>&1" #echoes nothing
-  __T4TT_GIT_DIR="git rev-parse --git-dir 2>/dev/null"    #echoes path to .git dir || nothing
 }
 
 
@@ -643,7 +723,8 @@ __tartify_branch() {
   local color_unstaged  # first 2 chars of branch name in case of unstaged modifs
   local style_untracked # special style in case of untracked files
   local nocolor
-  local nci   # store color infos in an easilly parseable string
+  local nci           # (VIM mode) store color infos
+  local saongbe       # (VIM mode) branch status - store either one of these letters (SAONGBE)
 
 
 
@@ -663,99 +744,113 @@ __tartify_branch() {
   # __git_ps1 accepts 0 or 1 arguments (i.e., format string)
   # returns text to add to bash PS1 prompt (includes branch name)
 
-  # original __git_ps1 (from bash_completion) tuned for tartify
-	if [ -n "$_gitdir" ]; then
-		local r=""
-		local b=""
-		if [ -f "$_gitdir/rebase-merge/interactive" ]; then
-			r="|REBASE-i"
-			b="$(cat "$_gitdir/rebase-merge/head-name")"
-		elif [ -d "$_gitdir/rebase-merge" ]; then
-			r="|REBASE-m"
-			b="$(cat "$_gitdir/rebase-merge/head-name")"
-		else
-			if [ -d "$_gitdir/rebase-apply" ]; then
-				if [ -f "$_gitdir/rebase-apply/rebasing" ]; then
-					r="|REBASE"
-				elif [ -f "$_gitdir/rebase-apply/applying" ]; then
-					r="|AM"
-				else
-					r="|AM/REBASE"
-				fi
-			elif [ -f "$_gitdir/MERGE_HEAD" ]; then
-				r="|MERGING"
-			elif [ -f "$_gitdir/CHERRY_PICK_HEAD" ]; then
-				r="|CHERRY-PICKING"
-			elif [ -f "$_gitdir/BISECT_LOG" ]; then
-				r="|BISECTING"
-			fi
+  #----------------------------------------------------------------------------
+  #
+  # <<BEGIN
+  #
+  # chunk of original __git_ps1 (from bash_completion) tuned for tartify
+  #----------------------------------------------------------------------------
+  if [ -n "$_gitdir" ]; then
+    local r=""
+    local b=""
+    if [ -f "$_gitdir/rebase-merge/interactive" ]; then
+      r="|REBASE-i"
+      b="$(cat "$_gitdir/rebase-merge/head-name")"
+    elif [ -d "$_gitdir/rebase-merge" ]; then
+      r="|REBASE-m"
+      b="$(cat "$_gitdir/rebase-merge/head-name")"
+    else
+      if [ -d "$_gitdir/rebase-apply" ]; then
+        if [ -f "$_gitdir/rebase-apply/rebasing" ]; then
+          r="|REBASE"
+        elif [ -f "$_gitdir/rebase-apply/applying" ]; then
+          r="|AM"
+        else
+          r="|AM/REBASE"
+        fi
+      elif [ -f "$_gitdir/MERGE_HEAD" ]; then
+        r="|MERGING"
+      elif [ -f "$_gitdir/CHERRY_PICK_HEAD" ]; then
+        r="|CHERRY-PICKING"
+      elif [ -f "$_gitdir/BISECT_LOG" ]; then
+        r="|BISECTING"
+      fi
 
-			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
+      b="$(git symbolic-ref HEAD 2>/dev/null)" || {
 
-				b="$(
-				case "${GIT_PS1_DESCRIBE_STYLE-}" in
-				(contains)
-					git describe --contains HEAD ;;
-				(branch)
-					git describe --contains --all HEAD ;;
-				(describe)
-					git describe HEAD ;;
-				(* | default)
-					git describe --tags --exact-match HEAD ;;
-				esac 2>/dev/null)" ||
+        b="$(
+        case "${GIT_PS1_DESCRIBE_STYLE-}" in
+        (contains)
+          git describe --contains HEAD ;;
+        (branch)
+          git describe --contains --all HEAD ;;
+        (describe)
+          git describe HEAD ;;
+        (* | default)
+          git describe --tags --exact-match HEAD ;;
+        esac 2>/dev/null)" ||
 
-				b="$(cut -c1-7 "$_gitdir/HEAD" 2>/dev/null)..." ||
-				b="unknown"
-				b="($b)"
-			}
-		fi
+        b="$(cut -c1-7 "$_gitdir/HEAD" 2>/dev/null)..." ||
+        b="unknown"
+        b="($b)"
+      }
+    fi
 
-		local w=""
-		local i=""
-		local s=""
-		local u=""
-		local c=""
-		local p=""
+    local w=""
+    local i=""
+    local s=""
+    local u=""
+    local c=""
+    local p=""
 
-		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
-			if [ "true" = "$_isbare" ]; then
-				c="BARE:"
-			else
-				b=$TARTIFY_STRING_DOTGIT
-			fi
-		elif [ "true" = "$_isinsideworktree" ]; then
-			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
-				if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
-					git diff --no-ext-diff --quiet --exit-code || w="*"
-					if git rev-parse --quiet --verify HEAD >/dev/null; then
-						git diff-index --cached --quiet HEAD -- || i="+"
-					else
-						i="#"
-					fi
-				fi
-			fi
-			if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
+    if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
+      if [ "true" = "$_isbare" ]; then
+        c="BARE:"
+        saongbe="B"
+      else
+        b=$TARTIFY_STRING_DOTGIT
+        saongbe="G"
+      fi
+    elif [ "true" = "$_isinsideworktree" ]; then
+      if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
+        if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
+          git diff --no-ext-diff --quiet --exit-code || w="*"
+          if git rev-parse --quiet --verify HEAD >/dev/null; then
+            git diff-index --cached --quiet HEAD -- || i="+"
+            saongbe="S"
+          else
+            i="#"
+            saongbe="E"
+          fi
+        fi
+      fi
+      if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
         [ "true" = "$_hasstash" ] && s="$"
-			fi
+      fi
 
-			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
-			   if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-			      u="%"
-			   fi
-			fi
+      if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
+         if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            u="%"
+         fi
+      fi
 
-		fi
+    fi
+  #----------------------------------------------------------------------------
+  #
+  # <<END
+  #
+  # chunk of original __git_ps1 (from bash_completion) tuned for tartify
+  #----------------------------------------------------------------------------
 
 
 
-		# ___________________
-		#
-		# Now for some OUTPUT
-		# ___________________
+    # ___________________
+    #
+    # Now for some OUTPUT
+    # ___________________
 
     [ "$_mode" = "OLDSCHOOL" ] && {
       local f="$w$i$s$u"
-      echo "\$c:$c - \$b:$b"
       printf "%s" "$c${b##refs/heads/}${f:+ $f}$r$p"
 
       #printf "%s" "$c   ${b##refs/heads/}${f:+ $f}$r$p"
@@ -766,16 +861,17 @@ __tartify_branch() {
     }
 
 
-    [ "$_mode" == "VIM" ] && {
-      [ -n "$w" ] && nci=$nci"U"  #unstaged
-      [ -n "$w" ] && nci=$nci""
-      [ -n "$w" ] && nci=$nci""
-      [ -n "$w" ] && nci=$nci""
-      [ -n "$w" ] && nci=$nci""
-      [ -n "$u" ] && nci=$nci"T"  #untracked
+    [ "$_mode" = "VIM" ] && {
+      [ -n "$w" ]     && nci=$nci"U"  #unstaged
 
-      printf "%s" $nci"|"${b##refs/heads/}$r #$r includes the "|" separator
-      :;
+      #SAONGBE : SGBE already taken care of
+      #          Determine AON (tracking branch info)
+      [ -n "$w" ] && saongbe="A"
+      [ -n "$w" ] && saongbe="O"
+      [ -n "$w" ] && saongbe="N"
+
+      [ -n "$u" ] && nci=$nci"T"  #untracked
+      printf "%s" $nci"|"${b##refs/heads/}$r #$r already includes the "|" separator
     }
 
     [ "$_mode" == "QUIET" ] && {
@@ -786,7 +882,12 @@ __tartify_branch() {
       :;
     }
 
-	fi
+    [ "$_mode" == "NONE" ] && {
+      printf "%s" "$c${b##refs/heads/}$r$p"
+    }
+
+
+  fi
 
 
 }
@@ -878,9 +979,9 @@ __tartify_remote()
   [ "true" = $_nocolors ] &&  echo -ne $nocolor || echo -e $color
 
   #TODO: oldschool 
-			#if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
-			#  __git_ps1_show_upstream
-			#fi
+      #if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
+      #  __git_ps1_show_upstream
+      #fi
 
 }
 
@@ -944,7 +1045,7 @@ __tartify_timelastcommit(){
           fi
     )"
     #TODO: include $_nocolors
-    [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs true)"
+    [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs $_nocolors)"
   fi
 }
 
@@ -980,7 +1081,7 @@ tartify()
   local isinsideworktree="false"
   local hasstash="false"
   local nocolors="false"
-  local mode="false"
+  local mode="NONE"
 
   # -- BAIL if not INSIDE a GIT REPO --
   gitdir=`git rev-parse --git-dir 2>/dev/null`
@@ -990,9 +1091,13 @@ tartify()
     isbare=$( git rev-parse --is-bare-repository 2>/dev/null )
     isinsideworktree=$(git rev-parse --is-inside-work-tree 2>/dev/null)
     if [ "true" = "$isinsideworktree" ]; then
-		#if [[ "$isinsideworktree" =~ true ]]; then
-		  git rev-parse --verify refs/stash >/dev/null 2>&1 && hasstash="true"
+    #if [[ "$isinsideworktree" =~ true ]]; then
+      git rev-parse --verify refs/stash >/dev/null 2>&1 && hasstash="true"
     fi
+
+    
+    #TODO:
+    count="$(git rev-list --count --left-right "$upstream"...HEAD 2>/dev/null)"
 
 
 
@@ -1002,6 +1107,7 @@ tartify()
     [[ "$argstr" == "W" ]] && argstr="nbrslW"                        #newline before
     [[ "$argstr" == "Ww" || "$argstr" == "wW" ]] && argstr="nbrslwW" #newline BOTH
     [[ "$argstr" == "o" ]] && argstr="obsr"                          #oldschool
+    [[ "$argstr" == "v" ]] && argstr="vnbrsl"                        #vim
     [ ${#argstr} == 0 ] && argstr="nbrsl"                            #no args
 
     local separator
@@ -1013,7 +1119,8 @@ tartify()
     }
     # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
     [[ "$argstr" =~ v ]] && {
-        separator="#"
+        # don't fucking change that
+        separator="vimsplitsep"
         nocolors="true"
         mode="VIM"
     }
@@ -1052,10 +1159,14 @@ tartify()
         w) ;;
         W) ;;
         #*) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
-        *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch;;
+        #TODO: make that work with PS1 and NOCOLORS
+        *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch$__NN_;;
       esac
     done
 
+    # Post Process
+    # VIM mode : remove first occurence of $separator
+    [ "$mode" = "VIM" ] && tartAnswer=${tartAnswer/#vimsplitsep/}
 
     # -- OUTPUT --
     # TODO: this test sucks (time lost in subshell)
