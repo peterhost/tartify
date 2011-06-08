@@ -166,7 +166,7 @@
 #
 #    * Quick n dirty benchmark
 #      loop over 1000 executions of `tartify` on a 3.06GHz Intel Core 2 Duo Imac
-#      without any methodology
+#      without any further methodology
 #
 #       **execution-time (ms)**
 #       _____________________________________________________________
@@ -607,7 +607,8 @@ __tartify_usage(){
   ${__UN_}Options${__UNQ_} is : a CASE-SENSITIVE sequence of characters.
 
       * The following characters are reserved tartify commands :
-         ${__Y_}bBcehlLnNopqrRsSuvwW${__NN_}
+         ${__Y_}bBcehlLnNopqrRsSuvwW${__NN_} (and maybe more letters in the future)
+
       * any other character will be printed "as is", including spaces. You can use
       those to format the output of the tarttify command (as delimiters,...)
               \`tartify [r]b - l\` will output \"[repository]master - 12m\"
@@ -615,7 +616,7 @@ __tartify_usage(){
       * if you need multiple spaces, escape them \"\ \" :
               \`tartify [r]b -\ \ l\` will output \"[repository]master -  12m\"
 
-      * following characters need to be escaped  ${__Y_}()<>;*\"\'\`#&|~)${__NN_}
+      * following characters need to be escaped  ${__Y_}\(\)<>;*\"\'\`\#&|~${__NN_}
 
 
       ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
@@ -626,14 +627,17 @@ __tartify_usage(){
       ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info          ${__Y_}S${__NN_}          \` \`
       ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info    ${__Y_}L${__NN_}          \` \`
 
-      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line append newline
-      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line prepend newline
+      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line     insert newline (positionnal)
+      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line     prepend newline at beginning (non-positionnal)
+
+      ${__Y_}[Modifiers]${__NN_} ${__EM_}                 ${__NN_}
+
+      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor    strip all colors
 
       ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
 
       ${__Y_}u${__NN_}       s${__EMY_}u${__NN_}ccint    short version
       ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update variables, no output
-      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor    strip all colors
       ${__Y_}o${__NN_}       ${__EMY_}o${__NN_}ldschool  __git_ps1 mode
       ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
       ${__Y_}v${__NN_}       ${__EMY_}v${__NN_}im mode   result formated for the Vim tartify plugin
@@ -1145,6 +1149,20 @@ tartify()
   local nocolors="false"
   local mode="NONE"
 
+
+  # -- INIT local vars --
+  # __git_ps1 locals
+  local g=""
+  local r=""
+  local b=""
+  local w=""
+  local i=""
+  local s=""
+  local u=""
+  local f=""
+  local c=""
+  local p=""
+
   # -- BAIL if not INSIDE a GIT REPO --
   gitdir=`git rev-parse --git-dir 2>/dev/null`
   [ $? == 0  ] && {
@@ -1173,12 +1191,12 @@ tartify()
 
     # (optionnal) argument expansion
     #TODO: these tests suck
-    [[ "$argstr" == "w" ]] && argstr="nbrslw"                        #newline after
-    [[ "$argstr" == "W" ]] && argstr="nbrslW"                        #newline before
-    [[ "$argstr" == "Ww" || "$argstr" == "wW" ]] && argstr="nbrslwW" #newline BOTH
-    [[ "$argstr" == "o" ]] && argstr="obsr"                          #oldschool
-    [[ "$argstr" == "v" ]] && argstr="vnbrsl"                        #vim
-    [ ${#argstr} == 0 ] && argstr="nbrsl"                            #no args
+    [ "$argstr"  = "w" ] && argstr="nbrslw"                           #newline after
+    [ "$argstr"  = "W" ] && argstr="nbrslW"                           #newline before
+    [ "$argstr" = "Ww" ] || [ "$argstr" = "wW" ] && argstr="nbrslwW"  #newline BOTH
+    [ "$argstr"  = "o" ] && argstr="obsr"                             #oldschool
+    [ "$argstr"  = "v" ] && argstr="vnbrsl"                           #vim
+    [ ${#argstr} == 0 ] && argstr="nbrsl"                             #no args
 
     local separator
 
@@ -1189,10 +1207,10 @@ tartify()
     }
     # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
     [[ "$argstr" =~ v ]] && {
-        # don't fucking change that
-        separator="vimsplitsep"
         nocolors="true"
         mode="VIM"
+        # don't fucking change that:
+        separator="vimsplitsep"
     }
     # OldSchool MODE : no color, branch results with $*+, stash results with %
     [[ "$argstr" =~ o ]] && {
@@ -1244,6 +1262,7 @@ tartify()
     local testforblank=$(echo  $tartAnswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
     testforblank=${testforblank/ //}
 
+    #TODO: 'w' newline insertion can happen anywhere, 'W' only at BOL
     # only do something if answer is not empty
     [ ${#testforblank} != 0 ] && {
       [[ "$argstr" =~ W ]] && echo -ne "\n" # linebreak before
