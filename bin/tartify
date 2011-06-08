@@ -1261,15 +1261,15 @@ tartify()
 #
 #------------------------------------------------------------------------------
 __tartify_define_colors
+__tartify_define_colors_TPUT
 __tartify_init_globs
 
 #DEPREC:
 #export __tartify_shell_loaded=1
 
-# in case the script in being executed and not sourced, run the main command
-  [ "$__tartify_whocalled" = "exec" ] && {
-    tartify $__tartify_args
-  }
+# script is being executed, run the main command
+# script is being sourced, exit with 0
+[ "$__tartify_whocalled" = "exec" ] && tartify $__tartify_args || return 0
 
 
 # REMOVE ANSI ESCAPE from string
