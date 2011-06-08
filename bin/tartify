@@ -333,6 +333,67 @@ __tartify_define_colors() {
 }
 
 
+
+__tartify_define_colors_TPUT() {
+# COLOR VARS :  * declare those color codes ONCE and for ALL.
+#                 This somewhat pollutes the GLOBAL SCOPE but the variable names
+#                 are (thought to be) unique enough so that won't cause problems
+#
+#               * do that like a grownup (tput, not ANSI escapes)
+#
+
+                                                              #   ANSI equivalent
+                                                              #  <attr> <fg>  <bg>
+  # ALL
+   __NN_=$( tput sgr0   || : 2>/dev/null )                    # [ 0m                RESET ALL attributes
+
+  # STYLES
+  # <BEGIN>
+   __EM_=$( tput bold    || : 2>/dev/null )                   # [ 1m                BEGIN DOUBLE INTENSITY (bold) mode
+   __DM_=$( tput dim     || : 2>/dev/null )                   # [ 2m                BEGIN HALF INTENSITY    (dim) mode
+   __UN_=$( tput smul    || : 2>/dev/null )                   # [ 4m                BEGIN UNDESCORE  (underlined) mode
+   __BL_=$( tput blink   || : 2>/dev/null )                   # [ 5m                BEGIN BLINKING                mode
+   __RV_=$( tput rev     || : 2>/dev/null )                   # [ 7m                BEGIN REVERSE VIDEO (reverse) mode
+   __SO_=$( tput smso    || : 2>/dev/null )                   #?[ 7m                BEGIN STANDOUT      (reverse) mode
+  # <END>
+  __SOQ_=$( tput rmso    || : 2>/dev/null )                   #?[ 27m               END   STANDOUT      (reverse) mode
+  __UNQ_=$( tput rmul    || : 2>/dev/null )                   # [ 24m               END   UNDESCORE  (underlined) mode
+  # for all other END style, use `tput sgr0` ($__NN_)
+
+  # COLORS
+  # <Foreground>
+    __K_=$( tput setf 0 || tput setaf 0 || : 2>/dev/null )    # [       0m          SET   FG color to BLACK
+    __R_=$( tput setf 4 || tput setaf 1 || : 2>/dev/null )    # [       1m          SET   FG color to RED
+    __G_=$( tput setf 2 || tput setaf 2 || : 2>/dev/null )    # [       2m          SET   FG color to GREEN
+    __Y_=$( tput setf 6 || tput setaf 3 || : 2>/dev/null )    # [       3m          SET   FG color to YELLOW
+    __B_=$( tput setf 1 || tput setaf 4 || : 2>/dev/null )    # [       4m          SET   FG color to BLUE
+    __M_=$( tput setf 5 || tput setaf 5 || : 2>/dev/null )    # [       5m          SET   FG color to MAGENTA
+    __C_=$( tput setf 3 || tput setaf 6 || : 2>/dev/null )    # [       6m          SET   FG color to CYAN
+    __W_=$( tput setf 7 || tput setaf 7 || : 2>/dev/null )    # [       7m          SET   FG color to WHITE
+  # <Background>
+  __BGK_=$( tput setb 0 || tput setab 0 || : 2>/dev/null )    # [       0m          SET   BG color to BLACK
+  __BGR_=$( tput setb 4 || tput setab 1 || : 2>/dev/null )    # [       1m          SET   BG color to RED
+  __BGG_=$( tput setb 2 || tput setab 2 || : 2>/dev/null )    # [       2m          SET   BG color to GREEN
+  __BGY_=$( tput setb 6 || tput setab 3 || : 2>/dev/null )    # [       3m          SET   BG color to YELLOW
+  __BGB_=$( tput setb 1 || tput setab 4 || : 2>/dev/null )    # [       4m          SET   BG color to BLUE
+  __BGM_=$( tput setb 5 || tput setab 5 || : 2>/dev/null )    # [       5m          SET   BG color to MAGENTA
+  __BGC_=$( tput setb 3 || tput setab 6 || : 2>/dev/null )    # [       6m          SET   BG color to CYAN
+  __BGW_=$( tput setb 7 || tput setab 7 || : 2>/dev/null )    # [       7m          SET   BG color to WHITE
+  # <reset>
+   __NF_=$( tput setf 9 || tput setaf 9 || : 2>/dev/null )    # [       39m         RESET FG color to term's default
+   __NG_=$( tput setb 9 || tput setab 9 || : 2>/dev/null )    # [             49m   RESET BG color to term's default
+  __NFG_=$__NF_$__NB_                                         # [       39;   49m   RESET FG & BG color to term's default
+  # <pseudo Foreground-bold>
+  __EMK_=$__EM_$__K_                                          # [ 1;    20m         SET   FG color to BOLD BLACK
+  __EMR_=$__EM_$__R_                                          # [ 1;    21m         SET   FG color to BOLD RED
+  __EMG_=$__EM_$__G_                                          # [ 1;    22m         SET   FG color to BOLD GREEN
+  __EMY_=$__EM_$__Y_                                          # [ 1;    23m         SET   FG color to BOLD YELLOW
+  __EMB_=$__EM_$__B_                                          # [ 1;    24m         SET   FG color to BOLD BLUE
+  __EMM_=$__EM_$__M_                                          # [ 1;    25m         SET   FG color to BOLD MAGENTA
+  __EMC_=$__EM_$__C_                                          # [ 1;    26m         SET   FG color to BOLD CYAN
+  __EMW_=$__EM_$__W_                                          # [ 1;    27m         SET   FG color to BOLD RED
+}
+
 __tartify_init_globs(){
 # TARTIFY PARAMETERS : adapt to your needs
 
@@ -390,7 +451,7 @@ export TARTIFY_STRING_UNMERGED="✖ "              # there are unmerged files
 export TARTIFY_COLOR_UNMERGED=${__BL_}${__EMR_}  # unmerged files                   BOLD RED BLINKING
                                                  #                                  (yeah, obnoxious)
 # // REPOSITORY
-export TARTIFY_COLOR_REPONAME=${__DM_}${__K_}    # repository's "name"              DIM GREY
+export TARTIFY_COLOR_REPONAME=${__K_}    # repository's "name"              DIM GREY
 
 # // REMOTES
 export TARTIFY_STRING_ORIGIN="O"                 # marker for remote repo called 'origin'
@@ -417,7 +478,7 @@ export TARTIFY_COLOR_STASH_NOCOUNT=${__Y_}       # color when not counting      
 export TARTIFY_COLOR_STASH_COUNT=${__EMY_}       # color in "count mode"            BOLD YELLOW
 
 # // UNPARSED CHARS
-export TARTIFY_COLOR_DELIMITER=${__DM_}${__K_}   # color for (unparsed) delimiters  DIM GREY
+export TARTIFY_COLOR_DELIMITER=${__K_}   # color for (unparsed) delimiters  DIM GREY
 
 
 # TODO: (restrict that to OLDSCHOOL)
@@ -1070,6 +1131,7 @@ tartify()
     return 0
   }
 
+  # Override args with $TARTIFY_OW if non empty
   [ -n "$TARTIFY_OW" ] && argstr=$TARTIFY_OW
 
 
@@ -1088,14 +1150,22 @@ tartify()
   [ $? == 0  ] && {
 
     #Perform all cheap 'git' tests (used in more than one '__tartify_*' function)
+
     isbare=$( git rev-parse --is-bare-repository 2>/dev/null )
+
     isinsideworktree=$(git rev-parse --is-inside-work-tree 2>/dev/null)
     if [ "true" = "$isinsideworktree" ]; then
-    #if [[ "$isinsideworktree" =~ true ]]; then
       git rev-parse --verify refs/stash >/dev/null 2>&1 && hasstash="true"
     fi
 
-    
+
+    #result=$(__tartify__branchname_and_state $gitdir)
+    #[ -n $result ] && {
+    #  $a=${result/%.!(.)/}
+    #  $b=${result/#!(.)./}
+    #  [ $b = $a ] && b=
+    #}
+
     #TODO:
     count="$(git rev-list --count --left-right "$upstream"...HEAD 2>/dev/null)"
 
