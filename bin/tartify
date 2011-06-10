@@ -342,7 +342,7 @@ __tartify_init_globs(){
 # // OVERWRITE
 #TODO: TARTIFY_IGNORE_GITPS1_VARS
 
-export TARTIFY_OW=""                             # a string containing tartify command-line params. If non empty, will
+export TARTIFY_FORCE=""                          # a string containing tartify command-line params. If non empty, will
                                                  # overwrite any arguments the tartify command receives
 
 # // TIME
@@ -387,9 +387,6 @@ export TARTIFY_COLOR_EMPTY=${__C_}               # empty repo (no commit yet)   
 export TARTIFY_COLOR_MERGE_REBASE_CHERRY_BISECT=${__EMR_}  # color for the merge/rebase/cherry-pick/bisect status of current branch (if any)
                                                  #                                  BOLD RED
 
-#TODO: unmerged : deprecated
-export TARTIFY_STRING_UNMERGED="✖ "              # there are unmerged files
-export TARTIFY_COLOR_UNMERGED=${__BL_}${__EMR_}  # unmerged files                   BOLD RED BLINKING
                                                  #                                  (yeah, obnoxious)
 # // REPOSITORY
 export TARTIFY_COLOR_REPONAME=${__K_}    # repository's "name"              DIM GREY
