@@ -1435,7 +1435,7 @@ __ctartify_completion()
 #             MAIN
 #
 #------------------------------------------------------------------------------
-__tartify_define_colors
+
 __tartify_define_colors_TPUT
 __tartify_init_globs
 
