@@ -1248,6 +1248,190 @@ tartify()
 
 #------------------------------------------------------------------------------
 #
+#             TARTIFY ADDONS
+#
+#------------------------------------------------------------------------------
+
+
+ctartify(){
+  # Quick tuner for tartify's COLOR-RELATED environment variables
+  # (with completion)
+
+  local myargs=$(echo "$*" | tr '[A-Z]' '[a-z]' | tr '-' ' ' | sed 's/tartify_//g')
+  [ -z "$myargs" ] && { tartify e; return 0; }
+  local myansw
+  local mytest
+  local myarg
+  local myenv
+#echo "myargs=$myargs"
+  for myarg in $myargs; do
+    case $myarg in
+
+      # ENV VARS
+      style_*|color_*) myenv=$myenv$myarg" "
+#echo "myarg=$myarg"
+                                      ;;
+
+      # STYLES
+      bold|emphasized)   myansw=$myansw$__EM_ ;;  underlined)        myansw=$myansw$__UN_ ;;
+      i*)        myansw=$myansw$__RV_ ;;
+
+      # COLORS
+      black)     myansw=$myansw$__K_  ;;  red)        myansw=$myansw$__R_  ;;
+      green)     myansw=$myansw$__G_  ;;  yellow)     myansw=$myansw$__Y_  ;;
+      blue)      myansw=$myansw$__B_  ;;  magenta)    myansw=$myansw$__M_  ;;
+      cyan)      myansw=$myansw$__C_  ;;  white)      myansw=$myansw$__W_  ;;
+
+      # BACKGROUND COLORS
+      bgblack)   myansw=$myansw$__BGK_ ;;  bgred)      myansw=$myansw$__BGR_;;
+      bggreen)   myansw=$myansw$__BGG_ ;;  bgyellow)   myansw=$myansw$__BGY_;;
+      bgblue)    myansw=$myansw$__BGB_ ;;  bgmagenta)  myansw=$myansw$__BGM_;;
+      bgcyan)    myansw=$myansw$__BGC_ ;;  bgwhite)    myansw=$myansw$__BGW_;;
+
+      # MISC
+      test)      mytest="t"          ;;
+      export)    mytest="t"          ;;
+
+      # HELP
+      h|help|?) cat <<HELPMSG
+
+${__EMR_}NAME
+     ctartify${__NN_} -- Quick color changer for ${__EM_}tartify${__NN_}
+
+${__EMR_}SYNOPSIS${__NN_}
+     ${__EMR_}ctartify${__NN_} [${__EMR_}-SHORTNAME${__NN_}][${__EMG_}TARTIFY_* ...${__NN_}][${__EMG_}compound${__NN_}]
+
+${__EMR_}DESCRIPTION${__NN_}
+     The order of command line arguments doesn't matter. When used
+     without arguments, ${__EMR_}ctartify${__NN_} pretty prints a list of
+     ALL tartify environment variables with their current value
+     (same as \`tartify e\`)
+
+     The options have the following meaning:
+
+     ${__EMG_}TARTIFY_*${__NN_}
+           any sequence of TARTIFY_COLOR_... or TARTIFY_STYLE_...
+           environment variables, by full name (eg: TARTIFY_COLOR_STAGED)
+                -> case insensitive
+                -> run ${__EMR_}ctartify${__NN_} without any argument to get a complete
+                   list of ALL tartify environment variables with their
+                   current value)
+                -> use ${__EMG_}T+completion${__NN_} to loop through ${__EM_}full${__NN_} names
+
+     ${__EMR_}-SHORTNAME${__NN_}
+           any sequence of TARTIFY_COLOR or TARTIFY_STYLE
+           environment variables, by short name (eg: -COLOR_STAGED),
+           prefixed with a ${__Y_}single-dash${__NN_}
+
+            -> case insensitive
+            -> use ${__EMG_}dash+completion${__NN_} to loop through ${__Y_}short${__NN_} names
+
+           If no environement variable is specified, ${__EMR_}ctartify${__NN_}
+           will print the compound color corresponding to ${__EMG_}compound${__NN_}
+           to STDOUT
+
+     ${__EMG_}compound${__NN_}  a list of any of the following words (case insensitive,
+           use completion to loop through)
+
+        ${__EMG_}*${__NN_} ${__G_}colors & styles${__NN_}
+           ${__EM_}bold${__NN_}    ${__EM_}emphasized${__NN_} ${__UN_}underlined${__NN_} ${__RV_}inverse${__NN_}
+
+           ${__K_}black${__NN_}   ${__R_}red${__NN_}        ${__G_}green${__NN_}     ${__Y_}yellow${__NN_}
+           ${__B_}blue${__NN_}    ${__M_}magenta${__NN_}    ${__C_}cyan${__NN_}      ${__W_}white${__NN_}
+
+           ${__BGK_}BGblack${__NN_} ${__BGR_}BGred${__NN_}      ${__K_}${__BGG_}BGgreen${__NN_}   ${__K_}${__BGY_}BGyellow${__NN_}
+           ${__K_}${__BGB_}BGblue${__NN_}  ${__K_}${__BGM_}BGmagenta${__NN_}  ${__K_}${__BGC_}BGcyan${__NN_}    ${__K_}${__BGW_}BGwhite${__NN_}
+
+        ${__EMG_}*${__NN_} ${__G_}Other${__NN_} ${__EM_}${__NN_}
+           test      doesn't modify any environment variable, just simulates.
+           export    print out the current TARTIFY environment in a form
+                     that can be reused for initializing tartify (only the
+                     diff with the default environmen is output)
+
+${__EMR_}EXAMPLES${__NN_}
+
+      ${__K_}\$ ctartify TARTIFY_COLOR_STAGED bold magenta${__NN_}
+      ${__K_}\$ ctartify -COLOR_STAGED bold blue underline verbose${__NN_}
+      TARTIFY_COLOR_STAGED (${__EMM_}was${__NN_}) (${__EMB_}${__UN_}now is${__NN_})
+      ${__K_}\$ ctartify -COLOR_STAGED -COLOR-UPTODATE r i test${__NN_}
+      TARTIFY_COLOR_STAGED (${__EMB_}${__UN_}was${__NN_}) (${__EMR_}${__RV_}*TEST*${__NN_})
+      TARTIFY_COLOR_UPTODATE (${__EMG_}was${__NN_}) (${__EMR_}${__RV_}*TEST*${__NN_})
+      ${__K_}\$ ctartify test bold cyan${__NN_}
+      ${__EMC_}*TEST*${__NN_}
+      ${__K_}\$ ctartify un yellow; echo \"colored string\"${__NN_}
+      ${__Y_}${__UN_}colored string${__NN_}
+      ${__K_}\$ MYENVVAR=\$(ctartify bo r); echo \$MYENVVAR\"colored string\"${__NN_}
+      ${__EMR_}colored string${__NN_}
+
+HELPMSG
+        return 0                      ;;
+
+     *) echo "Unknown argument $myarg"
+        return 1
+                                      ;;
+    esac
+  done;
+
+
+  # OUTPUT
+  [ -n "$myenv" ] && {
+        # WITH ENV
+        local thisenv
+        for thisenv in $myenv; do
+            thisenvUP="TARTIFY_"$(echo $thisenv | tr '[a-z]' '[A-Z]')
+            [ -n "$myansw" ] && {
+                printf "\n%s" "$thisenvUP ($(eval printf "%s" "\$$thisenvUP")was$__NN_)"
+                [ "t" = "$mytest" ] && printf " %s\n" " (${myansw}*TEST*$__NN_)"|| {
+                    printf " %s\n" " (${myansw}now is$__NN_)"
+                    #ASSIGN env variable
+                    eval "$thisenvUP=$myansw"
+                }
+            } || {
+                printf "\n%s\n" "no option set."
+                printf "%s\n" "$thisenvUP ($(eval printf "%s" "\$$thisenvUP")is$__NN_)"
+            }
+        done
+        echo
+  } || {
+      # NO ENV
+      [ "t" = "$mytest" ] && printf "%s\n" "${myansw}*TEST*$__NN_" || printf "%s" "${myansw}"
+  }
+
+}
+
+
+__ctartify_completion()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    optsVAR=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("-%s ", $1)}' | sed 's/TARTIFY_//g')
+    optsVARLONG=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("%s ", $1)}')
+
+    optsARG="bold emphasized underlined inverse black red green yellow
+    blue magenta cyan white bgblack bgred bggreen bgyellow bgblue
+    bgmagenta bgcyan bgwhite test help "
+
+    #if [[ ${cur} == T* ]] ; then
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${optsVAR}" -- ${cur}) )
+        return 0
+    elif [[ ${cur} == T* ]] ; then
+        COMPREPLY=( $(compgen -W "${optsVARLONG}" -- ${cur}) )
+        return 0
+    else
+        COMPREPLY=( $(compgen -W "${optsARG}" -- ${cur}) )
+        return 0
+    fi
+}
+
+
+
+
+#------------------------------------------------------------------------------
+#
 #             MAIN
 #
 #------------------------------------------------------------------------------
