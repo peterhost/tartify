@@ -1439,6 +1439,25 @@ __ctartify_completion()
 __tartify_define_colors_TPUT
 __tartify_init_globs
 
+# ADDONS
+
+##TODO: ZSH compatibility
+#if [[ -n ${ZSH_VERSION-} ]]; then
+#  autoload -U compinit
+#  autoload -U +X bashcompinit && bashcompinit
+#fi
+
+#if [[ -n ${ZSH_VERSION-} ]]; then
+#  emulate -L bash
+#  setopt KSH_TYPESET
+
+#  # workaround zsh's bug that leaves 'words' as a special
+#  # variable in versions < 4.3.12
+#  typeset -h words
+#fi
+
+complete -F __ctartify_completion ctartify
+
 #DEPREC:
 #export __tartify_shell_loaded=1
 
