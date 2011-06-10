@@ -545,7 +545,7 @@ __tartify_usage(){
   ${__UN_}Options${__UNQ_} is : a CASE-SENSITIVE sequence of characters.
 
       * The following characters are reserved tartify commands :
-         ${__Y_}bBcehlLnNopqrRsSuvwW${__NN_} (and maybe more letters in the future)
+         ${__Y_}abBcehilLnNopqrRsSuUvwW${__NN_} (and maybe more letters in the future)
 
       * any other character will be printed "as is", including spaces. You can use
       those to format the output of the tarttify command (as delimiters,...)
@@ -559,11 +559,12 @@ __tartify_usage(){
 
       ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
 
-      ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame     ${__Y_}N${__NN_}   same without colors
-      ${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name         ${__Y_}B${__NN_}          \` \`
-      ${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes info        ${__Y_}R${__NN_}          \` \`
-      ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info          ${__Y_}S${__NN_}          \` \`
-      ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info    ${__Y_}L${__NN_}          \` \`
+      ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame       ${__Y_}N${__NN_}   same without colors
+      ${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name           ${__Y_}B${__NN_}          \` \`
+      ${__Y_}r${__NN_}       (all)  ${__EMY_}r${__NN_}emotes  info  ${__Y_}R${__NN_}          \` \`
+      ${__Y_}u${__NN_}       (only) ${__EMY_}u${__NN_}pstream info  ${__Y_}U${__NN_}          \` \`
+      ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info            ${__Y_}S${__NN_}          \` \`
+      ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info      ${__Y_}L${__NN_}          \` \`
 
       ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line     insert newline (positionnal)
       ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line     prepend newline at beginning (non-positionnal)
@@ -574,7 +575,8 @@ __tartify_usage(){
 
       ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
 
-      ${__Y_}u${__NN_}       s${__EMY_}u${__NN_}ccint    short version
+      ${__Y_}i${__NN_}       succ${__EMY_}i${__NN_}nt    even shorter version
+      ${__Y_}a${__NN_}       ch${__EMY_}a${__NN_}tterbox looong version
       ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update variables, no output
       ${__Y_}o${__NN_}       ${__EMY_}o${__NN_}ldschool  __git_ps1 mode
       ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
@@ -591,6 +593,8 @@ __tartify_usage(){
             tartify w : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrslw${__NN_}
             tartify o : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}obsr${__NN_}
 
+  ${__UN_}More${__UNQ_}      see the ${__Y_}ctartify${__NN_} command to easily change tartify's colors from
+            the command line and experiment
 
 "
 }
@@ -645,6 +649,8 @@ __tartify_reformat_timestamp(){
     fi
     echo "$timestr"
 }
+
+
 
 
 #------------------------------------------------------------------------------
@@ -1172,19 +1178,25 @@ tartify()
     do
       local ch=${argstr:$i:1}
       case $ch in
-        n) tartAnswer=$tartAnswer$separator$( __tartify_repo_name $gitdir $isbare                                   $nocolors);;
-        b) tartAnswer=$tartAnswer$separator$( __tartify_branch    $gitdir $isbare $hasstash $isinsideworktree $mode $nocolors);;
-        r) tartAnswer=$tartAnswer$separator$( __tartify_remote    $gitdir                                           $nocolors);;
+        n) tartAnswer=$tartAnswer$separator$( __tartify_repo_name $g $isbare                                   $nocolors);;
+        b) tartAnswer=$tartAnswer$separator$( __tartify_branch    $g $isbare $hasstash $isinsideworktree $mode $nocolors);;
+        r) tartAnswer=$tartAnswer$separator$( __tartify_remote    $g                                           $nocolors);;
+        #TODO:
+        u) tartAnswer=$tartAnswer$separator$( __tartify_remote    $g                                           $nocolors);;
+
         s) tartAnswer=$tartAnswer$separator$( __tartify_stash                     $hasstash $isinsideworktree $mode $nocolors);;
         l) tartAnswer=$tartAnswer$separator$( __tartify_timelastcommit                                              $nocolors);;
         c) ;;
         o) ;;
         p) ;;
+        i) ;;
+        a) ;;
         q) ;;
         v) ;;
         w) ;;
         W) ;;
-        #*) echo "Unknown option \"$ch\""; __tartify_usage; return 1 ;;
+        #TODO: make that issue ansi escapes (PS1 and standard mode)
+        \\) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch$__NN_;;
         #TODO: make that work with PS1 and NOCOLORS
         *) tartAnswer=$tartAnswer$TARTIFY_COLOR_DELIMITER$ch$__NN_;;
       esac
