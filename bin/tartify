@@ -1144,36 +1144,58 @@ tartify()
 
     local separator
 
-    # -- MODES --
-    # No Colors MODE : strip all color info, whatever the result
-    [[ "$argstr" =~ c ]] && {
-        nocolors="true"
-    }
-    # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
-    [[ "$argstr" =~ v ]] && {
-        nocolors="true"
-        mode="VIM"
-        # don't fucking change that:
-        separator="vimsplitsep"
-    }
-    # OldSchool MODE : no color, branch results with $*+, stash results with %
-    [[ "$argstr" =~ o ]] && {
-        #separator=" "
-        nocolors="true"
-        mode="OLDSCHOOL"
-    }
-    # Quiet mode (only update the __TART4PS1* variables)
-    [[ "$argstr" =~ q ]] && {
-        mode="QUIET"
-    }
-    # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
-    [[ "$argstr" =~ p ]] && {
-        mode="PS1"
-    }
 
-    # -- PARSE remaining args --
-    local tartAnswer=""
+    # REGEX TESTS
+    #POSIX WAY (2ms   average) : expr $argstr : '.*c'  >/dev/null 2>&1 && {
+    #BASH  WAY (0.4ms average) : [[ "$argstr" =~ c ]] && {
+
+
     local i
+    #
+    # PRE-PARSING (modes)
+    #
+    for ((i=0;i<${#argstr};i++))
+    do
+      local ch=${argstr:$i:1}
+      case $ch in
+
+        # -- MODES --
+
+        # No Colors MODE : strip all color info, whatever the result
+        c)  nocolors="true"         ;;
+        # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
+        v)
+          nocolors="true"
+          mode="VIM"
+          # don't fucking change that:
+          separator="vimsplitsep"
+                                    ;;
+        # OldSchool MODE : no color, branch results with $*+, stash results with %
+        o)
+          #separator=" "
+          nocolors="true"
+          mode="OLDSCHOOL"
+                                    ;;
+        # Quiet mode (only update the __TART4PS1* variables)
+        q) mode="QUIET"             ;;
+        # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
+        p) mode="PS1"               ;;
+        # SUCCINT (SHORT) mode
+        i) mode="SHORT"             ;;
+        # CHATTERBOX (LOOONG) mode
+        a) mode="LONG"              ;;
+
+        # -- MODAL ARGS --
+
+        u|U) processupstream="true" ;;
+        r|R) processremotes="true"  ;;
+
+      esac
+    done
+    #
+    # ARGUMENTS
+    #
+    local tartAnswer=""
     for ((i=0;i<${#argstr};i++))
     do
       local ch=${argstr:$i:1}
