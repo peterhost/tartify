@@ -996,24 +996,24 @@ __tartify_build_PS1() {
         ;;
       b)
         #BRANCH
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_tU'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_tuSr'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_tRA'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_tRD'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_tRI'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_tRO'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_tRN'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_turS'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_tU'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_tuSr'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_tRA'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_tRD'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_tRI'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_tRO'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_tRN'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_turS'
 
-        printf "%s" $PS1str'\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_TU'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TuSr'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_TRA'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_TRD'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_TRI'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_TRO'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_TRN'
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TurS'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_TU'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TuSr'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_TRA'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_TRD'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_TRI'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_TRO'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_TRN'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TurS'
         printf "%s" '\['$__NN_'\]'
         ;;
       r)
@@ -1021,6 +1021,10 @@ __tartify_build_PS1() {
       u)
         ;;
       s)
+        printf "%s" '\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_STASH_NOCOUNT'\]$__t4_st'
+        printf "%s" '\['$TARTIFY_COLOR_STASH_COUNT'\]$__t4_ST'
+        printf "%s" '\['$__NN_'\]'
         ;;
       l)
         ;;
@@ -1040,9 +1044,9 @@ __tartify_build_PS1() {
       #*) printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'$ch'\['$__NN_'\]';;
       *)
         [ " " = "$ch" ] && {
-          printf "%s" $PS1str'\['$TARTIFY_COLOR_MISC_DELIMITER'\]'" "'\['$__NN_'\]'
+          printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'" "'\['$__NN_'\]'
         } || {
-        printf "%s" $PS1str'\['$TARTIFY_COLOR_MISC_DELIMITER'\]'$ch'\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'$ch'\['$__NN_'\]'
       }
         ;;
     esac
@@ -1488,16 +1492,11 @@ __tartify_stash()
   [ "OLDSCHOOL" = "$mode" ] && return 0
   [ "QUIET" = "$mode" ]     && __tartify_reset_PS1_globs "STASH"
 
-  #local _hasstash=$1
-  #local _isinsideworktree=$2   #TRUE if inside working dir
-  #local _mode=$3
-  #local _nocolors=$4           #TRUE for no color
   local color
   local nocolor
   #? are we inside a GIT repo's working tree
-  #TODO: redundant test
   if [ "true" = "$isinsideworktree" ]; then
-    if [ "true" = "$_hasstash" ]; then
+    if [ "true" = "$hasstash" ]; then
       if [ -n "$TARTIFY_SETTING_COUNTSTASHES" ]; then
         # One star per stash
         color=$TARTIFY_COLOR_STASH_COUNT
@@ -1509,14 +1508,14 @@ __tartify_stash()
           nocolor=$nocolor$TARTIFY_STRING_STASH
         done
         #nocolor=$nocolor" "
+        [ "QUIET" = "$mode" ] && __t4_ST=$nocolor
       else
         color=$TARTIFY_COLOR_STASH_NOCOUNT
         nocolor=$TARTIFY_STRING_STASH
+        [ "QUIET" = "$mode" ] && __t4_st=$nocolor
       fi
       color=$color$nocolor${__NN_}
-
     fi
-
     [ "true" = $nocolors ] &&   tartanswer=$tartanswer$nocolor || tartanswer=$tartanswer$color
   fi
 }
@@ -1712,24 +1711,21 @@ tartify()
         n)
           tartanswer=$tartanswer$separator
           __tartify_repo_name
-          #echo $__Y_"afterwards, [REPONAME] tartanswer=$tartanswer"$__NN_
           ;;
-        #b) tartanswer=$tartanswer$separator$( __tartify_branch    $g $isbare $hasstash $isinsideworktree $mode $nocolors);;
         b)
           tartanswer=$tartanswer$separator
           __tartify_branch
-          #echo "afterwards, [BRANCH] tartanswer=$tartanswer"
         ;;
-        #b) echo "mode(prebranch)=$mode , argstr=$argstr"; tartanswer=$tartanswer$separator$(__tartify_branch);;
         #r) tartanswer=$tartanswer$separator$( __tartify_remote    $g                                           $nocolors);;
+        #TODO:
         r) tartanswer=$tartanswer$separator$( __tartify_remote2 );;
         #TODO:
         #u) tartanswer=$tartanswer$separator$( __tartify_remote    $g                                           $nocolors);;
-
         s)
           tartanswer=$tartanswer$separator
           __tartify_stash
         ;;
+        #TODO:
         l) tartanswer=$tartanswer$separator$( __tartify_timelastcommit                                              $nocolors);;
         c) ;;
         o) ;;
