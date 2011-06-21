@@ -420,7 +420,11 @@ __tartify_reset_PS1_globs(){
   #fi
 
   #ANYTIME
-  __t4_del=$__DEL_
+  #__t4_del=$__DEL_
+
+  #NOTA : all variables named __t4_D*, where * is one or more numbers
+  #       are dynamically generated a `tartify q' evaluation time
+  #       (reserved variables for delimiters)
 
 
 }
@@ -996,6 +1000,7 @@ __tartify_build_PS1() {
   }
 
   local firstn="true" #don't insert dynamic separator ($__t4_sep*) before first item
+  local delimNb=0     #delimiter's position
   for ((n=0;n<${#argstr};n++))
   do
     local ch=${argstr:$n:1}
@@ -1064,11 +1069,9 @@ __tartify_build_PS1() {
       #TODO: make that work with PS1 and NOCOLORS
       #*) printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'$ch'\['$__NN_'\]';;
       *)
-        [ " " = "$ch" ] && {
-          printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'" "'\[$__t4_del\]''\['$__NN_'\]'
-        } || {
-        printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'$ch'\[$__t4_del\]''\['$__NN_'\]'
-      }
+
+        printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]$__t4_D'$delimNb'\['$__NN_'\]'
+        delimNb=$((delimNb + 1))
         ;;
     esac
     unset firstn
@@ -1733,7 +1736,7 @@ tartify()
         # Quiet mode (only update the __TART4PS1* variables)
         # ($tartanswer is discarded)
         q) mode="QUIET"
-           __t4_del=$__NN_
+           #__t4_del=$__NN_
                                     ;;
 
         # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
@@ -1771,6 +1774,7 @@ tartify()
     # PROCESSING
     #
     local firstn="true" #don't insert separator before first item
+    local delimNb=0     #delimiter's position
     tartanswer=""
     for ((n=0;n<${#argstr};n++))
     do
@@ -1808,7 +1812,14 @@ tartify()
         #TODO: make that issue ansi escapes (PS1 and standard mode)
         \\) tartanswer=$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_;;
         #TODO: make that work with PS1 and NOCOLORS
-        *) tartanswer=$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_;;
+        *)
+          tartanswer=$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_
+
+          if [ "QUIET" = $mode ]; then
+            [ " " = "$ch" ] && eval "__t4_D$delimNb=\" \"" || eval "__t4_D$delimNb=\"$ch\""
+          fi
+          delimNb=$((delimNb + 1))
+          ;;
       esac
       unset firstn
     done
