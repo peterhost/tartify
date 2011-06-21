@@ -342,36 +342,6 @@ __tartify_define_colors_TPUT() {
 }
 
 
-#__tartify_init_PS1_globs_EXPORT(){
-
-#  # BRANCH
-#      export __t4_tU="";    export __t4_tuSr="";  export __t4_tRA="";
-#      export __t4_tRD="";   export __t4_tRI="";   export __t4_tRO="";
-#      export __t4_tRN="";   export __t4_turS="";  export __t4_TU="";
-#      export __t4_TuSr="";  export __t4_TRA="";   export __t4_TRD="";
-#      export __t4_TRI="";   export __t4_TRO="";   export __t4_TRN="";
-#      export __t4_TurS="";
-
-
-#}
-
-
-#__tartify_init_PS1_globs(){
-
-#  # BRANCH
-#      __t4_tU="";    __t4_tuSr="";  __t4_tRA="";
-#      __t4_tRD="";   __t4_tRI="";   __t4_tRO="";
-#      __t4_tRN="";   __t4_turS="";  __t4_TU="";
-#      __t4_TuSr="";  __t4_TRA="";   __t4_TRD="";
-#      __t4_TRI="";   __t4_TRO="";   __t4_TRN="";
-#      __t4_TurS="";
-
-#  # STASH
-#     __t4_st="";    __t4_ST="";
-
-#}
-
-
 #__tartify_list_PS1_globs(){
 
 #  # BRANCH
@@ -388,6 +358,12 @@ __tartify_define_colors_TPUT() {
 
 
 __tartify_reset_PS1_globs(){
+
+  # REPOSITORY NAME
+  if [ "REPO" = "$1" ] ||  [ "ALL" = "$1" ]; then
+     __t4_rep=""   # repo name
+    __t4_sepN=""   # dynamic separator for repo name
+  fi
 
   # BRANCH
   if [ "BRANCH" = "$1" ] ||  [ "ALL" = "$1" ]; then
@@ -416,30 +392,53 @@ __tartify_reset_PS1_globs(){
       __t4_TRN=""  #UNtracked  remote None
       __t4_TurS="" #UNtracked  Staged                (rem-before-stag
 
+     __t4_sepB=""  # dynamic separator for branch
   fi
 
 
+  #REMOTE
+  if [ "STASH" = "$1" ] ||  [ "ALL" = "$1" ]; then
+    __t4_sepR=""   # dynamic separator for remotes
+  fi
+
+
+  #STASH
   if [ "STASH" = "$1" ] ||  [ "ALL" = "$1" ]; then
      __t4_st=""   # stash nocount
      __t4_ST=""   # stash count
+   __t4_sepS=""   # dynamic separator for stashes
   fi
+
+  #LAST COMMIT
+  if [ "LAST" = "$1" ] ||  [ "ALL" = "$1" ]; then
+    __t4_sepL=""   # dynamic separator for time-last-commit
+  fi
+
+  #if [ "ALL" = "$1" ]; then
+  #fi
+
 
 }
 
 
 __tartify_init_globs(){
-# TARTIFY PARAMETERS : adapt to your needs
+
+# Internal
 TARTIFY_PS1_OPTION_SET=""
+TARTIFY_PROMPT_COMMAND_SET=""
 
-# // OVERWRITE
+# External TARTIFY PARAMETERS : adapt to your needs
 
-export TARTIFY_SETTING_FORCE=""                         # a string containing tartify command-line params. If non empty, will
+# // GLOBAL
+
+export TARTIFY_SETTING_FORCE=""                         # A string containing tartify command-line params. If non empty, will
                                                         # overwrite any arguments the tartify command receives
+export TARTIFY_STRING_SEPARATOR=""                      # Default separator to be used with mono-character options (tartify 
 
 # // TIME
-export TARTIFY_SETTING_TIME_BUGME=TRUE                  # non empty : will color and style the 'time since last commit' string
+export TARTIFY_SETTING_TIME_BUGME=TRUE                  # Non empty : will color and style the 'time since last commit' string
 export TARTIFY_SETTING_TIME_DISPLAY=LONG                # LONG (min, hours, days) SHORT (mine | hours | days) CHAR (cf. next var)
-export TARTIFY_STRING_TIME_DISPLAY="⟳ "                 # string to display in case prec. var == CHAR
+export TARTIFY_STRING_TIME_DISPLAY="⟳ "                 # String to display in case prec. var == CHAR
 
                                                         # Uncommited changes (staged, unstaged)
 export TARTIFY_SETTING_TIME_COULDCOMMIT=3600            #     *     nb seconds after which you COULD  commit
@@ -899,6 +898,7 @@ __tartify_usage(){
       ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update variables, no output
       ${__Y_}o${__NN_}       ${__EMY_}o${__NN_}ldschool  __git_ps1 mode
       ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
+      ${__Y_}P${__NN_}       ${__EMY_}P${__NN_}s1 mode   same, but also generate PROMPT_COMMAND
       ${__Y_}v${__NN_}       ${__EMY_}v${__NN_}im mode   result formated for the Vim tartify plugin
                          (color info appended to result)
 
@@ -982,20 +982,37 @@ __tartify_show_env() {
 
 
 __tartify_build_PS1() {
+  #WARN: this is called from within the PS1 string, hence we're in a
+  #      subshell -> no exporting
 
   local argstr="$*"
-  export TARTIFY_PS1_OPTION_SET=${argstr//p/q}  #Important : the quiet mode will update these options, (or all if this variable is empty or unset)
+  TARTIFY_PS1_OPTION_SET=${argstr//P/q}  #Important : the quiet mode will update these options, (or all if this variable is empty or unset)
+  TARTIFY_PS1_OPTION_SET=${argstr//p/q}  #Important : the quiet mode will update these options, (or all if this variable is empty or unset)
+  export TARTIFY_PS1_OPTION_SET=${TARTIFY_PS1_OPTION_SET//P/q}  #Important : the quiet mode will update these options, (or all if this variable is empty or unset)
   #TODO: this test shouldn't be necessary, remove it in the end
   [[ "$TARTIFY_PS1_OPTION_SET" =~ q ]] || $TARTIFY_PS1_OPTION_SET=$TARTIFY_PS1_OPTION_SET"q"
 
+
+  #force dynamic separator if need be
+  [ -z "$forceDefaultSep" ] || {
+    separator=$TARTIFY_STRING_SEPARATOR
+    [ -z $separator ] && separator=' '
+  }
+
+  local firstn="true" #don't insert dynamic separator ($__t4_sep*) before first item
   for ((n=0;n<${#argstr};n++))
   do
     local ch=${argstr:$n:1}
     case $ch in
       n)
+        #REPO NAME
+        [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepN'
+        printf "%s" '\['$TARTIFY_COLOR_REPO_NAME'\]$__t4_rep'
+
         ;;
       b)
         #BRANCH
+        [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepB'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_tU'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_tuSr'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_tRA'
@@ -1017,16 +1034,24 @@ __tartify_build_PS1() {
         printf "%s" '\['$__NN_'\]'
         ;;
       r)
+        #REMOTES
+        [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepR'
         ;;
       u)
+        #UPSTREAM ONLY
+        [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepR'
         ;;
       s)
+        #STASHES
+        [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepS'
         printf "%s" '\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_STASH_NOCOUNT'\]$__t4_st'
         printf "%s" '\['$TARTIFY_COLOR_STASH_COUNT'\]$__t4_ST'
         printf "%s" '\['$__NN_'\]'
         ;;
       l)
+        #LAST COMMIT
+        [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepL'
         ;;
       c) ;;
       o) ;;
@@ -1050,6 +1075,7 @@ __tartify_build_PS1() {
       }
         ;;
     esac
+    unset firstn
   done
 
 
@@ -1057,6 +1083,42 @@ __tartify_build_PS1() {
 
   #TODO: newline insertion
 
+
+}
+
+
+__tartify_augment_prompt_command() {
+  # build a function (or augment existing one) 
+  # and assign it to PROMPT_COMMAND
+  # TODO: make that ZSH compatible
+
+  # Create default PROMPT_COMMAND function
+  eval "__tartify_prompt_command(){ tartify \"\$TARTIFY_PS1_OPTION_SET\"; };
+        export -f __tartify_prompt_command;"
+
+  # Yank current definition of $PROMPT_COMMAND (if any)
+  # TODO: this is not portable outside of Bash
+  #
+  #                                          remove                         remove
+  #                                          "...is a function"             trailing "}"
+  local minusLast2=$(type  $PROMPT_COMMAND | tail -n +2        |  tail -r | tail -n +2)
+  local last2lines=$(printf '%s\n %s\n ' '}' '  tartify "$TARTIFY_PS1_OPTION_SET"' )
+
+  # $PROMPT_COMMAND already defined and is a valid function name
+  if [ ! -z "${PROMPT_COMMAND:-}" ]  &&  type $PROMPT_COMMAND >/dev/null 2>&1; then
+    #but not already augmented
+    if ! type $PROMPT_COMMAND | tail -n +3 | grep "TARTIFY_PS1_OPTION_SET" >/dev/null 2>&1; then
+      eval "$(echo -n  "$last2lines$minusLast2" | tail -r )"
+    #already augmented
+    else
+      return 0
+    fi
+  #default
+  else
+    export PROMPT_COMMAND="__tartify_prompt_command"
+  fi
+
+  export TARTIFY_PROMPT_COMMAND_SET="true"
 
 }
 
@@ -1139,6 +1201,7 @@ __tartify_reformat_timestamp(){
 
 __tartify_repo_name()
 {
+  [ "QUIET" = "$mode" ]     && __tartify_reset_PS1_globs "REPO"
   local updir=""
   [ $isbare = "false" ] && updir="/.." #don't go 1 level up for bare repo
   local color
@@ -1150,6 +1213,7 @@ __tartify_repo_name()
   color=$color$nocolor
   color=$color"${__NN_}"
 
+  [ "QUIET" = "$mode" ] && { __t4_rep=$nocolor; [ -z $__t4_rep ] || __t4_sepN=$separator; }
   [ "true" = $nocolors ] &&   tartanswer=$tartanswer$nocolor || tartanswer=$tartanswer$color
   #[ "true" = $nocolors ] &&   echo "nocolors true" || echo "nocolors false"
   #echo " [REPONAME before leaving] nocolor=$nocolor tartanswer=$tartanswer"
@@ -1375,6 +1439,8 @@ __tartify_branch(){
       fi
 
       [ "NORMAL" = "$mode" ] && tartanswer=$tartanswer$c$res1$res2$res3$r$__NN_
+      #dynamic separator in QUIET mode
+      [ "QUIET" = "$mode" ] && [ ! -z $bname ] && __t4_sepB=$separator
 
     ;;
 
@@ -1556,20 +1622,23 @@ __tartify_timelastcommit(){
 tartify()
 {
   local argstr="$*"
+  local forceDefaultSep=""
 
   # (optionnal) argument expansion
   #TODO: these tests suck
   [ "$argstr"  = "w" ] && argstr="nbrslw"                           #newline after
   [ "$argstr"  = "W" ] && argstr="nbrslW"                           #newline before
   [ "$argstr" = "Ww" ] || [ "$argstr" = "wW" ] && argstr="nbrslwW"  #newline BOTH
-  [ "$argstr"  = "o" ] && argstr="obsr"                             #oldschool
-  [ "$argstr"  = "v" ] && argstr="vnbrsl"                           #vim
-  [ "$argstr"  = "p" ] && argstr="pnbrsl"                           #PS1
-  [ "$argstr"  = "q" ] && {
+  #expand some mono-character options
+  [ "$argstr"  = "o" ] && { argstr="obsr";   forceDefaultSep=true ; }      #oldschool
+  [ "$argstr"  = "v" ] && { argstr="vnbrsl";                   }      #vim
+  [ "$argstr"  = "p" ] && { argstr="pnbrsl"; forceDefaultSep=true ; }      #PS1
+  [ "$argstr"  = "P" ] && { argstr="Pnbrsl"; forceDefaultSep=true ; }      #PS1
+  [ "$argstr"  = "q" ] && {                                         #QUIET mode
+    #TODO: is this necessary ?
     [ -z $TARTIFY_PS1_OPTION_SET ] && argstr="qnbrsl" || argstr=$TARTIFY_PS1_OPTION_SET
-  }                                                                 #QUIET mode
-  [ ${#argstr} -eq 0 ] && argstr="nbrsl"                             #no args
-  #TODO: VIRER!!!!!!
+  }
+  [ ${#argstr} -eq 0 ] && { argstr="nbrsl";                         }      #no args
 
 
   # -- PARSE help options and exit --
@@ -1581,6 +1650,11 @@ tartify()
   # PS1 building (done here because it has to work wether wether we're
   # in a GIT dir or not
   [[ "$argstr" =~ p ]] && { __tartify_build_PS1 $argstr; return 0; }
+  [[ "$argstr" =~ P ]] && {
+      __tartify_build_PS1 $argstr
+      [ -z "$TARTIFY_PROMPT_COMMAND_SET" ] && __tartify_augment_prompt_command
+      return 0
+    }
 
   # Override args with $TARTIFY_SETTING_FORCE if non empty
   [ -n "$TARTIFY_SETTING_FORCE" ] && argstr=$TARTIFY_SETTING_FORCE
@@ -1637,7 +1711,12 @@ tartify()
 
 
 
-    local separator
+    local separator=""
+    #force default separator if need be
+    [ -z "$forceDefaultSep" ] || {
+      separator=$TARTIFY_STRING_SEPARATOR
+      [ -z $separator ] && separator=' '
+    }
 
     local n
     #
@@ -1652,7 +1731,7 @@ tartify()
 
         # No Colors MODE : strip all color info, whatever the result
         c)  nocolors="true"         ;;
-        # Vim MODE : no color, prepend color infos for 'branch', use '#' as separator
+        # Vim MODE : no color, prepend color infos for 'branch', use 'vimsplitsep' as separator
         v)
           nocolors="true"
           mode="VIM"
@@ -1661,11 +1740,11 @@ tartify()
                                     ;;
         # OldSchool MODE : no color, branch results with $*+, stash results with %
         o)
-          #separator=" "
           nocolors="true"
           mode="OLDSCHOOL"
                                     ;;
         # Quiet mode (only update the __TART4PS1* variables)
+        # ($tartanswer is discarded)
         q) mode="QUIET"             ;;
 
         # PS1 mode (ansi color codes escaped with '\[' and '\]' for PS1
@@ -1702,34 +1781,35 @@ tartify()
     #
     # PROCESSING
     #
+    local firstn="true" #don't insert separator before first item
     tartanswer=""
     for ((n=0;n<${#argstr};n++))
     do
+      [ -z $firstn ] && [ ! -z "$separator" ] && tartanswer=$tartanswer$separator
+
       local ch=${argstr:$n:1}
       case $ch in
-        #n) tartanswer=$tartanswer$separator$( __tartify_repo_name $g $isbare                                   $nocolors);;
+        #n) tartanswer=$tartanswer$( __tartify_repo_name $g $isbare                                   $nocolors);;
         n)
-          tartanswer=$tartanswer$separator
           __tartify_repo_name
           ;;
         b)
-          tartanswer=$tartanswer$separator
           __tartify_branch
         ;;
-        #r) tartanswer=$tartanswer$separator$( __tartify_remote    $g                                           $nocolors);;
+        #r) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
         #TODO:
-        r) tartanswer=$tartanswer$separator$( __tartify_remote2 );;
+        r) tartanswer=$tartanswer$( __tartify_remote2 );;
         #TODO:
-        #u) tartanswer=$tartanswer$separator$( __tartify_remote    $g                                           $nocolors);;
+        #u) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
         s)
-          tartanswer=$tartanswer$separator
           __tartify_stash
         ;;
         #TODO:
-        l) tartanswer=$tartanswer$separator$( __tartify_timelastcommit                                              $nocolors);;
+        l) tartanswer=$tartanswer$( __tartify_timelastcommit                                              $nocolors);;
         c) ;;
         o) ;;
         p) ;;
+        P) ;;
         i) ;;
         a) ;;
         q) ;;
@@ -1742,6 +1822,7 @@ tartify()
         #TODO: make that work with PS1 and NOCOLORS
         *) tartanswer=$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_;;
       esac
+      unset firstn
     done
 
     # Post Process
