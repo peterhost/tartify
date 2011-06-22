@@ -341,6 +341,9 @@ __tartify_define_colors_TPUT() {
   export __EMM_=$__EM_$__M_                                          # [ 1;    25m         SET   FG color to BOLD MAGENTA
   export __EMC_=$__EM_$__C_                                          # [ 1;    26m         SET   FG color to BOLD CYAN
   export __EMW_=$__EM_$__W_                                          # [ 1;    27m         SET   FG color to BOLD RED
+
+  #MISC (non color)
+  export __NL_=$( tput cud1 )
 }
 
 
@@ -416,16 +419,16 @@ __tartify_reset_PS1_globs(){
     __t4_sepL=""   # dynamic separator for time-last-commit
   fi
 
-  #if [ "ALL" = "$1" ]; then
-  #fi
-
-  #ANYTIME
-  #__t4_del=$__DEL_
 
   #NOTA : all variables named __t4_D*, where * is one or more numbers
   #       are dynamically generated a `tartify q' evaluation time
   #       (reserved variables for delimiters)
-
+  if [ "ALL" = "$1" ]; then
+    #clear __t4_D* variables
+    for ((n=0;n<100;n++)); do eval "__t4_D$n=" ; done;
+    __t4_newline_before=""
+    __t4_newline_after=""
+  fi
 
 }
 
@@ -993,11 +996,18 @@ __tartify_build_PS1() {
   #      subshell -> no exporting
   local argstr="$*"
 
+  local before=""
+  local after=""
+
   #force dynamic separator if need be
   [ -z "$forceDefaultSep" ] || {
     separator=$TARTIFY_STRING_SEPARATOR
     [ -z $separator ] && separator=' '
   }
+
+
+
+  [[ "$argstr" =~ W ]] && printf "%s" '$__t4_newline_before'
 
   local firstn="true" #don't insert dynamic separator ($__t4_sep*) before first item
   local delimNb=0     #delimiter's position
@@ -1069,7 +1079,8 @@ __tartify_build_PS1() {
       #TODO: make that work with PS1 and NOCOLORS
       #*) printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]'$ch'\['$__NN_'\]';;
       *)
-
+        #Delimiters will be generated and stored dynamically in __t4_D* variables for each
+        #call of 'tartify q'
         printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]$__t4_D'$delimNb'\['$__NN_'\]'
         delimNb=$((delimNb + 1))
         ;;
@@ -1079,6 +1090,8 @@ __tartify_build_PS1() {
 
 
   printf "%s" '\['$__NN_'\]'
+
+  [[ "$argstr" =~ w ]] && printf "%s" '$__t4_newline_after'
 
   #TODO: newline insertion
 
@@ -1829,19 +1842,31 @@ tartify()
     [ "$mode" = "VIM" ] && tartanswer=${tartanswer/#vimsplitsep/}
 
     # -- OUTPUT --
-    [ "QUIET" = "$mode" ] && return 0
 
     # TODO: this test sucks (time lost in subshell)
     # remove ansi escapes
     local testforblank=$(echo  $tartanswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
     testforblank=${testforblank/ //}
 
+    #[ "QUIET" = "$mode" ] && return 0
+    if [ "QUIET" = "$mode" ]; then
+      [ ${#testforblank} != 0 ] && {
+        [[ "$argstr" =~ W ]] &&  __t4_newline_before=$(echo -ne "\n ")
+        [[ "$argstr" =~ w ]] &&  __t4_newline_after=$(echo -ne "\n ")
+      }
+      return 0
+    fi
+
     #TODO: 'w' newline insertion can happen anywhere, 'W' only at BOL
     # only do something if answer is not empty
     [ ${#testforblank} != 0 ] && {
-      [[ "$argstr" =~ W ]] && echo -ne "\n" # linebreak before
+      [[ "$argstr" =~ W ]] && {
+        echo -ne "\n" # linebreak before
+      }
       echo -ne $tartanswer
-      [[ "$argstr" =~ w ]] && echo -ne "\n" # linebreak after
+      [[ "$argstr" =~ w ]] && {
+        echo -ne "\n" # linebreak after
+      }
     }
   } || __tartify_reset_PS1_globs ALL
   return 0
