@@ -87,6 +87,18 @@
 #   The 'w' option to tartify issues a newline if the contents of \`tartify\`
 #   is not an empty string.
 #
+#   Inside PS1, it will work too at the cost of inserting an extra
+#   whitespace after the newline (otherwise the newline will be striped)
+#
+#
+#      ALMOST WORKS :
+#      PS1='$(echo -ne "\n ")\[$(tput kbs)$\] '
+#
+#      INDENTATION
+#      PS1='\[$(tput sc)\]\[\033[60C (`date "+%a, %b %d"`)\]\[$(tput rc)\]'
+#
+#
+#
 #   * Line Wrapping Calculation
 #
 #     The one thing (that I know of) which confuse line wrapping (when browsing
@@ -1631,6 +1643,7 @@ __tartify_timelastcommit(){
 #
 #------------------------------------------------------------------------------
 
+#TODO: add a RV (reverse) option (or theme)
 tartify()
 {
   local argstr="$*"
@@ -1845,6 +1858,7 @@ tartify()
 
     # TODO: this test sucks (time lost in subshell)
     # remove ansi escapes
+    # TODO: Make that linux compatible (sed -E is bsd)
     local testforblank=$(echo  $tartanswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
     testforblank=${testforblank/ //}
 
