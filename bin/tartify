@@ -72,7 +72,8 @@
 #   * conditionnal newline : there is no such thing in a prompt. Either a
 #   newline is hardcoded in the prompt, or it's not. All linebreak(s) inserted
 #   by an external command called in the PS1 variable via "$(command)" are
-#   stripped out when $PS1 is evaluated.
+#   stripped out when $PS1 is evaluated. With the exception of a newline
+#   followed by something (see ISSUE below)
 #
 #   Solution: if you need a multiline prompt, with the 'tartify' line only
 #   inserted if you're being in a 'git' repository, consider using a
@@ -87,7 +88,7 @@
 #   The 'w' option to tartify issues a newline if the contents of \`tartify\`
 #   is not an empty string.
 #
-#   Inside PS1, it will work too at the cost of inserting an extra
+#   ISSUE: Inside PS1, it will work too at the cost of inserting an extra
 #   whitespace after the newline (otherwise the newline will be striped)
 #
 #
@@ -447,8 +448,8 @@ __tartify_reset_PS1_globs(){
 
 __tartify_init_globs(){
 
-# Internal
-TARTIFY_PROMPT_COMMAND_SET=""
+# Internal (RESERVED)
+
 
 # External TARTIFY PARAMETERS : adapt to your needs
 
@@ -911,8 +912,8 @@ __tartify_usage(){
 
       ${__Y_}[Modifiers]${__NN_} ${__EM_}                 ${__NN_}
 
-      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor    strip all colors
-      ${__Y_}t${__NN_}       no ups${__EMY_}t${__NN_}ream in branch
+      ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor      strip all colors
+      ${__Y_}t${__NN_}       no ups${__EMY_}t${__NN_}ream  in branch
 
       ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
 
@@ -924,6 +925,14 @@ __tartify_usage(){
       ${__Y_}v${__NN_}       ${__EMY_}v${__NN_}im mode   result formated for the Vim tartify plugin
                          (color info appended to result)
 
+      ${__Y_}number${__NN_}  menu mode  display result as menu
+                         (number indicates menu position)
+
+              ┌─────────────┐
+              │${__EMY_}1/4 ${__NN_} ${__EMY_}2/5${__NN_}  ${__EMY_}3/6${__NN_}│
+              │${__EMY_}  ${__NN_}    ${__EMY_} ${__NN_}     ${__EMY_} ${__NN_}│
+              │${__EMY_}  ${__NN_}    ${__EMY_}9${__NN_}     ${__EMY_}0${__NN_}│
+              └─────────────┘
 
       ${__Y_}[Help]${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
@@ -1086,6 +1095,7 @@ __tartify_build_PS1() {
       v) ;;
       w) ;;
       W) ;;
+      0 | 1 | 2 | 3 | 4 | 5 | 6 | 9 ) ;;
       #TODO: make that issue ansi escapes (PS1 and standard mode)
       \\) ;;
       #TODO: make that work with PS1 and NOCOLORS
@@ -1145,6 +1155,103 @@ __tartify_build_PS1() {
 #  export TARTIFY_PROMPT_COMMAND_SET="true"
 
 #}
+
+__tartify_popup ()
+{
+
+  #  position the 'tartify()' result on the screen
+  #   ┌───────────────┐
+  #   │1      2      3│
+  #   │4      5      6│
+  #   │               │
+  #   │               │
+  #   │               │
+  #   │       9      0│
+  #   └───────────────┘
+
+  #TODO: next test is not necessary
+  #[ -z "$menuPos" ] && menuPos="3" #default : top right corner
+
+
+  #result=$(tartify "n/b - l");
+  local border=$__NN_$__B_;
+  tput sc;
+  if [ -z "$tartanswer" ]; then
+    :;
+  else
+    local stripansi=$(echo $tartanswer | perl -pe 's/\e\[?.*?[\@-~]//g');
+    local resLength=$((${#stripansi} + 4));
+    local menuBorder=$(echo $stripansi"  " | tr "[:print:]" '─');
+    local menuBlank=$(echo $stripansi"  " | tr "[:print:]" ' ');
+    local firstC=
+    local firstL=
+    local oneliner=
+    local additLines=
+    local sttysize=
+    local nlines=
+    local ncol=
+
+    sttysize=$(stty size 2>/dev/null)
+    [ $? -eq 0 ]  && {
+      nlines=${sttysize%% *}
+      ncol=${sttysize##* }
+    } || {
+      nlines=$(tput lines);
+      ncol=$(tput cols);
+    }
+
+
+    case $menuPos in
+      #0) firstL=$(( $nlines / 2 )); firstC=$(( ($ncol - $resLength)/2 ));;
+      #1) firstL=0                 ; firstC=0                            ;;
+      #2) firstL=0                 ; firstC=$(( ($ncol - $resLength)/2 ));;
+      #3) firstL=0                 ; firstC=$(( $ncol - $resLength ))    ;;
+      #4) firstL=$(( $nlines / 2 )); firstC=0                            ;;
+      #5) firstL=$(( $nlines / 2 )); firstC=$(( $ncol - $resLength ))    ;;
+      #6) firstL=$(( $nlines - 5 )); firstC=0                            ;;
+      #7) firstL=$(( $nlines - 4 )); firstC=$(( ($ncol - $resLength)/2 ));;
+      #8) firstL=$(( $nlines - 4 )); firstC=$(( $ncol - $resLength ))    ;;
+
+      1) firstL=0                 ; firstC=0                            ;;
+      2) firstL=0                 ; firstC=$(( ($ncol - $resLength)/2 ));;
+      3) firstL=0                 ; firstC=$(( $ncol - $resLength ))    ;;
+      4) firstL=1                 ; firstC=0                            ; additLines=1;;
+      5) firstL=1                 ; firstC=$(( ($ncol - $resLength)/2 )); additLines=1;;
+      6) firstL=1                 ; firstC=$(( $ncol - $resLength ))    ; additLines=1;;
+      9) firstL=$(( $nlines - 1 )); firstC=$(( ($ncol - $resLength)/2 )); oneliner="true";;
+      0) firstL=$(( $nlines - 1 )); firstC=$(( $ncol - $resLength ))    ; oneliner="true" ;;
+
+    esac
+
+    [ 2 -le $additLines ] && {
+    tput cup $(($firstL - 2)) $firstC;
+      echo $__NN_" "$menuBlank" ";
+    }
+
+    [ 1 -le $additLines ] && {
+    tput cup $(($firstL - 1)) $firstC;
+      echo $__NN_" "$menuBlank" ";
+    }
+
+    [ "true" = "$oneliner" ] || {
+      tput cup $firstL $firstC;
+      echo $border"┌"$menuBorder"┐"$__NN_;
+    }
+
+    tput cup $(($firstL + 1)) $firstC;
+    echo -e $border"│"$__NN_" "$tartanswer" "$border"│"$__NN_;
+
+    [ "true" = "$oneliner" ] || {
+      tput cup $(($firstL + 2)) $firstC;
+      echo $border"└"$menuBorder"┘"$__NN_;
+    }
+
+    tput rc;
+    #echo "stty-size=$(stty size) - nlines=$nlines ($(tput lines)) - ncol=$ncol ($(tput cols)) - firstL=$firstL - firstC=$firstC - resLength=$resLength - stripansi=$stripansi - menuBorder=["$menuBorder"]"
+  fi;
+  #echo "nlines=$nlines - ncol=$ncol - firstL=$firstL - firstC=$firstC - resLength=$resLength - stripansi=$stripansi - menuBorder=["$menuBorder"]"
+  #stty size
+}
 
 
 __tartify_reformat_timestamp(){
@@ -1284,7 +1391,6 @@ __tartify_branch(){
   #     TOTO=2
   #     TATA=TO
   #     TITI=$(eval "printf "%s" "\$${TATA}TO"")
-
   case $mode in
 
     OLDSCHOOL)
@@ -1342,7 +1448,8 @@ __tartify_branch(){
     #__t4_TRN=""  #UNtracked  remote None
     #__t4_TurS="" #UNtracked  Staged                (rem-before-stag
 
-    NORMAL | QUIET)
+    #TODO: *) would be better
+    NORMAL | QUIET | SHORT | LONG)
       local bname=${b##refs/heads/}
       local bnameL=${#bname}
 
@@ -1462,9 +1569,11 @@ __tartify_branch(){
           }
       fi
 
-      [ "NORMAL" = "$mode" ] && tartanswer=$tartanswer$c$res1$res2$res3$r$__NN_
       #dynamic separator in QUIET mode
       [ "QUIET" = "$mode" ] && [ ! -z $bname ] && __t4_sepB=$separator
+
+      # All Modes
+      tartanswer=$tartanswer$c$res1$res2$res3$r$__NN_
 
     ;;
 
@@ -1643,9 +1752,10 @@ __tartify_timelastcommit(){
 #
 #------------------------------------------------------------------------------
 
-#TODO: add a RV (reverse) option (or theme)
 tartify()
 {
+
+#TODO: add a RV (reverse) option (or theme)
   local argstr="$*"
   local forceDefaultSep=""
 
@@ -1684,6 +1794,7 @@ tartify()
   local hasupstream="false"
   local nocolors="false"
   local mode="NORMAL"
+  local menuPos=""
 
   local staged_info=""  # (VIM mode) branch status - store either one of these letters (US)
   local idaongbe=""     # (VIM mode) branch status - store either one of these letters (IDAONGBE)
@@ -1774,6 +1885,9 @@ tartify()
         # CHATTERBOX (LOOONG) mode
         a) mode="LONG"              ;;
 
+        0 | 1 | 2 | 3 | 4 | 5 | 6 | 9 )
+           menuPos=$ch
+                                    ;;
         # -- MODAL ARGS --
 
         u|U) processupstream="true" ;;
@@ -1835,6 +1949,7 @@ tartify()
         v) ;;
         w) ;;
         W) ;;
+        0 | 1 | 2 | 3 | 4 | 5 | 6 | 9 ) ;;
         #TODO: make that issue ansi escapes (PS1 and standard mode)
         \\) tartanswer=$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_;;
         #TODO: make that work with PS1 and NOCOLORS
@@ -1860,17 +1975,31 @@ tartify()
     # remove ansi escapes
     # TODO: Make that linux compatible (sed -E is bsd)
     local testforblank=$(echo  $tartanswer | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
+    # variant : sed 's/\[[0-9;]*m//g'
+    # variant2 : perl -pe 's/\e\[?.*?[\@-~]//g'
+    #  (http://unix.stackexchange.com/questions/4527/program-that-passes-stdin-to-stdout-with-color-codes-stripped/4533#4533)
+    #
     testforblank=${testforblank/ //}
 
-    #[ "QUIET" = "$mode" ] && return 0
+    # 1 - QUIET MODE
     if [ "QUIET" = "$mode" ]; then
       [ ${#testforblank} != 0 ] && {
         [[ "$argstr" =~ W ]] &&  __t4_newline_before=$(echo -ne "\n ")
         [[ "$argstr" =~ w ]] &&  __t4_newline_after=$(echo -ne "\n ")
       }
-      return 0
+       return 0
     fi
 
+    # 2 - MENU MODIFIER
+    if [ ! -z $menuPos ]; then
+      [ ${#testforblank} != 0 ] && {
+          __tartify_popup
+          #( __tartify_popup & )
+      }
+       return 0
+    fi
+
+    # 3 - OTHER MODEs
     #TODO: 'w' newline insertion can happen anywhere, 'W' only at BOL
     # only do something if answer is not empty
     [ ${#testforblank} != 0 ] && {
@@ -1883,6 +2012,7 @@ tartify()
       }
     }
   } || __tartify_reset_PS1_globs ALL
+
   return 0
 }
 
@@ -2069,6 +2199,9 @@ __tartitune_completion()
 }
 
 
+tartiforce(){
+  export TARTIFY_SETTING_FORCE="$*"
+}
 
 
 #------------------------------------------------------------------------------
