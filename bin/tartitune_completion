@@ -1,0 +1,253 @@
+__tartitune_completion()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    #prev2="${COMP_WORDS[COMP_CWORD-2]}"
+    #prev3="${COMP_WORDS[COMP_CWORD-3]}"
+
+#    echo ${#COMP_WORDS[@]}" - $COMP_CWORD - "
+#index=0
+
+#while [ "$index" -lt "${#COMP_WORDS[@]}" ]
+#do    # List all the elements in the array.
+#  echo ${COMP_WORDS[$index]}
+#  #    ${colors[index]} also works because it's within ${ ... } brackets.
+#  let "index = $index + 1"
+#  # Or:
+#  #    ((index++))
+
+#done
+
+  local n
+  local testopt
+  local tmpList
+
+  optsCOLOR="${!TARTIFY_COLOR*}"
+  optsSTYLE="${!TARTIFY_STYLE*}"
+  optsSTRING="${!TARTIFY_STRING*}"
+  optsSETTING="${!TARTIFY_SETTING*}"
+
+  if [[ ${cur} == -* ]] ; then
+
+    optsARG="-bold -emphasized -underlined -inverse -black -red -green -yellow
+    -blue -magenta -cyan -white -bgblack -bgred -bggreen -bgyellow -bgblue
+    -bgmagenta -bgcyan -bgwhite -abort -last -test -export -help "
+    COMPREPLY=( $(compgen -W "${optsARG}" -- ${cur}) )
+    return 0
+  else
+    nbopts=${#COMP_WORDS[@]}
+    case $nbopts in
+      # no option yet
+      2)
+        optsVAR=
+        tmpList=${!TARTIFY_*}
+        for n in $tmpList; do
+          testopt=${n/TARTIFY_/}
+          testopt=${testopt/_*/}
+          [[ "$optsVAR" =~ $testopt ]] || optsVAR=$optsVAR" ["$(echo $testopt | tr '[A-Z]' '[a-z]')
+        done
+        COMPREPLY=( $(compgen -W "${optsVAR}" -- ${cur}) )
+        return 0
+        ;;
+
+      # 1st level options : COLOR/STRING/SETTING/STYLE
+      3)
+        optsVAR=
+        prev=$(echo "${COMP_WORDS[COMP_CWORD-1]}" | tr '[a-z]' '[A-Z]')
+        prev=${prev#[}
+        tmpList=$(eval "echo \${!TARTIFY_${prev}*}")
+        for n in $tmpList; do
+          testopt=$(eval "echo \${n/TARTIFY_${prev}_/}")
+          local lbef=${#testopt}
+          testopt=${testopt/_*/}
+          [[ "$optsVAR" =~ $testopt ]] || optsVAR=$optsVAR" "$(echo $testopt | tr '[A-Z]' '[a-z]')
+          [ $lbef -eq ${#testopt} ] && optsVAR=$optsVAR"]" # terminal arg of sequence
+        done
+        COMPREPLY=( $(compgen -W "${optsVAR}" -- ${cur}) )
+        return 0
+        ;;
+
+      # 2nd level options
+      4)
+        prev2=$(echo "${COMP_WORDS[COMP_CWORD-2]}" | tr '[a-z]' '[A-Z]')
+        prev2=${prev2#[}
+        optsVAR=
+        prev=$(echo "${COMP_WORDS[COMP_CWORD-1]}" | tr '[a-z]' '[A-Z]')
+        tmpList=$(eval "echo \${!TARTIFY_${prev2}_${prev}*}")
+        #echo "echo \${!TARTIFY_${prev2}_${prev}*}"
+        #echo "tmpList=$tmpList"
+        for n in $tmpList; do
+          testopt=$(eval "echo \${n/TARTIFY_${prev2}_${prev}_/}")
+          local lbef=${#testopt}
+          testopt=${testopt/_*/}
+          #echo "testopt=$testopt"
+          [[ "$optsVAR" =~ $testopt ]] || optsVAR=$optsVAR" "$(echo $testopt | tr '[A-Z]' '[a-z]')
+          [ $lbef -eq ${#testopt} ] && optsVAR=$optsVAR"]" # terminal arg of sequence
+        done
+        COMPREPLY=( $(compgen -W "${optsVAR}" -- ${cur}) )
+        return 0
+        ;;
+
+      # 3rd level options
+      5)
+        prev2=$(echo "${COMP_WORDS[COMP_CWORD-2]}" | tr '[a-z]' '[A-Z]')
+        prev3=$(echo "${COMP_WORDS[COMP_CWORD-3]}" | tr '[a-z]' '[A-Z]')
+        prev3=${prev3#[}
+        optsVAR=
+        prev=$(echo "${COMP_WORDS[COMP_CWORD-1]}" | tr '[a-z]' '[A-Z]')
+        tmpList=$(eval "echo \${!TARTIFY_${prev3}_${prev2}_${prev}*}")
+        #echo "echo \${!TARTIFY_${prev2}_${prev}*}"
+        #echo "tmpList=$tmpList"
+        for n in $tmpList; do
+          testopt=$(eval "echo \${n/TARTIFY_${prev3}_${prev2}_${prev}_/}")
+          local lbef=${#testopt}
+          testopt=${testopt/_*/}
+          #echo "testopt=$testopt"
+          [[ "$optsVAR" =~ $testopt ]] || optsVAR=$optsVAR" "$(echo $testopt | tr '[A-Z]' '[a-z]')
+          [ $lbef -eq ${#testopt} ] && optsVAR=$optsVAR"]" # terminal arg of sequence
+        done
+        COMPREPLY=( $(compgen -W "${optsVAR}" -- ${cur}) )
+        return 0
+        ;;
+
+      # 4rth level options
+      6) ;;
+    esac
+  fi
+
+# -----------------------------------------------
+# COLOR___ BRANCH
+#  |        |______BARE
+#  |        |_____ GITDIR
+#  |        |_____ MERGEINFOS
+#  |        |_____ NOCOMMITYET
+#  |        |_____ STAGED
+#  |        |_____ UNSTAGED
+#  |        |_____ UPSTREAM
+#  |                |___________ AHEAD
+#  |                |___________ BEHIND
+#  |                |___________ DIVERGE
+#  |                |___________ NOTRACK
+#  |                |___________ UPTODATE
+#  |
+#  |______ MENU
+#  |        |_____ BORDER
+#  |
+#  |______ MISC
+#  |        |_____ DELIMITER
+#  |
+#  |______ REMOTE
+#  |        |_____ COUNT
+#  |        |       |___________ AHEAD
+#  |        |       |___________ BEHIND
+#  |        |
+#  |        |_____ NAME
+#  |                |___________ ORIGIN
+#  |                |___________ OTHER
+#  |                |___________ UPSTREAM
+#  |______ REPO
+#  |        |_____ NAME
+#  |
+#  |______ STASH
+#  |        |_____ COUNT
+#  |               NOCOUNT
+#  |
+#  |______ TIME
+#           |_____ ACTIVITY
+#                   |___________ HIGH
+#                   |___________ LOW
+#                   |___________ NONE
+#
+# SETTING
+#  |______ BRANCH
+#  |        |_____ STAGED
+#  |                |____________INFOPOS
+#  |                |____________INFOLENGTH
+#  |______ FORCE
+#  |
+#  |______ STASH   COUNT
+#  |
+#  |______ TIME
+#           |_____ BUGME
+#           |_____ COULDCOMMIT
+#           |_____ DISPLAY
+#           |_____ SHOULDCOMMIT
+#
+# STRING
+#  |______ BRANCH
+#  |        |_____ BARE
+#  |        |_____ DOTGIT
+#  |
+#  |______ MENU
+#  |        |_____ BOTTOM
+#  |        |_____ BOTTOMLEFT
+#  |        |_____ BOTTOMRIGHT
+#  |        |_____ FILLER
+#  |        |_____ LEFT
+#  |        |_____ RIGHT
+#  |        |_____ TOP
+#  |        |_____ TOPLEFT
+#  |        |_____ TOPRIGHT
+#  |
+#  |______ MISC
+#  |        |_____ SEPARATOR
+#  |
+#  |______ REMOTE
+#  |        |_____ COUNT
+#  |        |       |____________SEP
+#  |        |
+#  |        |_____ NAME
+#  |        |       |___________ ORIGIN
+#  |        |       |___________ OTHER
+#  |        |       |___________ UPSTREAM
+#  |        |
+#  |        |_____ TRACKING
+#  |
+#  |______ STASH
+#  |
+#  |______ TIME
+#           |_____ DISPLAY
+#
+# STYLE
+#  |______ BRANCH
+#  |        |_____ UNTRACKED
+#  |
+#  |______ TIME
+#           |_____ COULDCOMMIT
+#                  SHOULDCOMMIT
+
+
+
+
+
+
+
+
+    #optsVARLONG="${!TARTIFY_COLOR*} ${!TARTIFY_STYLE*}"
+    #optsVAR=$( echo $optsVARLONG |  sed 's/TARTIFY_/-/g')
+    ### Slower
+    ##optsVAR=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("-%s ", $1)}' | sed 's/TARTIFY_//g')
+    ##optsVARLONG=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("%s ", $1)}')
+
+    #optsARG="bold emphasized underlined inverse black red green yellow
+    #blue magenta cyan white bgblack bgred bggreen bgyellow bgblue
+    #bgmagenta bgcyan bgwhite abort last test export help "
+
+    ##if [[ ${cur} == T* ]] ; then
+    #if [[ ${cur} == -* ]] ; then
+    #    COMPREPLY=( $(compgen -W "${optsVAR}" -- ${cur}) )
+    #    return 0
+    #elif [[ ${cur} == T* ]] ; then
+    #    COMPREPLY=( $(compgen -W "${optsVARLONG}" -- ${cur}) )
+    #    return 0
+    #else
+    #    COMPREPLY=( $(compgen -W "${optsARG}" -- ${cur}) )
+    #    return 0
+    #fi
+}
+complete -F __tartitune_completion tartitune
+
+
+
