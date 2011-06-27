@@ -253,6 +253,9 @@ else
   __tartify_whocalled="source"
 fi
 
+# take care of non UTF-8 terminals
+supports8=
+locale | grep -i utf-8 >/dev/null 2>&1 && supports8="true"
 
 
 #------------------------------------------------------------------------------
@@ -302,77 +305,89 @@ __tartify_define_colors_TPUT() {
 #               * TODO: handle 256 colors (if [ $(tput colors) -ge 256 ] ...)
 #                       -> do that via tartitheme()
 
+#
                                                                      #   ANSI equivalent
                                                                      #  <attr> <fg>  <bg>
   # ALL
-   export __NN_=$( tput sgr0   || : 2>/dev/null )                    # [ 0m                RESET ALL attributes
+   __NN_=$( tput sgr0   || : 2>/dev/null )                    # [ 0m                RESET ALL attributes
 
   # STYLES
   # <BEGIN>
-   export __EM_=$( tput bold    || : 2>/dev/null )                   # [ 1m                BEGIN DOUBLE INTENSITY (bold) mode
-   export __DM_=$( tput dim     || : 2>/dev/null )                   # [ 2m                BEGIN HALF INTENSITY    (dim) mode
-   export __UN_=$( tput smul    || : 2>/dev/null )                   # [ 4m                BEGIN UNDESCORE  (underlined) mode
-   export __BL_=$( tput blink   || : 2>/dev/null )                   # [ 5m                BEGIN BLINKING                mode
-   export __RV_=$( tput rev     || : 2>/dev/null )                   # [ 7m                BEGIN REVERSE VIDEO (reverse) mode
-   export __SO_=$( tput smso    || : 2>/dev/null )                   #?[ 7m                BEGIN STANDOUT      (reverse) mode
-   export __IN_=$( tput invis   || : 2>/dev/null )                   # [ 8m                BEGIN INVISIBLE               mode
-   export __DEL_=$(tput cub1    || : 2>/dev/null )                   #                     MOVE cursor LEFT one space
+   __EM_=$( tput bold    || : 2>/dev/null )                   # [ 1m                BEGIN DOUBLE INTENSITY (bold) mode
+   __DM_=$( tput dim     || : 2>/dev/null )                   # [ 2m                BEGIN HALF INTENSITY    (dim) mode
+   __UN_=$( tput smul    || : 2>/dev/null )                   # [ 4m                BEGIN UNDESCORE  (underlined) mode
+   __BL_=$( tput blink   || : 2>/dev/null )                   # [ 5m                BEGIN BLINKING                mode
+   __RV_=$( tput rev     || : 2>/dev/null )                   # [ 7m                BEGIN REVERSE VIDEO (reverse) mode
+   __SO_=$( tput smso    || : 2>/dev/null )                   #?[ 7m                BEGIN STANDOUT      (reverse) mode
+   __IN_=$( tput invis   || : 2>/dev/null )                   # [ 8m                BEGIN INVISIBLE               mode
+   __DEL_=$(tput cub1    || : 2>/dev/null )                   #                     MOVE cursor LEFT one space
   # <END>
-  export __SOQ_=$( tput rmso    || : 2>/dev/null )                   #?[ 27m               END   STANDOUT      (reverse) mode
-  export __UNQ_=$( tput rmul    || : 2>/dev/null )                   # [ 24m               END   UNDESCORE  (underlined) mode
+  __SOQ_=$( tput rmso    || : 2>/dev/null )                   #?[ 27m               END   STANDOUT      (reverse) mode
+  __UNQ_=$( tput rmul    || : 2>/dev/null )                   # [ 24m               END   UNDESCORE  (underlined) mode
   # for all other END style, use `tput sgr0` ($__NN_)
 
   # COLORS
   # <Foreground>
-    export __K_=$( tput setf 0 || tput setaf 0 || : 2>/dev/null )    # [       0m          SET   FG color to BLACK
-    export __R_=$( tput setf 4 || tput setaf 1 || : 2>/dev/null )    # [       1m          SET   FG color to RED
-    export __G_=$( tput setf 2 || tput setaf 2 || : 2>/dev/null )    # [       2m          SET   FG color to GREEN
-    export __Y_=$( tput setf 6 || tput setaf 3 || : 2>/dev/null )    # [       3m          SET   FG color to YELLOW
-    export __B_=$( tput setf 1 || tput setaf 4 || : 2>/dev/null )    # [       4m          SET   FG color to BLUE
-    export __M_=$( tput setf 5 || tput setaf 5 || : 2>/dev/null )    # [       5m          SET   FG color to MAGENTA
-    export __C_=$( tput setf 3 || tput setaf 6 || : 2>/dev/null )    # [       6m          SET   FG color to CYAN
-    export __W_=$( tput setf 7 || tput setaf 7 || : 2>/dev/null )    # [       7m          SET   FG color to WHITE
+    __K_=$( tput setf 0 || tput setaf 0 || : 2>/dev/null )    # [       0m          SET   FG color to BLACK
+    __R_=$( tput setf 4 || tput setaf 1 || : 2>/dev/null )    # [       1m          SET   FG color to RED
+    __G_=$( tput setf 2 || tput setaf 2 || : 2>/dev/null )    # [       2m          SET   FG color to GREEN
+    __Y_=$( tput setf 6 || tput setaf 3 || : 2>/dev/null )    # [       3m          SET   FG color to YELLOW
+    __B_=$( tput setf 1 || tput setaf 4 || : 2>/dev/null )    # [       4m          SET   FG color to BLUE
+    __M_=$( tput setf 5 || tput setaf 5 || : 2>/dev/null )    # [       5m          SET   FG color to MAGENTA
+    __C_=$( tput setf 3 || tput setaf 6 || : 2>/dev/null )    # [       6m          SET   FG color to CYAN
+    __W_=$( tput setf 7 || tput setaf 7 || : 2>/dev/null )    # [       7m          SET   FG color to WHITE
   # <Background>
-  export __BGK_=$( tput setb 0 || tput setab 0 || : 2>/dev/null )    # [       0m          SET   BG color to BLACK
-  export __BGR_=$( tput setb 4 || tput setab 1 || : 2>/dev/null )    # [       1m          SET   BG color to RED
-  export __BGG_=$( tput setb 2 || tput setab 2 || : 2>/dev/null )    # [       2m          SET   BG color to GREEN
-  export __BGY_=$( tput setb 6 || tput setab 3 || : 2>/dev/null )    # [       3m          SET   BG color to YELLOW
-  export __BGB_=$( tput setb 1 || tput setab 4 || : 2>/dev/null )    # [       4m          SET   BG color to BLUE
-  export __BGM_=$( tput setb 5 || tput setab 5 || : 2>/dev/null )    # [       5m          SET   BG color to MAGENTA
-  export __BGC_=$( tput setb 3 || tput setab 6 || : 2>/dev/null )    # [       6m          SET   BG color to CYAN
-  export __BGW_=$( tput setb 7 || tput setab 7 || : 2>/dev/null )    # [       7m          SET   BG color to WHITE
+  __BGK_=$( tput setb 0 || tput setab 0 || : 2>/dev/null )    # [       0m          SET   BG color to BLACK
+  __BGR_=$( tput setb 4 || tput setab 1 || : 2>/dev/null )    # [       1m          SET   BG color to RED
+  __BGG_=$( tput setb 2 || tput setab 2 || : 2>/dev/null )    # [       2m          SET   BG color to GREEN
+  __BGY_=$( tput setb 6 || tput setab 3 || : 2>/dev/null )    # [       3m          SET   BG color to YELLOW
+  __BGB_=$( tput setb 1 || tput setab 4 || : 2>/dev/null )    # [       4m          SET   BG color to BLUE
+  __BGM_=$( tput setb 5 || tput setab 5 || : 2>/dev/null )    # [       5m          SET   BG color to MAGENTA
+  __BGC_=$( tput setb 3 || tput setab 6 || : 2>/dev/null )    # [       6m          SET   BG color to CYAN
+  __BGW_=$( tput setb 7 || tput setab 7 || : 2>/dev/null )    # [       7m          SET   BG color to WHITE
   # <reset>
-   export __NF_=$( tput setf 9 || tput setaf 9 || : 2>/dev/null )    # [       39m         RESET FG color to term's default
-   export __NG_=$( tput setb 9 || tput setab 9 || : 2>/dev/null )    # [             49m   RESET BG color to term's default
-  export __NFG_=$__NF_$__NB_                                         # [       39;   49m   RESET FG & BG color to term's default
+   __NF_=$( tput setf 9 || tput setaf 9 || : 2>/dev/null )    # [       39m         RESET FG color to term's default
+   __NG_=$( tput setb 9 || tput setab 9 || : 2>/dev/null )    # [             49m   RESET BG color to term's default
+  __NFG_=$__NF_$__NB_                                         # [       39;   49m   RESET FG & BG color to term's default
+
+  if [ $(tput colors) -eq 256 ]; then
+  ## <Foreground>
+    __K_=$( tput setf 243 || tput setaf 243 || : 2>/dev/null ) #                    SET   FG color to BLACK
+  #  __R_=$( tput setf 196 || tput setaf 196 || : 2>/dev/null ) #                    SET   FG color to RED
+  #  __G_=$( tput setf 34  || tput setaf 34  || : 2>/dev/null ) #                    SET   FG color to GREEN
+  #  __Y_=$( tput setf 220 || tput setaf 220 || : 2>/dev/null ) #                    SET   FG color to YELLOW
+  #  __B_=$( tput setf 33  || tput setaf 33  || : 2>/dev/null ) #                    SET   FG color to BLUE
+  #  __M_=$( tput setf 201 || tput setaf 201 || : 2>/dev/null ) #                    SET   FG color to MAGENTA
+  #  __C_=$( tput setf 45  || tput setaf 45  || : 2>/dev/null ) #                    SET   FG color to CYAN
+  #  __W_=$( tput setf 15  || tput setaf 15  || : 2>/dev/null ) #                    SET   FG color to WHITE
+  ## <Background>
+  #__BGK_=$( tput setb 243 || tput setab 243 || : 2>/dev/null ) #                    SET   BG color to BLACK
+  #__BGR_=$( tput setb 196 || tput setab 196 || : 2>/dev/null ) #                    SET   BG color to RED
+  #__BGG_=$( tput setb 34  || tput setab 34  || : 2>/dev/null ) #                    SET   BG color to GREEN
+  #__BGY_=$( tput setb 220 || tput setab 220 || : 2>/dev/null ) #                    SET   BG color to YELLOW
+  #__BGB_=$( tput setb 33  || tput setab 33  || : 2>/dev/null ) #                    SET   BG color to BLUE
+  #__BGM_=$( tput setb 201 || tput setab 201 || : 2>/dev/null ) #                    SET   BG color to MAGENTA
+  #__BGC_=$( tput setb 45  || tput setab 45  || : 2>/dev/null ) #                    SET   BG color to CYAN
+  #__BGW_=$( tput setb 15  || tput setab 15  || : 2>/dev/null ) #                    SET   BG color to WHITE
+
+  fi
+
   # <pseudo Foreground-bold>
-  export __EMK_=$__EM_$__K_                                          # [ 1;    20m         SET   FG color to BOLD BLACK
-  export __EMR_=$__EM_$__R_                                          # [ 1;    21m         SET   FG color to BOLD RED
-  export __EMG_=$__EM_$__G_                                          # [ 1;    22m         SET   FG color to BOLD GREEN
-  export __EMY_=$__EM_$__Y_                                          # [ 1;    23m         SET   FG color to BOLD YELLOW
-  export __EMB_=$__EM_$__B_                                          # [ 1;    24m         SET   FG color to BOLD BLUE
-  export __EMM_=$__EM_$__M_                                          # [ 1;    25m         SET   FG color to BOLD MAGENTA
-  export __EMC_=$__EM_$__C_                                          # [ 1;    26m         SET   FG color to BOLD CYAN
-  export __EMW_=$__EM_$__W_                                          # [ 1;    27m         SET   FG color to BOLD RED
+  __EMK_=$__EM_$__K_                                          # [ 1;    20m         SET   FG color to BOLD BLACK
+  __EMR_=$__EM_$__R_                                          # [ 1;    21m         SET   FG color to BOLD RED
+  __EMG_=$__EM_$__G_                                          # [ 1;    22m         SET   FG color to BOLD GREEN
+  __EMY_=$__EM_$__Y_                                          # [ 1;    23m         SET   FG color to BOLD YELLOW
+  __EMB_=$__EM_$__B_                                          # [ 1;    24m         SET   FG color to BOLD BLUE
+  __EMM_=$__EM_$__M_                                          # [ 1;    25m         SET   FG color to BOLD MAGENTA
+  __EMC_=$__EM_$__C_                                          # [ 1;    26m         SET   FG color to BOLD CYAN
+  __EMW_=$__EM_$__W_                                          # [ 1;    27m         SET   FG color to BOLD RED
 
   #MISC (non color)
-  export __NL_=$( tput cud1 )
+  __NL_=$( tput cud1 )
+
+
+
 }
-
-
-#__tartify_list_PS1_globs(){
-
-#  # BRANCH
-#  echo "
-#      __t4_tU=$__t4_tU    __t4_tuSr=$__t4_tuSr  __t4_tRA=$__t4_tRA
-#      __t4_tRD=$__t4_tRD   __t4_tRI=$__t4_tRI   __t4_tRO=$__t4_tRO
-#      __t4_tRN=$__t4_tRN   __t4_turS=$__t4_turS  __t4_TU=$__t4_TU
-#      __t4_TuSr=$__t4_TuSr  __t4_TRA=$__t4_TRA   __t4_TRD=$__t4_TRD
-#      __t4_TRI=$__t4_TRI   __t4_TRO=$__t4_TRO   __t4_TRN=$__t4_TRN
-#      __t4_TurS=$__t4_TurS
-#"
-
-#}
 
 
 __tartify_reset_PS1_globs(){
@@ -411,6 +426,8 @@ __tartify_reset_PS1_globs(){
       __t4_TurS="" #UNtracked  Staged                (rem-before-stag
 
      __t4_sepB=""  # dynamic separator for branch
+     __t4_merg=""  # merge infos for branch
+     __t4_bare=""  # bare repository indicator
   fi
 
 
@@ -430,6 +447,15 @@ __tartify_reset_PS1_globs(){
   #LAST COMMIT
   if [ "LAST" = "$1" ] ||  [ "ALL" = "$1" ]; then
     __t4_sepL=""   # dynamic separator for time-last-commit
+    __t4_lccan=""  # Could Commit Activity None
+    __t4_lccal=""  # Could Commit Activity Low
+    __t4_lccah=""  # Could Commit Activity High
+    __t4_lscan=""  # Should Commit Activity None
+    __t4_lscal=""  # Should Commit Activity Low
+    __t4_lscah=""  # Should Commit Activity High
+    __t4_lnhan=""  # No Hurry Activity None
+    __t4_lnhal=""  # No Hurry Activity Low
+    __t4_lnhah=""  # No Hurry Activity High
   fi
 
 
@@ -441,6 +467,7 @@ __tartify_reset_PS1_globs(){
     for ((n=0;n<100;n++)); do eval "__t4_D$n=" ; done;
     __t4_newline_before=""
     __t4_newline_after=""
+    __t4_tune=""
   fi
 
 }
@@ -453,37 +480,49 @@ __tartify_init_globs(){
 
 # External TARTIFY PARAMETERS : adapt to your needs
 
-# // GLOBAL
+#-------------------------------------------------------
+# GLOBAL
 
 export TARTIFY_SETTING_FORCE=""                         # A string containing tartify command-line params. If non empty, will
                                                         # overwrite any arguments the tartify command receives
-export TARTIFY_STRING_SEPARATOR=""                      # Default separator to be used with mono-character options (tartify 
+export TARTITUNE_SETTING_FORCE="false"                  # "true" : bypass TARTIFY_SETTING_FORCE during a tartitune session
+export TARTITUNE_SETTING_LAST=""                        # saves last tartitune session
+export TARTITUNE_SETTING_GROUNDZERO=""                  # save tartify settings before beginning a new tartitune session
+#TODO: allow empty separator (' ' should not be default)
+export TARTIFY_STRING_MISC_SEPARATOR=""                      # Default separator to be used with mono-character options (tartify
 
-# // TIME
+#-------------------------------------------------------
+# TIME
+# //COMMIT-WISE
 export TARTIFY_SETTING_TIME_BUGME=TRUE                  # Non empty : will color and style the 'time since last commit' string
 export TARTIFY_SETTING_TIME_DISPLAY=LONG                # LONG (min, hours, days) SHORT (mine | hours | days) CHAR (cf. next var)
 export TARTIFY_STRING_TIME_DISPLAY="⟳ "                 # String to display in case prec. var == CHAR
 
                                                         # Uncommited changes (staged, unstaged)
-export TARTIFY_SETTING_TIME_COULDCOMMIT=3600            #     *     nb seconds after which you COULD  commit
-export TARTIFY_SETTING_TIME_SHOULDCOMMIT=86400          #     * Max nb seconds after which you SHOULD commit
-                                                        # (default is 86400, 24hours)
+export TARTIFY_SETTING_TIME_COULDCOMMIT=14400           #     *     nb seconds after which you COULD  commit (default is 4 hours)
+export TARTIFY_SETTING_TIME_SHOULDCOMMIT=86400          #     * Max nb seconds after which you SHOULD commit (default is 1 day)
 
-
-                                                        # colors applied to the 'time elapsed since last commit'
+                                                        # styles applied to the 'time elapsed since last commit'
                                                         # string, in case of uncommited changes
 export TARTIFY_STYLE_TIME_COULDCOMMIT=${__UN_}          #                                  UNDERLINED
 export TARTIFY_STYLE_TIME_SHOULDCOMMIT=${__EM_}${__UN_} #                           BOLD UNDERLINED
 
-                                                        # styles applied to the 'time elapsed since last commit'
+
+
+# //ACTIVITY-WISE
+export TARTIFY_SETTING_TIME_LOWACTIVITY=604800          #     *     nb seconds after which ACTIVITY is considered low (default is  7 days)
+export TARTIFY_SETTING_TIME_MEDIUMACTIVITY=86400        #     * Max nb seconds after which ACTIVITY is considered medium (default is  1 day)
+                                                        # colors applied to the 'time elapsed since last commit'
                                                         # string in case of no uncommited changes
 export TARTIFY_COLOR_TIME_ACTIVITY_HIGH=${__G_}         #                                  GREEN
 export TARTIFY_COLOR_TIME_ACTIVITY_LOW=${__Y_}          #                                  YELLOW
-export TARTIFY_COLOR_TIME_ACTIVITY_NON=${__R_}          #                                  RED
+export TARTIFY_COLOR_TIME_ACTIVITY_NONE=${__R_}         #                                  RED
 
-# //BRANCH
+#-------------------------------------------------------
+#BRANCH
 export TARTIFY_STRING_BRANCH_DOTGIT="GIT_DIR!"                 # "branch name" replacement string for .git directory
-export TARTIFY_STRING_BRANCH_BARE="<BARE>"                     # "branch name" replacement string for bare .git directory
+export TARTIFY_STRING_BRANCH_BARE="BARE:"                      # "branch name" replacement string for bare .git directory
+export TARTIFY_COLOR_BRANCH_BARE=$__EMW_                       # "branch name" replacement string for bare .git directory
 
 #Branch style : Untracked files
 export TARTIFY_STYLE_BRANCH_UNTRACKED=${__UN_}                 # Untracked Files                  UNDERLINED
@@ -497,11 +536,14 @@ export TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND=${__R_}     # tracked remote ahead o
 export TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD=${__Y_}      # tracked remote behind HEAD       YELLOW
 export TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE=${__G_}   # tracked remote == HEAD           GREEN
 export TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK=${__B_}    # no remote tracking branch        BLUE
+                                                        # NB: this is also the color used when
+                                                        # tartify does not display 'upstream' info in branch
+
 export TARTIFY_COLOR_BRANCH_NOCOMMITYET=${__W_}         # empty repo, no commit yet        WHITE
 export TARTIFY_COLOR_BRANCH_GITDIR=${__C_}              # inside .git dir                  CYAN
 
 #Branch color : additional info
-export TARTIFY_COLOR_BRANCH_MERGE_INFOS=${__EMR_}       # color for the merge/rebase/cherry-pick/bisect status of current branch (if any)
+export TARTIFY_COLOR_BRANCH_MERGEINFOS=${__RV_}${__EMR_} # color for the merge/rebase/cherry-pick/bisect status of current branch (if any)
                                                         #                                  BOLD RED
 
 # Tartify shows U (Unstaged state), S (Staged state) and P (uPstream state,
@@ -509,25 +551,27 @@ export TARTIFY_COLOR_BRANCH_MERGE_INFOS=${__EMR_}       # color for the merge/re
 # can be tuned for lisibility's sake
 export TARTIFY_SETTING_BRANCH_STAGED_INFO=              # empty     -> (unstaged)UPSTREAM[staged]
                                                         # non-empty -> (unstaged)[staged]UPSTREAM
-export TARTIFY_SETTING_BRANCH_STAGED_INFO_LENGTH=2      # How many letters of resulting branchname are to be colored with
+export TARTIFY_SETTING_BRANCH_STAGED_INFOLENGTH=2       # How many letters of resulting branchname are to be colored with
                                                         # the "unstaged" and "staged" markers
 # Example:
 #     () for      unstaged,      [] for      staged,     rest: upstream info
 #
 #     $TARTIFY_SETTING_BRANCH_STAGED_INFO empty
-#     $TARTIFY_SETTING_BRANCH_STAGED_INFO_LENGTH =
+#     $TARTIFY_SETTING_BRANCH_STAGED_INFOLENGTH =
 #     0 : master    1 : (m)aste[r]    2 : (ma)st[er]    3 : (mas)[ter]    4 : (mas)[ter]    ,...
 #     0 : feature   1 : (f)eatur[e]   2 : (fe)atu[re]   3 : (fea)t[ure]   4 : (fea)t[ure]   ,...
 #
 #     $TARTIFY_SETTING_BRANCH_STAGED_INFO non-empty
-#     $TARTIFY_SETTING_BRANCH_STAGED_INFO_LENGTH =
+#     $TARTIFY_SETTING_BRANCH_STAGED_INFOLENGTH =
 #     0 : master    1 : (m)[a]ster    2 : (ma)[st]er    3 : (mas)[ter]    4 : (mas)[ter]    ,...
 
 
-# // REPOSITORY
+#-------------------------------------------------------
+# REPOSITORY
 export TARTIFY_COLOR_REPO_NAME=${__K_}                  # repository's "name"              DIM GREY
 
-# // REMOTES
+#-------------------------------------------------------
+# REMOTES
 export TARTIFY_STRING_REMOTE_NAME_ORIGIN="O"            # marker for remote repo called 'origin'
 export TARTIFY_STRING_REMOTE_NAME_UPSTREAM="U"          # marker for remote repo called 'upstream'
 export TARTIFY_STRING_REMOTE_NAME_OTHER="⇧ "            # generic marker for remote repo
@@ -543,18 +587,58 @@ export TARTIFY_COLOR_REMOTE_COUNT_AHEAD=${__G_}         # nb commits ahead of re
 export TARTIFY_COLOR_REMOTE_COUNT_BEHIND=${__R_}        # nb commits behind of remote      RED
 
 
-# // STASH
-export TARTIFY_SETTING_COUNTSTASHES=TRUE                # non empty: print 1 $TARTIFY_STRING_STASH per existing stash
+#-------------------------------------------------------
+# STASH
+export TARTIFY_SETTING_STASH_COUNT=                    # non empty: print 1 $TARTIFY_STRING_STASH per existing stash
                                                         # (WARN: this is slow process, add ~50ms computing time)
-export TARTIFY_STRING_STASH="☆ "                        # marker for stash
+[ "true" = $supports8 ] && {
+#export TARTIFY_STRING_STASH="☆ "                        # marker for stash
 export TARTIFY_STRING_STASH="•"                         # marker for stash
+} || {
+export TARTIFY_STRING_STASH="*"                         # marker for stash
+}
 export TARTIFY_COLOR_STASH_NOCOUNT=${__Y_}              # color when not counting          YELLOW
 export TARTIFY_COLOR_STASH_COUNT=${__EMY_}              # color in "count mode"            BOLD YELLOW
 
-# // UNPARSED CHARS
+#-------------------------------------------------------
+# UNPARSED CHARS
 export TARTIFY_COLOR_MISC_DELIMITER=${__K_}             # color for (unparsed) delimiters  DIM GREY
 
 
+#-------------------------------------------------------
+# MENU
+
+export TARTIFY_COLOR_MENU_BORDER=$__B_
+
+[ "true" = $supports8 ] && {
+  export TARTIFY_STRING_MENU_TOPLEFT="┌"
+  export TARTIFY_STRING_MENU_TOP="─"
+  export TARTIFY_STRING_MENU_TOPRIGHT="┐"
+  export TARTIFY_STRING_MENU_LEFT="│"
+  export TARTIFY_STRING_MENU_RIGHT="│"
+  export TARTIFY_STRING_MENU_BOTTOMLEFT="└"
+  export TARTIFY_STRING_MENU_BOTTOM="─"
+  export TARTIFY_STRING_MENU_BOTTOMRIGHT="┘"
+} || {
+  export TARTIFY_STRING_MENU_TOPLEFT=" "
+  export TARTIFY_STRING_MENU_TOP="_"
+  export TARTIFY_STRING_MENU_TOPRIGHT=" "
+  export TARTIFY_STRING_MENU_LEFT=" "
+  export TARTIFY_STRING_MENU_RIGHT=" "
+  export TARTIFY_STRING_MENU_BOTTOMLEFT=" "
+  export TARTIFY_STRING_MENU_BOTTOM="_"
+  export TARTIFY_STRING_MENU_BOTTOMRIGHT=" "
+  #export TARTIFY_STRING_MENU_TOPLEFT="┌"
+  #export TARTIFY_STRING_MENU_TOP="="
+  #export TARTIFY_STRING_MENU_TOPRIGHT="┐"
+  #export TARTIFY_STRING_MENU_LEFT="│"
+  #export TARTIFY_STRING_MENU_RIGHT="│"
+  #export TARTIFY_STRING_MENU_BOTTOMLEFT="└"
+  #export TARTIFY_STRING_MENU_BOTTOM="="
+  #export TARTIFY_STRING_MENU_BOTTOMRIGHT="┘"
+}
+
+#-------------------------------------------------------
 # TODO: (restrict that to OLDSCHOOL)
 # The usual environment variables from git-completion.bash still apply
 # in "OLDSCHOOL" mode
@@ -565,28 +649,6 @@ export TARTIFY_COLOR_MISC_DELIMITER=${__K_}             # color for (unparsed) d
 #     GIT_PS1_SHOWUPSTREAM
 }
 
-
-__tartify_REMOVEME_exportall(){
-  export -f __tartify_init_PS1_globs
-  #export -f __tartify_init_PS1_globs_EXPORT
-  export -f __tartify_reset_PS1_globs
-  export -f __tartify_git_ps1_find_upstream
-  export -f __tartify_git_ps1_process_remote
-  export -f __tartify_git_ps1
-  export -f __tartify_diff_count
-  export -f __tartify_usage
-  export -f __tartify_show_env
-  export -f __tartify_build_PS1
-  export -f __tartify_reformat_timestamp
-  export -f __tartify_repo_name
-  export -f __tartify_branch
-  export -f __tartify_remote2
-  export -f __tartify_stash
-  export -f __tartify_timelastcommit
-  export -f tartify
-  export -f tartitune
-  export -f __tartitune_completion
-}
 
 #------------------------------------------------------------------------------
 #
@@ -817,7 +879,7 @@ __tartify_git_ps1(){
 
     if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
       if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
-        c="BARE:"
+        c=$TARTIFY_STRING_BRANCH_BARE
         idaongbe="B"
       else
         b="GIT_DIR!"
@@ -878,15 +940,19 @@ __tartify_diff_count() {
 __tartify_usage(){
 # Display the help message
   cat <<HELPTEXT
-  ${__UN_}Description${__UNQ_} : One-Liner condensed GIT infos (for your prompt, screen
+
+${__EMR_}NAME
+     tartify${__NN_} -- One-Liner condensed GIT infos (for your prompt, screen
                 statusline, ...)
 
-  ${__UN_}Usage${__UNQ_} is : ${__EM_}tartify${__EMQ_} [${__Y_}options${__NN_}]
+${__EMR_}SYNOPSIS${__NN_}
+     ${__EMR_}tartify${__NN_} [${__EMG_}option string${__NN_}]
 
-  ${__UN_}Options${__UNQ_} is : a CASE-SENSITIVE sequence of characters.
+${__EMR_}DESCRIPTION${__NN_}
+     The ${__EMG_}option string${__NN_} is a CASE-SENSITIVE sequence of characters.
 
       * The following characters are reserved tartify commands :
-         ${__Y_}abBcehilLnNopqrRsStuUvwW${__NN_} (and maybe more letters in the future)
+         ${__Y_}0123456789ZzabBcefhilLnNopqrRsStuUvwW${__NN_} (and maybe more letters in the future)
 
       * any other character will be printed "as is", including spaces. You can use
       those to format the output of the tarttify command (as delimiters,...)
@@ -898,7 +964,7 @@ __tartify_usage(){
       * following characters need to be escaped  ${__Y_}\(\)<>;*\"\'\`\#&|~${__NN_}
 
 
-      ${__Y_}[Elements]${__NN_} ${__EM_}${__NN_}
+      ${__EMG_}Elements${__NN_}
 
       ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame       ${__Y_}N${__NN_}   same without colors
       ${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name           ${__Y_}B${__NN_}          \` \`
@@ -907,15 +973,23 @@ __tartify_usage(){
       ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info            ${__Y_}S${__NN_}          \` \`
       ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info      ${__Y_}L${__NN_}          \` \`
 
-      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line     insert newline (positionnal)
-      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line     prepend newline at beginning (non-positionnal)
 
-      ${__Y_}[Modifiers]${__NN_} ${__EM_}                 ${__NN_}
+      ${__EMG_}Modifiers${__NN_}
 
       ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor      strip all colors
       ${__Y_}t${__NN_}       no ups${__EMY_}t${__NN_}ream  in branch
 
-      ${__Y_}[Modes]${__NN_} ${__EM_}mutually exclusive (only first one counts)${__NN_}
+      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line     insert newline : positionnal in MENU mode
+                                           at end of line  in other modes
+      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line     prepend newline at beginning (non-positionnal)
+                                          ignored in MENU mode
+      ${__Y_}z${__NN_}       rever${__EMY_}z${__NN_}e     reverse color of next ${__Y_}Element${__NN_}
+      ${__Y_}Z${__NN_}       rever${__EMY_}z${__NN_}e     reverse color of ALL ${__Y_}Elements${__NN_}
+
+      ${__Y_}f${__NN_}       ${__EMY_}f${__NN_}orce       overwrite global TARTIFY_SETTING_FORCE (once)
+                          (see tartitune(), tartiforce() )
+
+      ${__EMG_}Modes${__NN_}
 
       ${__Y_}i${__NN_}       succ${__EMY_}i${__NN_}nt    even shorter version
       ${__Y_}a${__NN_}       ch${__EMY_}a${__NN_}tterbox looong version
@@ -926,31 +1000,37 @@ __tartify_usage(){
                          (color info appended to result)
 
       ${__Y_}number${__NN_}  menu mode  display result as menu
-                         (number indicates menu position)
+              ┌───────────────────┐
+              │${__EMY_}1/4/7 ${__NN_} ${__EMY_}2/5/8${__NN_}  ${__EMY_}3/6/9${__NN_}│
+              │${__EMY_}    ${__NN_}      ${__EMY_} ${__NN_}       ${__EMY_} ${__NN_}│
+              │${__EMY_}    ${__NN_}      ${__EMY_} ${__NN_}       ${__EMY_}0${__NN_}│
+              └───────────────────┘
+              1line prompt ${__EMY_}1${__NN_} top left  ${__EMY_}2${__NN_} top middle  ${__EMY_}3${__NN_} top right
+              2line prompt ${__EMY_}4${__NN_} top left  ${__EMY_}5${__NN_} top middle  ${__EMY_}6${__NN_} top right
+              3line prompt ${__EMY_}7${__NN_} top left  ${__EMY_}8${__NN_} top middle  ${__EMY_}9${__NN_} top right
+              ${__EMY_}0${__NN_} bottom right (one liner)
 
-              ┌─────────────┐
-              │${__EMY_}1/4 ${__NN_} ${__EMY_}2/5${__NN_}  ${__EMY_}3/6${__NN_}│
-              │${__EMY_}  ${__NN_}    ${__EMY_} ${__NN_}     ${__EMY_} ${__NN_}│
-              │${__EMY_}  ${__NN_}    ${__EMY_}9${__NN_}     ${__EMY_}0${__NN_}│
-              └─────────────┘
-
-      ${__Y_}[Help]${__NN_} ${__EM_}all other arguments are ignored${__NN_}
+      ${__EMG_}Help${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
       ${__Y_}h${__NN_}     ${__EMY_}h${__NN_}elp      display this help message
       ${__Y_}e${__NN_}     ${__EMY_}e${__NN_}nv help  list customizable environment variables
 
-  ${__UN_}Default${__UNQ_}   tartify   : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
-            tartify w : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrslw${__NN_}
-            tartify o : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}obsr${__NN_}
+${__EMR_}DEFAULT${__NN_}
+     tartify   : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrsl${__NN_}
+     tartify w : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}nbrslw${__NN_}
+     tartify o : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}obsr${__NN_}
 
-  ${__UN_}More${__UNQ_}      see the ${__Y_}tartitune${__NN_} command to easily change tartify's colors from
-            the command line and experiment
+${__EMR_}SEE ALSO${__NN_}
+     ${__Y_}tartitune${__NN_}  (easily tune  tartify's colors)
+     ${__Y_}tartiforce${__NN_} (force overwrite any options passed to tartify)
 
 HELPTEXT
 }
 
 
 __tartify_show_env() {
+  #TODO: do that with less clutter, using something like :
+  # echo ${!TARTIFY_*} | xargs  printf "%s\n" to list the args
 
   # pretty print TARTIFY environment
   echo;echo
@@ -1022,13 +1102,16 @@ __tartify_build_PS1() {
 
   #force dynamic separator if need be
   [ -z "$forceDefaultSep" ] || {
-    separator=$TARTIFY_STRING_SEPARATOR
+    separator=$TARTIFY_STRING_MISC_SEPARATOR
     [ -z $separator ] && separator=' '
   }
 
 
 
   [[ "$argstr" =~ W ]] && printf "%s" '$__t4_newline_before'
+
+        # tartitune session
+        printf "%s" '\['$__EMR_'\]$__t4_tune\[$__NN_\]'
 
   local firstn="true" #don't insert dynamic separator ($__t4_sep*) before first item
   local delimNb=0     #delimiter's position
@@ -1045,6 +1128,9 @@ __tartify_build_PS1() {
       b)
         #BRANCH
         [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepB'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_BARE'\]$__t4_bare'
+
+        #no untracked files
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_tU'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_tuSr'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_tRA'
@@ -1054,6 +1140,7 @@ __tartify_build_PS1() {
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_tRN'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_turS'
 
+        #untracked files
         printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_TU'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TuSr'
@@ -1063,6 +1150,10 @@ __tartify_build_PS1() {
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_TRO'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_TRN'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TurS'
+        printf "%s" '\['$__NN_'\]'
+
+        #merge infos
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_MERGEINFOS'\]$__t4_merg'
         printf "%s" '\['$__NN_'\]'
         ;;
       r)
@@ -1084,10 +1175,29 @@ __tartify_build_PS1() {
       l)
         #LAST COMMIT
         [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepL'
+        printf "%s" '\['$__NN_'\]'
+        #COULD COMMIT
+        printf "%s" '\['$TARTIFY_STYLE_TIME_COULDCOMMIT'\]'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_NONE'\]$__t4_lccan'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_LOW'\]$__t4_lccal'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_HIGH'\]$__t4_lccah'
+        printf "%s" '\['$__NN_'\]'
+        #SHOULD COMMIT
+        printf "%s" '\['$TARTIFY_STYLE_TIME_SHOULDCOMMIT'\]'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_NONE'\]$__t4_lscan'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_LOW'\]$__t4_lscal'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_HIGH'\]$__t4_lscah'
+        printf "%s" '\['$__NN_'\]'
+        # NO HURRY
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_NONE'\]$__t4_lnhan'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_LOW'\]$__t4_lnhal'
+        printf "%s" '\['$TARTIFY_COLOR_TIME_ACTIVITY_HIGH'\]$__t4_lnhah'
+        printf "%s" '\['$__NN_'\]'
         ;;
       c) ;;
       o) ;;
       p) ;;
+      f) ;;
       i) ;;
       a) ;;
       q) ;;
@@ -1095,7 +1205,7 @@ __tartify_build_PS1() {
       v) ;;
       w) ;;
       W) ;;
-      0 | 1 | 2 | 3 | 4 | 5 | 6 | 9 ) ;;
+      0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 ) ;;
       #TODO: make that issue ansi escapes (PS1 and standard mode)
       \\) ;;
       #TODO: make that work with PS1 and NOCOLORS
@@ -1120,41 +1230,6 @@ __tartify_build_PS1() {
 
 }
 
-# TODO : DEPRECATED
-#__tartify_augment_prompt_command() {
-#  # build a function (or augment existing one) 
-#  # and assign it to PROMPT_COMMAND
-#  # TODO: make that ZSH compatible
-
-#  # Create default PROMPT_COMMAND function
-#  eval "__tartify_prompt_command(){ tartify \"\$TARTIFY_PS1_OPTION_SET\"; };
-#        export -f __tartify_prompt_command;"
-
-#  # Yank current definition of $PROMPT_COMMAND (if any)
-#  # TODO: this is not portable outside of Bash
-#  #
-#  #                                          remove                         remove
-#  #                                          "...is a function"             trailing "}"
-#  local minusLast2=$(type  $PROMPT_COMMAND | tail -n +2        |  tail -r | tail -n +2)
-#  local last2lines=$(printf '%s\n %s\n ' '}' '  tartify "$TARTIFY_PS1_OPTION_SET"' )
-
-#  # $PROMPT_COMMAND already defined and is a valid function name
-#  if [ ! -z "${PROMPT_COMMAND:-}" ]  &&  type $PROMPT_COMMAND >/dev/null 2>&1; then
-#    #but not already augmented
-#    if ! type $PROMPT_COMMAND | tail -n +3 | grep "TARTIFY_PS1_OPTION_SET" >/dev/null 2>&1; then
-#      eval "$(echo -n  "$last2lines$minusLast2" | tail -r )"
-#    #already augmented
-#    else
-#      return 0
-#    fi
-#  #default
-#  else
-#    export PROMPT_COMMAND="__tartify_prompt_command"
-#  fi
-
-#  export TARTIFY_PROMPT_COMMAND_SET="true"
-
-#}
 
 __tartify_popup ()
 {
@@ -1163,7 +1238,7 @@ __tartify_popup ()
   #   ┌───────────────┐
   #   │1      2      3│
   #   │4      5      6│
-  #   │               │
+  #   │7      8      9│
   #   │               │
   #   │               │
   #   │       9      0│
@@ -1179,10 +1254,16 @@ __tartify_popup ()
   if [ -z "$tartanswer" ]; then
     :;
   else
-    local stripansi=$(echo $tartanswer | perl -pe 's/\e\[?.*?[\@-~]//g');
+    local stripansi=$(printf "%s" "$tartanswer" | perl -pe 's/\e\[?.*?[\@-~]//g');
     local resLength=$((${#stripansi} + 4));
-    local menuBorder=$(echo $stripansi"  " | tr "[:print:]" '─');
-    local menuBlank=$(echo $stripansi"  " | tr "[:print:]" ' ');
+    local menuBorderTop=$(printf "%s" "$stripansi""##" | tr "[:print:]" $TARTIFY_STRING_MENU_TOP);
+    local menuBorderBottom=$(printf "%s" "$stripansi""##" | tr "[:print:]" $TARTIFY_STRING_MENU_BOTTOM);
+
+    local blankLine=$(printf "%s" "$stripansi""####")
+    blankLine=$(printf "%${#blankLine}s")
+    ##much slower alternative :
+    #local blankLine=$(printf "%s" $stripansi"    " | tr "[:print:]" ' ');
+
     local firstC=
     local firstL=
     local oneliner=
@@ -1202,49 +1283,44 @@ __tartify_popup ()
 
 
     case $menuPos in
-      #0) firstL=$(( $nlines / 2 )); firstC=$(( ($ncol - $resLength)/2 ));;
-      #1) firstL=0                 ; firstC=0                            ;;
-      #2) firstL=0                 ; firstC=$(( ($ncol - $resLength)/2 ));;
-      #3) firstL=0                 ; firstC=$(( $ncol - $resLength ))    ;;
-      #4) firstL=$(( $nlines / 2 )); firstC=0                            ;;
-      #5) firstL=$(( $nlines / 2 )); firstC=$(( $ncol - $resLength ))    ;;
-      #6) firstL=$(( $nlines - 5 )); firstC=0                            ;;
-      #7) firstL=$(( $nlines - 4 )); firstC=$(( ($ncol - $resLength)/2 ));;
-      #8) firstL=$(( $nlines - 4 )); firstC=$(( $ncol - $resLength ))    ;;
 
-      1) firstL=0                 ; firstC=0                            ;;
-      2) firstL=0                 ; firstC=$(( ($ncol - $resLength)/2 ));;
-      3) firstL=0                 ; firstC=$(( $ncol - $resLength ))    ;;
-      4) firstL=1                 ; firstC=0                            ; additLines=1;;
-      5) firstL=1                 ; firstC=$(( ($ncol - $resLength)/2 )); additLines=1;;
-      6) firstL=1                 ; firstC=$(( $ncol - $resLength ))    ; additLines=1;;
-      9) firstL=$(( $nlines - 1 )); firstC=$(( ($ncol - $resLength)/2 )); oneliner="true";;
-      0) firstL=$(( $nlines - 1 )); firstC=$(( $ncol - $resLength ))    ; oneliner="true" ;;
+      1) firstL=0                 ; firstC=0                                              ;;
+      2) firstL=0                 ; firstC=$(( ($ncol - $resLength)/2 ))                  ;;
+      3) firstL=0                 ; firstC=$((  $ncol - $resLength ))                     ;;
+      4) firstL=1                 ; firstC=0                            ; additLines=1    ;;
+      5) firstL=1                 ; firstC=$(( ($ncol - $resLength)/2 )); additLines=1    ;;
+      6) firstL=1                 ; firstC=$((  $ncol - $resLength ))   ; additLines=1    ;;
+      7) firstL=2                 ; firstC=0                            ; additLines=2    ;;
+      8) firstL=2                 ; firstC=$(( ($ncol - $resLength)/2 )); additLines=2    ;;
+      9) firstL=2                 ; firstC=$((  $ncol - $resLength ))   ; additLines=2    ;;
+      0) firstL=$(( $nlines - 1 )); firstC=$((  $ncol - $resLength ))   ; oneliner="true" ;;
 
     esac
 
-    [ 2 -le $additLines ] && {
-    tput cup $(($firstL - 2)) $firstC;
-      echo $__NN_" "$menuBlank" ";
+    [ -z $additLines ] || {
+      [ 2 -le $additLines ] && {
+      tput cup $(($firstL - 2)) $firstC;
+        printf "%s" "$__NN_$blankLine";
+      }
+
+      [ 1 -le $additLines ] && {
+      tput cup $(($firstL - 1)) $firstC;
+        printf "%s" "$__NN_$blankLine";
+      }
     }
 
-    [ 1 -le $additLines ] && {
-    tput cup $(($firstL - 1)) $firstC;
-      echo $__NN_" "$menuBlank" ";
-    }
-
-    [ "true" = "$oneliner" ] || {
+    [ -z $oneliner ] && {
       tput cup $firstL $firstC;
-      echo $border"┌"$menuBorder"┐"$__NN_;
-    }
-
-    tput cup $(($firstL + 1)) $firstC;
-    echo -e $border"│"$__NN_" "$tartanswer" "$border"│"$__NN_;
-
-    [ "true" = "$oneliner" ] || {
+      printf "%s" "$TARTIFY_COLOR_MENU_BORDER$TARTIFY_STRING_MENU_TOPLEFT$menuBorderTop$TARTIFY_STRING_MENU_TOPRIGHT$__NN_";
+      tput cup $(($firstL + 1)) $firstC;
+      printf "%s" "$TARTIFY_COLOR_MENU_BORDER$TARTIFY_STRING_MENU_LEFT$__NN_" "$tartanswer" "$TARTIFY_COLOR_MENU_BORDER$TARTIFY_STRING_MENU_RIGHT$__NN_";
       tput cup $(($firstL + 2)) $firstC;
-      echo $border"└"$menuBorder"┘"$__NN_;
+      printf "%s" "$TARTIFY_COLOR_MENU_BORDER$TARTIFY_STRING_MENU_BOTTOMLEFT$menuBorderBottom$TARTIFY_STRING_MENU_BOTTOMRIGHT$__NN_";
+    } || {
+      tput cup $(($firstL )) $(($firstC + 4));
+      printf "%s" $__NN_$tartanswer$__NN_;
     }
+
 
     tput rc;
     #echo "stty-size=$(stty size) - nlines=$nlines ($(tput lines)) - ncol=$ncol ($(tput cols)) - firstL=$firstL - firstC=$firstC - resLength=$resLength - stripansi=$stripansi - menuBorder=["$menuBorder"]"
@@ -1269,39 +1345,21 @@ __tartify_reformat_timestamp(){
     local mins="$(( $div / 60 ))"
 
     # create the formatted time string
-    local timestr
     [ 0 -lt "$yrs" ] && timestr="${yrs}y"
+    [ -n "$timestr" ] && [ "SHORT" = $TARTIFY_SETTING_TIME_DISPLAY ] && return 0
     if [ 0 -lt "$days" ]; then
         [ -n "$timestr" ] && timestr="$timestr,"
-        timestr="${days}d"
+        timestr="${timestr}${days}d"
+        [ -n "$timestr" ] && [ "SHORT" = $TARTIFY_SETTING_TIME_DISPLAY ] && return 0
     fi
     if [ 0 -lt "$hrs" ]; then
         [ -n "$timestr" ] && timestr="$timestr,"
         timestr="${timestr}${hrs}h"
+        [ -n "$timestr" ] && [ "SHORT" = $TARTIFY_SETTING_TIME_DISPLAY ] && return 0
     fi
     [ -n "$timestr" ] && timestr="${timestr},"
     timestr="${timestr}${mins}m"
 
-    # TODO:
-    # TARTIFY_STYLE_TIME_COULDCOMMIT
-    # TARTIFY_STYLE_TIME_SHOULDCOMMIT
-    # TARTIFY_SETTING_TIME_DISPLAY
-    # TARTIFY_STRING_TIME_DISPLAY
-
-    # add a hint of color
-    if [ "$2" = "false" ] && [ -n "$TARTIFY_SETTING_TIME_BUGME" ]; then
-    #if [ -n "$2" ] && [ -n "$TARTIFY_SETTING_TIME_BUGME" ]; then
-        local color
-        if [ $TARTIFY_SETTING_TIME_SHOULDCOMMIT -lt "$secs" ]; then # 30 mins
-            color=$TARTIFY_COLOR_TIME_ACTIVITY_NON
-        elif [ $TARTIFY_SETTING_TIME_COULDCOMMIT -lt "$secs" ]; then # 10 mins
-            color=$TARTIFY_COLOR_TIME_ACTIVITY_LOW
-        else
-            color=$TARTIFY_COLOR_TIME_ACTIVITY_HIGH
-        fi
-        timestr="${color}${timestr}${__NN_}"
-    fi
-    echo "$timestr"
 }
 
 
@@ -1313,21 +1371,6 @@ __tartify_reformat_timestamp(){
 # assume we are inside a GIT repository.
 #
 #------------------------------------------------------------------------------
-#__tartify_repo_name()
-#{
-#  local _gitdir=$1
-#  local updir=""; [ $2 = "false" ] && updir="/.." #don't go 1 level up for bare repo
-#  local _nocolors=$3   #TRUE for no color
-#  local color
-
-#  # Print the REPO's name
-#  color=$TARTIFY_COLOR_REPO_NAME
-#  nocolor=$(echo `cd $_gitdir$updir; pwd` | sed 's,.*/,,' | tr -d '\n')
-#  color=$color$nocolor
-#  color=$color"${__NN_}"
-
-#  [ "true" = $_nocolors ] &&  echo -ne $nocolor || echo -ne $color
-#}
 
 
 __tartify_repo_name()
@@ -1473,7 +1516,7 @@ __tartify_branch(){
       local Stag=$TARTIFY_COLOR_BRANCH_STAGED$colUntracked
       local Remo=$bColRemote$colUntracked
 
-      local ll=$TARTIFY_SETTING_BRANCH_STAGED_INFO_LENGTH
+      local ll=$TARTIFY_SETTING_BRANCH_STAGED_INFOLENGTH
       local remaind
       local res1=""; local res2=""; local res3=""
 
@@ -1569,11 +1612,17 @@ __tartify_branch(){
           }
       fi
 
-      #dynamic separator in QUIET mode
-      [ "QUIET" = "$mode" ] && [ ! -z $bname ] && __t4_sepB=$separator
+      [ "QUIET" = "$mode" ] && {
+          #dynamic separator in QUIET mode
+          [ ! -z $bname ] && __t4_sepB=$separator
+          #mergeinfos
+          [ ! -z $r ] && __t4_merg=$r
+          #bare
+          [ ! -z $c ] && __t4_bare=$c
+      }
 
       # All Modes
-      tartanswer=$tartanswer$c$res1$res2$res3$r$__NN_
+      tartanswer=$tartanswer$c$res1$res2$res3$TARTIFY_COLOR_BRANCH_MERGEINFOS$r$__NN_
 
     ;;
 
@@ -1696,7 +1745,7 @@ __tartify_stash()
   #? are we inside a GIT repo's working tree
   if [ "true" = "$isinsideworktree" ]; then
     if [ "true" = "$hasstash" ]; then
-      if [ -n "$TARTIFY_SETTING_COUNTSTASHES" ]; then
+    if [ -n "$TARTIFY_SETTING_STASH_COUNT" ]; then
         # One star per stash
         color=$TARTIFY_COLOR_STASH_COUNT
         #nocolor="  "
@@ -1721,28 +1770,86 @@ __tartify_stash()
 
 
 __tartify_timelastcommit(){
+  [ "QUIET" = "$mode" ]     && __tartify_reset_PS1_globs "LAST"
+
   #TODO: COLORS !!!!!!!
-  local _nocolors=$1           #TRUE for no color
   local color
   local nocolor
 
-  #? are we inside a GIT repo
-  if git rev-parse --git-dir >/dev/null 2>&1; then
-    # calc relative time diff of last commit
-    local secs="$(
-      # get the unix timestamp for the lastest commit (seconds)
-      # copied from https://github.com/xtrementl/dev-bash-git-ps1.git
-          local now="$(date +%s)"
-          local last_commit="$(git log --format='%at' -1 2>/dev/null)"
-          if [ -z "$last_commit" ]; then # probably initial git init, no commits
-              return
-          fi
-          if [ 0 -lt "$now" ] && [ 0 -lt "$last_commit" ]; then
-              echo "$((now - last_commit))"
-          fi
-    )"
-    #TODO: include $_nocolors
-    [ -n "$secs" ] && echo -e "$(__tartify_reformat_timestamp $secs $_nocolors)"
+  # calc relative time diff of last commit
+  local secs="$(
+    # get the unix timestamp for the lastest commit (seconds)
+    # copied from https://github.com/xtrementl/dev-bash-git-ps1.git
+        local now="$(date +%s)"
+        local last_commit="$(git log --format='%at' -1 2>/dev/null)"
+        if [ -z "$last_commit" ]; then # probably initial git init, no commits
+            return
+        fi
+        if [ 0 -lt "$now" ] && [ 0 -lt "$last_commit" ]; then
+            echo "$((now - last_commit))"
+        fi
+  )"
+  #TODO: include $nocolors
+  if [ -n "$secs" ]; then
+    local timestr
+    [ "CHAR" = $TARTIFY_SETTING_TIME_DISPLAY ] && timestr=$TARTIFY_STRING_TIME_DISPLAY ||
+        __tartify_reformat_timestamp $secs #fills in timestr
+
+    # Compute colors
+    if [ "false" = $nocolors ]; then
+      local color
+      if [ "QUIET" = "$mode" ]; then
+
+        [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && {
+            if [ $TARTIFY_SETTING_TIME_COULDCOMMIT -gt "$secs" ]; then
+                if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then __t4_lnhan=${timestr}
+                elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then __t4_nhcal=${timestr}
+                else __t4_nhcah=${timestr}
+                fi
+            elif [ $TARTIFY_SETTING_TIME_SHOULDCOMMIT -gt "$secs" ]; then
+                if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then __t4_lccan=${timestr}
+                elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then __t4_lccal=${timestr}
+                else __t4_lccah=${timestr}
+                fi
+            else
+                if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then __t4_lscan=${timestr}
+                elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then __t4_lscal=${timestr}
+                else __t4_lscah=${timestr}
+                fi
+            fi
+        } || {
+                if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then __t4_lnhan=${timestr}
+                elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then __t4_lnhal=${timestr}
+                else __t4_lnhah=${timestr}
+                fi
+        }
+
+
+      else
+        # STYLES
+        [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && {
+            if [ $TARTIFY_SETTING_TIME_COULDCOMMIT -gt "$secs" ]; then 
+              :
+            elif [ $TARTIFY_SETTING_TIME_SHOULDCOMMIT -gt "$secs" ]; then 
+                color=$TARTIFY_STYLE_TIME_COULDCOMMIT
+            else color=$TARTIFY_STYLE_TIME_SHOULDCOMMIT
+            fi
+        }
+        # COLORS
+        if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then 
+            color=$color$TARTIFY_COLOR_TIME_ACTIVITY_NONE
+        elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then 
+            color=$color$TARTIFY_COLOR_TIME_ACTIVITY_LOW
+        else color=$color$TARTIFY_COLOR_TIME_ACTIVITY_HIGH
+        fi
+
+        timestr="${color}${timestr}${__NN_}"
+
+      fi
+    fi
+
+
+    tartanswer="$tartanswer$timestr"
   fi
 }
 
@@ -1752,12 +1859,15 @@ __tartify_timelastcommit(){
 #
 #------------------------------------------------------------------------------
 
+
 tartify()
 {
+#TODO: distinguish between FAST and SLOW modes to try and bypass a
+#      maximum tests (VIM, OLDSCHOOL, ...)
 
-#TODO: add a RV (reverse) option (or theme)
   local argstr="$*"
   local forceDefaultSep=""
+
 
   # (optionnal) argument expansion
   #TODO: these tests suck
@@ -1773,17 +1883,24 @@ tartify()
 
 
   # -- PARSE help options and exit --
-  # do that first to enable testing if 'tartify' is present with exit value of zero
-
-  # Help
+  # do that first to enable testing if 'tartify' is present with exit
+  # value of zero
   [[ "$argstr" =~ h ]] && { __tartify_usage; return 0; }
   [[ "$argstr" =~ e ]] && { __tartify_show_env; return 0; }
+
   # PS1 building (done here because it has to work wether wether we're
   # in a GIT dir or not
   [[ "$argstr" =~ p ]] && { __tartify_build_PS1 $argstr; return 0; }
 
-  # Override args with $TARTIFY_SETTING_FORCE if non empty
-  [ -n "$TARTIFY_SETTING_FORCE" ] && argstr=$TARTIFY_SETTING_FORCE
+  # Override args with $TARTIFY_SETTING_FORCE if $argstr is non empty,
+  # and there's no 'f' (force) option in the command line args, and
+  # we're not in VIM mode
+  [[ "$argstr" =~ f ]] || {
+      [ -n "$TARTIFY_SETTING_FORCE" ] && {
+          # ignore FORCE in VIM mode
+          [[ "$argstr" =~ v ]] || argstr=$TARTIFY_SETTING_FORCE
+        }
+  }
 
 
   # -- INIT tartify local vars --
@@ -1825,6 +1942,9 @@ tartify()
   g=`git rev-parse --git-dir 2>/dev/null`
   [ $? -eq 0  ] && {
 
+    #load optionnal config file (if we're not in the middle of a tartitune session)
+    [ "false" = $TARTITUNE_SETTING_FORCE ] && [ -z $TARTIFY_SETTING_FORCE ] && [ -f ~/.tartifyrc ] && . ~/.tartifyrc
+
     #TODO: DEPREC ????
     #Perform all cheap 'git' tests (used in more than one '__tartify_*' function)
     isbare=$( git rev-parse --is-bare-repository 2>/dev/null )
@@ -1838,10 +1958,11 @@ tartify()
 
 
 
+    #TODO: make this work
     local separator=""
-    #force default separator if need be
+    #force default ' ' separator if need be
     [ -z "$forceDefaultSep" ] || {
-      separator=$TARTIFY_STRING_SEPARATOR
+      separator=$TARTIFY_STRING_MISC_SEPARATOR
       [ -z $separator ] && separator=' '
     }
 
@@ -1885,18 +2006,26 @@ tartify()
         # CHATTERBOX (LOOONG) mode
         a) mode="LONG"              ;;
 
-        0 | 1 | 2 | 3 | 4 | 5 | 6 | 9 )
+        0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 )
            menuPos=$ch
                                     ;;
         # -- MODAL ARGS --
 
         u|U) processupstream="true" ;;
-        r|R) processupstream="true"; processremotes="true"  ;;
-          b) processupstream="true" ;; #only colored version of 'branch' needs upstream info
-          o) [ -n "${GIT_PS1_SHOWUPSTREAM-}" ] && processupstream="true" ;; #oldschool
+
+        r|R) processupstream="true"
+             processremotes="true"  ;;
+
+        b) #no upstream calculation in branch with 't' (no upstream), 'c' (no color) and 'v' (VIM mode)
+             [[ "$argstr" =~ v ]] || [[ "$argstr" =~ c ]] || [[ "$argstr" =~ t ]] ||  processupstream="true"
+                                    ;;
+        #l) #time since last commit
+        #   [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && processupstream="true"
+        #                            ;;
+        o) [ -n "${GIT_PS1_SHOWUPSTREAM-}" ] && processupstream="true" ;; #oldschool
 
         # -- MODIFIERS --
-        t) ;; # no upstream in branch TODO:
+        t) processupstream="false"  ;;
       esac
     done
 
@@ -1922,26 +2051,20 @@ tartify()
 
       local ch=${argstr:$n:1}
       case $ch in
-        #n) tartanswer=$tartanswer$( __tartify_repo_name $g $isbare                                   $nocolors);;
-        n)
-          __tartify_repo_name
-          ;;
-        b)
-          __tartify_branch
-        ;;
-        #r) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
+        n) __tartify_repo_name      ;;
+        b) __tartify_branch         ;;
         #TODO:
         r) tartanswer=$tartanswer$( __tartify_remote2 );;
         #TODO:
         #u) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
-        s)
-          __tartify_stash
-        ;;
+        s) __tartify_stash          ;;
         #TODO:
-        l) tartanswer=$tartanswer$( __tartify_timelastcommit                                              $nocolors);;
+        l) __tartify_timelastcommit ;;
+        0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 ) ;;
         c) ;;
         o) ;;
         p) ;;
+        f) ;;
         i) ;;
         a) ;;
         q) ;;
@@ -1949,7 +2072,6 @@ tartify()
         v) ;;
         w) ;;
         W) ;;
-        0 | 1 | 2 | 3 | 4 | 5 | 6 | 9 ) ;;
         #TODO: make that issue ansi escapes (PS1 and standard mode)
         \\) tartanswer=$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_;;
         #TODO: make that work with PS1 and NOCOLORS
@@ -1966,6 +2088,15 @@ tartify()
     done
 
     # Post Process
+
+    # tartitune session
+    [ "true" = $TARTITUNE_SETTING_FORCE ] && {
+        tartanswer="($__EMR_*$__NN_)"$tartanswer
+        __t4_tune="(*)"
+      } || {
+        __t4_tune=
+      }
+
     # VIM mode : remove first occurence of $separator
     [ "$mode" = "VIM" ] && tartanswer=${tartanswer/#vimsplitsep/}
 
@@ -2028,30 +2159,33 @@ tartitune(){
   # Quick tuner for tartify's COLOR-RELATED environment variables
   # (with completion)
 
+  #save tartify() environment before beginning a tartitune session
+  [ -z "$TARTITUNE_SETTING_GROUNDZERO" ] && TARTITUNE_SETTING_GROUNDZERO=$(env | grep "^TARTIFY_" | sort)
+
+
   local myargs=$(echo "$*" | tr '[A-Z]' '[a-z]' | tr '-' ' ' | sed 's/tartify_//g')
   [ -z "$myargs" ] && { tartify e; return 0; }
   local myansw
-  local mytest
+  local action
   local myarg
   local myenv
-#echo "myargs=$myargs"
+
   for myarg in $myargs; do
     case $myarg in
 
       # ENV VARS
       style_*|color_*) myenv=$myenv$myarg" "
-#echo "myarg=$myarg"
-                                      ;;
+                                       ;;
 
       # STYLES
       bold|emphasized)   myansw=$myansw$__EM_ ;;  underlined)        myansw=$myansw$__UN_ ;;
-      i*)        myansw=$myansw$__RV_ ;;
+      i*)        myansw=$myansw$__RV_  ;;
 
       # COLORS
-      black)     myansw=$myansw$__K_  ;;  red)        myansw=$myansw$__R_  ;;
-      green)     myansw=$myansw$__G_  ;;  yellow)     myansw=$myansw$__Y_  ;;
-      blue)      myansw=$myansw$__B_  ;;  magenta)    myansw=$myansw$__M_  ;;
-      cyan)      myansw=$myansw$__C_  ;;  white)      myansw=$myansw$__W_  ;;
+      black)     myansw=$myansw$__K_   ;;  red)        myansw=$myansw$__R_  ;;
+      green)     myansw=$myansw$__G_   ;;  yellow)     myansw=$myansw$__Y_  ;;
+      blue)      myansw=$myansw$__B_   ;;  magenta)    myansw=$myansw$__M_  ;;
+      cyan)      myansw=$myansw$__C_   ;;  white)      myansw=$myansw$__W_  ;;
 
       # BACKGROUND COLORS
       bgblack)   myansw=$myansw$__BGK_ ;;  bgred)      myansw=$myansw$__BGR_;;
@@ -2059,9 +2193,18 @@ tartitune(){
       bgblue)    myansw=$myansw$__BGB_ ;;  bgmagenta)  myansw=$myansw$__BGM_;;
       bgcyan)    myansw=$myansw$__BGC_ ;;  bgwhite)    myansw=$myansw$__BGW_;;
 
+      # SETTINGS
+      bugme)     action="b"            ;;
+      timelong)  action="L"            ;;
+      timeshor)  action="S"            ;;
+      timechar)  action="C"            ;;
+
       # MISC
-      test)      mytest="t"          ;;
-      export)    mytest="t"          ;;
+      test)      action="t"            ;;
+      export)    action="e"            ;;
+      quit)      action="q"            ;;
+      last)      action="l"            ;;
+      nuke)      action="n"            ;;
 
       # HELP
       h|help|?) cat <<HELPMSG
@@ -2075,8 +2218,8 @@ ${__EMR_}SYNOPSIS${__NN_}
 ${__EMR_}DESCRIPTION${__NN_}
      The order of command line arguments doesn't matter. When used
      without arguments, ${__EMR_}tartitune${__NN_} pretty prints a list of
-     ALL tartify environment variables with their current value
-     (same as \`tartify e\`)
+     ALL ${__EMR_}tartify${__NN_} environment variables with their current value
+     (same as \`${__EMR_}tartify${__NN_} e\`)
 
      The options have the following meaning:
 
@@ -2085,7 +2228,7 @@ ${__EMR_}DESCRIPTION${__NN_}
            environment variables, by full name (eg: TARTIFY_COLOR_BRANCH_STAGED)
                 -> case insensitive
                 -> run ${__EMR_}tartitune${__NN_} without any argument to get a complete
-                   list of ALL tartify environment variables with their
+                   list of ALL ${__EMR_}tartify${__NN_} environment variables with their
                    current value)
                 -> use ${__EMG_}T+completion${__NN_} to loop through ${__EM_}full${__NN_} names
 
@@ -2114,11 +2257,41 @@ ${__EMR_}DESCRIPTION${__NN_}
            ${__K_}${__BGB_}BGblue${__NN_}  ${__K_}${__BGM_}BGmagenta${__NN_}  ${__K_}${__BGC_}BGcyan${__NN_}    ${__K_}${__BGW_}BGwhite${__NN_}
 
         ${__EMG_}*${__NN_} ${__G_}Other${__NN_} ${__EM_}${__NN_}
-           test      doesn't modify any environment variable, just simulates.
-           export    print out the current TARTIFY environment in a form
-                     that can be reused for initializing tartify (only the
-                     diff with the default environmen is output)
+           ${__G_}test${__NN_}      Doesn't modify any environment variable, just simulates.
 
+           ${__G_}export${__NN_}    Save the current ${__EMR_}tartify${__NN_} environment in ~/.tartitunebak
+                     (WARN: will overwrite previous .tartitunebak silently).
+                     Move ~/.tartitunebak to ~/.tartifyrc to make that the
+                     default ${__EMR_}tartify${__NN_} environment.
+           ${__G_}nuke${__NN_}      Replace ~/.tartifyrc with the current ${__EMR_}tartify${__NN_}
+                     environment
+           ${__G_}last${__NN_}      Revert to latest ${__EMR_}tartitune${__NN_} environment
+           ${__G_}quit${__NN_}      Exit ${__EMR_}tartitune${__NN_} session (discard changes)
+
+           ${__G_}bugme${__NN_}     switch TARTIFY_SETTING_TIME_BUGME setting on/off
+           ${__G_}timelong${__NN_}  set    TARTIFY_SETTING_TIME_DISPLAY setting to LONG
+           ${__G_}timeshort${__NN_} set    TARTIFY_SETTING_TIME_DISPLAY setting to SHORT
+           ${__G_}timechar${__NN_}  set    TARTIFY_SETTING_TIME_DISPLAY setting to CHAR
+
+${__EMR_}INDICATOR${__NN_}
+
+      As soon as a ${__EMR_}tartify${__NN_} parameter is modified with ${__EMR_}tartitune${__NN_} and/or
+      ${__EMR_}tartiforce${__NN_}, and as long as the ${__G_}quit${__NN_} option is not called,
+      an indicator will appear at the beginning of all ${__EMR_}tartify${__NN_}
+      results : (${__EMR_}*${__NN_})
+
+${__EMR_}LIMITATIONS${__NN_}
+
+      ${__EMR_}tartitune${__NN_} won't have visible effects on ${__EMR_}tartify${__NN_} in PS1 mode as
+      the colors in PS1 are hardcoded at PS1 creation time. However, the
+      indicator will be present. In which case, use ${__EMR_}tartify${__NN_} from the
+      command line to see the effects of ${__EMR_}tartitune${__NN_}
+
+      ${__EMR_}tartitune${__NN_} is limited to setting COLOR and STYLE related
+      '${__EMR_}tartify${__NN_} variables'
+
+${__EMR_}SEE ALSO${__NN_}
+      tartify, tartiforce
 ${__EMR_}EXAMPLES${__NN_}
 
       ${__K_}\$ tartitune TARTIFY_COLOR_BRANCH_STAGED bold magenta${__NN_}
@@ -2144,7 +2317,7 @@ HELPMSG
   done;
 
 
-  # OUTPUT
+  # -- COLOR/STYLE --
   [ -n "$myenv" ] && {
         # WITH ENV
         local thisenv
@@ -2152,10 +2325,11 @@ HELPMSG
             thisenvUP="TARTIFY_"$(echo $thisenv | tr '[a-z]' '[A-Z]')
             [ -n "$myansw" ] && {
                 printf "\n%s" "$thisenvUP ($(eval printf "%s" "\$$thisenvUP")was$__NN_)"
-                [ "t" = "$mytest" ] && printf " %s\n" " (${myansw}*TEST*$__NN_)"|| {
+                [ "t" = "$action" ] && printf " %s\n" " (${myansw}*TEST*$__NN_)"|| {
                     printf " %s\n" " (${myansw}now is$__NN_)"
                     #ASSIGN env variable
                     eval "$thisenvUP=$myansw"
+                    TARTITUNE_SETTING_FORCE="true"
                 }
             } || {
                 printf "\n%s\n" "no option set."
@@ -2165,8 +2339,66 @@ HELPMSG
         echo
   } || {
       # NO ENV
-      [ "t" = "$mytest" ] && printf "%s\n" "${myansw}*TEST*$__NN_" || printf "%s" "${myansw}"
+      [ "t" = "$action" ] && printf "%s\n" "${myansw}*TEST*$__NN_" ||
+        printf "%s" "${myansw}"
   }
+
+  case $action in
+
+    #  -- SETTINGS --
+    b)  [ -z $TARTIFY_SETTING_TIME_BUGME ] && { 
+        TARTIFY_SETTING_TIME_BUGME="TRUE"
+        TARTITUNE_SETTING_FORCE="true"
+        echo "time display ${__EMG_}will include${__NN_} ${TARTIFY_STYLE_TIME_COULDCOMMIT}could${__NN_}/${TARTIFY_STYLE_TIME_SHOULDCOMMIT}should${__NN_} commit styles"
+      } || {
+        TARTIFY_SETTING_TIME_BUGME=
+        TARTITUNE_SETTING_FORCE="true"
+        echo "time display ${__EMR_}won't include${__NN_} ${TARTIFY_STYLE_TIME_COULDCOMMIT}could${__NN_}/${TARTIFY_STYLE_TIME_SHOULDCOMMIT}should${__NN_} commit styles"
+    }
+        ;;
+    L)  TARTIFY_SETTING_TIME_DISPLAY="LONG"
+        TARTITUNE_SETTING_FORCE="true"
+        echo "time display set to ${__EMG_}LONG${__NN_}"
+        ;;
+    S)  TARTIFY_SETTING_TIME_DISPLAY="SHORT"
+        TARTITUNE_SETTING_FORCE="true"
+        echo "time display set to ${__EMG_}SHORT${__NN_}"
+        ;;
+    C)  TARTIFY_SETTING_TIME_DISPLAY="CHAR"
+        TARTITUNE_SETTING_FORCE="true"
+        echo "time display set to ${__EMG_}CHAR${__NN_}"
+        ;;
+
+    # -- MISC --
+    #export
+    e)
+        env | grep "^TARTIFY_" | sort > ~/.tartitunebak
+        echo "current$__EMR_ tartify$__NN_ environment exported to ~/.tartunebak"
+        ;;
+
+    #nuke : save current in ~/.tartifyrc
+    n)
+        TARTITUNE_SETTING_FORCE="false"
+        TARTITUNE_SETTING_LAST=""
+        TARTITUNE_SETTING_GROUNDZERO=""
+        env | grep "^TARTIFY_" | sort > ~/.tartifyrc
+        echo "current$__EMR_ tartify$__NN_ environment exported to ~/.tartifyrc"
+        return 0
+        ;;
+
+    #quit : exit without saving, revert to original env
+    q)
+        __tartitune_reset
+        return 0
+        ;;
+
+    l)
+        eval $TARTITUNE_SETTING_LAST;
+        TARTITUNE_SETTING_FORCE="true";
+        ;;
+  esac
+
+  TARTITUNE_SETTING_LAST=$(env | grep "^TARTIFY_" | sort)
 
 }
 
@@ -2178,12 +2410,16 @@ __tartitune_completion()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    optsVAR=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("-%s ", $1)}' | sed 's/TARTIFY_//g')
-    optsVARLONG=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("%s ", $1)}')
+    optsVARLONG="${!TARTIFY_COLOR*} ${!TARTIFY_STYLE*}"
+    optsVAR=$( echo $optsVARLONG |  sed 's/TARTIFY_/-/g')
+    ## Slower
+    #optsVAR=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("-%s ", $1)}' | sed 's/TARTIFY_//g')
+    #optsVARLONG=$(env | grep "^TARTIFY_COLOR\|^TARTIFY_STYLE" | awk -F"=" '{printf("%s ", $1)}')
 
     optsARG="bold emphasized underlined inverse black red green yellow
     blue magenta cyan white bgblack bgred bggreen bgyellow bgblue
-    bgmagenta bgcyan bgwhite test help "
+    bgmagenta bgcyan bgwhite quit nuke last test export help bugme
+    timelong timeshor timechar"
 
     #if [[ ${cur} == T* ]] ; then
     if [[ ${cur} == -* ]] ; then
@@ -2200,10 +2436,33 @@ __tartitune_completion()
 
 
 tartiforce(){
-  export TARTIFY_SETTING_FORCE="$*"
+  [ -z "$*" ] && {
+      __tartitune_reset
+    } || {
+      case "$*" in
+        h|-h|?|-?)
+          echo "${__EMR_}tartiforce${__NN_} : force tartify settings in
+          the current ${__EMR_}tartitune${__NN_} session"
+          ;;
+        *)
+          TARTIFY_SETTING_FORCE="$*"
+          TARTITUNE_SETTING_FORCE="true"
+          ;;
+      esac
+    }
+
+
+
 }
 
-
+__tartitune_reset(){
+  TARTITUNE_SETTING_FORCE="false"
+  TARTITUNE_SETTING_LAST=$(env | grep "^TARTIFY_" | sort)
+  eval $TARTITUNE_SETTING_GROUNDZERO
+  TARTITUNE_SETTING_GROUNDZERO=""
+  TARTIFY_SETTING_FORCE=
+  echo "exiting$__EMR_ tartitune$__NN_ session, modified environment discarded"
+}
 #------------------------------------------------------------------------------
 #
 #             MAIN
@@ -2215,6 +2474,7 @@ __tartify_reset_PS1_globs ALL
 #__tartify_init_PS1_globs
 #__tartify_init_PS1_globs_EXPORT
 __tartify_init_globs
+[ -f ~/.tartifyrc ] && . ~/.tartifyrc
 
 # ADDONS
 
