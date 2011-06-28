@@ -389,8 +389,103 @@ __tartify_define_colors_TPUT() {
 
 }
 
-
 __tartify_reset_PS1_globs(){
+
+  # REPOSITORY NAME
+     __t4_rep=""   # repo name
+    __t4_sepN=""   # dynamic separator for repo name
+
+  # BRANCH
+      #
+      # TODO: explain that better !
+      # __t4B=__tartify_branch()
+      # T=untracked files    t=no untracked files
+      # U=unstaged changes   u=no unstaged changes
+      # S=staged changes     s=no staged changes
+      # R=remote info        r=no remote info
+
+      __t4_tU=""   #           Unstaged
+      __t4_tuSr="" #           Staged                (stag-before-rem
+      __t4_tRA=""  #           remote Ahead of
+      __t4_tRD=""  #           remote behinD
+      __t4_tRI=""  #           remote dIverged
+      __t4_tRO=""  #           remote Ok (uptodate)
+      __t4_tRN=""  #           remote None
+      __t4_turS="" #           Staged                (stag-before-rem
+      __t4_TU=""   #UNtracked  Unstaged
+      __t4_TuSr="" #UNtracked  Staged                (stag-before-rem
+      __t4_TRA=""  #UNtracked  remote Ahead of
+      __t4_TRD=""  #UNtracked  remote behinD
+      __t4_TRI=""  #UNtracked  remote dIverged
+      __t4_TRO=""  #UNtracked  remote Ok (uptodate)
+      __t4_TRN=""  #UNtracked  remote None
+      __t4_TurS="" #UNtracked  Staged                (rem-before-stag
+
+     __t4_sepB=""  # dynamic separator for branch
+     __t4_merg=""  # merge infos for branch
+     __t4_bare=""  # bare repository indicator
+
+
+  #REMOTE
+    __t4_sepR=""   # dynamic separator for remotes
+
+
+  #STASH
+     __t4_st=""   # stash nocount
+     __t4_ST=""   # stash count
+   __t4_sepS=""   # dynamic separator for stashes
+
+  #LAST COMMIT
+    __t4_sepL=""   # dynamic separator for time-last-commit
+    __t4_lccan=""  # Could Commit Activity None
+    __t4_lccal=""  # Could Commit Activity Low
+    __t4_lccah=""  # Could Commit Activity High
+    __t4_lscan=""  # Should Commit Activity None
+    __t4_lscal=""  # Should Commit Activity Low
+    __t4_lscah=""  # Should Commit Activity High
+    __t4_lnhan=""  # No Hurry Activity None
+    __t4_lnhal=""  # No Hurry Activity Low
+    __t4_lnhah=""  # No Hurry Activity High
+
+
+  #NOTA : all variables named __t4_D*, where * is one or more numbers
+  #       are dynamically generated at `tartify` evaluation time
+  #       (reserved variables for delimiters)
+  #
+  #       NB1: 100 delimiters should be plenty enough
+  #       NB2: could have used loop
+  #             for ((n=0;n<100;n++)); do eval "__t4_D$n=" ; done;
+  #           but about 10 times slower
+
+    __t4_D0=;     __t4_D1=;     __t4_D2=;     __t4_D3=;     __t4_D4=;
+    __t4_D5=;     __t4_D6=;     __t4_D7=;     __t4_D8=;     __t4_D9=;
+    __t4_D10=;    __t4_D11=;    __t4_D12=;    __t4_D13=;    __t4_D14=;
+    __t4_D15=;    __t4_D16=;    __t4_D17=;    __t4_D18=;    __t4_D19=;
+    __t4_D20=;    __t4_D21=;    __t4_D22=;    __t4_D23=;    __t4_D24=;
+    __t4_D25=;    __t4_D26=;    __t4_D27=;    __t4_D28=;    __t4_D29=;
+    __t4_D30=;    __t4_D31=;    __t4_D32=;    __t4_D33=;    __t4_D34=;
+    __t4_D35=;    __t4_D35=;    __t4_D36=;    __t4_D38=;    __t4_D39=;
+    __t4_D40=;    __t4_D41=;    __t4_D42=;    __t4_D43=;    __t4_D44=;
+    __t4_D45=;    __t4_D46=;    __t4_D47=;    __t4_D48=;    __t4_D49=;
+    __t4_D50=;    __t4_D51=;    __t4_D52=;    __t4_D53=;    __t4_D54=;
+    __t4_D55=;    __t4_D56=;    __t4_D57=;    __t4_D58=;    __t4_D59=;
+    __t4_D60=;    __t4_D61=;    __t4_D62=;    __t4_D63=;    __t4_D64=;
+    __t4_D65=;    __t4_D66=;    __t4_D67=;    __t4_D68=;    __t4_D69=;
+    __t4_D70=;    __t4_D71=;    __t4_D72=;    __t4_D73=;    __t4_D74=;
+    __t4_D75=;    __t4_D76=;    __t4_D77=;    __t4_D78=;    __t4_D79=;
+    __t4_D80=;    __t4_D81=;    __t4_D82=;    __t4_D83=;    __t4_D84=;
+    __t4_D85=;    __t4_D86=;    __t4_D87=;    __t4_D88=;    __t4_D89=;
+    __t4_D90=;    __t4_D91=;    __t4_D92=;    __t4_D93=;    __t4_D94=;
+    __t4_D95=;    __t4_D96=;    __t4_D97=;    __t4_D98=;    __t4_D99=;
+
+
+    __t4_newline_before=""
+    __t4_newline_after=""
+    __t4_tune=""
+
+}
+
+__tartify_reset_PS1_globsDEPREC(){
 
   # REPOSITORY NAME
   if [ "REPO" = "$1" ] ||  [ "ALL" = "$1" ]; then
@@ -490,13 +585,19 @@ export TARTITUNE_SETTING_LAST=""                        # saves last tartitune s
 export TARTITUNE_SETTING_GROUNDZERO=""                  # save tartify settings before beginning a new tartitune session
 #TODO: allow empty separator (' ' should not be default)
 export TARTIFY_STRING_MISC_SEPARATOR=""                      # Default separator to be used with mono-character options (tartify
+export TARTIFY_STRING_MISC_SEPARATOR="--"                      # Default separator to be used with mono-character options (tartify
 
 #-------------------------------------------------------
 # TIME
 # //COMMIT-WISE
 export TARTIFY_SETTING_TIME_BUGME=TRUE                  # Non empty : will color and style the 'time since last commit' string
 export TARTIFY_SETTING_TIME_DISPLAY=LONG                # LONG (min, hours, days) SHORT (mine | hours | days) CHAR (cf. next var)
+
+[ "true" = $supports8 ] && {
 export TARTIFY_STRING_TIME_DISPLAY="⟳ "                 # String to display in case prec. var == CHAR
+} || {
+export TARTIFY_STRING_TIME_DISPLAY="◉ "                 # String to display in case prec. var == CHAR
+}
 
                                                         # Uncommited changes (staged, unstaged)
 export TARTIFY_SETTING_TIME_COULDCOMMIT=14400           #     *     nb seconds after which you COULD  commit (default is 4 hours)
@@ -1103,7 +1204,7 @@ __tartify_build_PS1() {
   #force dynamic separator if need be
   [ -z "$forceDefaultSep" ] || {
     separator=$TARTIFY_STRING_MISC_SEPARATOR
-    [ -z $separator ] && separator=' '
+    [ -z "$separator" ] && separator=' '
   }
 
 
@@ -1122,33 +1223,35 @@ __tartify_build_PS1() {
       n)
         #REPO NAME
         [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepN'
+        printf "%s" '\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_REPO_NAME'\]$__t4_rep'
-
+        printf "%s" '\['$__NN_'\]'
         ;;
       b)
         #BRANCH
         [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepB'
+        printf "%s" '\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_BARE'\]$__t4_bare'
 
         #no untracked files
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_tU'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_tuSr'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_tRA'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_tRD'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_tRI'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_tRO'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_tRN'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_turS'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_tU''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_tuSr''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_tRA''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_tRD''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_tRI''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_tRO''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_tRN''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_turS''\['$__NN_'\]'
 
         #untracked files
         printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_TU'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TuSr'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_TRA'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_TRD'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_TRI'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_TRO'
-        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_TRN'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_TU''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TuSr''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_TRA''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_TRD''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_TRI''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_TRO''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_TRN''\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TurS'
         printf "%s" '\['$__NN_'\]'
 
@@ -1159,10 +1262,16 @@ __tartify_build_PS1() {
       r)
         #REMOTES
         [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepR'
+        printf "%s" '\['$__NN_'\]'
+
+        printf "%s" '\['$__NN_'\]'
         ;;
       u)
         #UPSTREAM ONLY
         [ -z $firstn ] && [ ! -z "$separator" ] && printf "%s" '$__t4_sepR'
+        printf "%s" '\['$__NN_'\]'
+
+        printf "%s" '\['$__NN_'\]'
         ;;
       s)
         #STASHES
@@ -1387,7 +1496,7 @@ __tartify_repo_name()
   color=$color$nocolor
   color=$color"${__NN_}"
 
-  [ "QUIET" = "$mode" ] && { __t4_rep=$nocolor; [ -z $__t4_rep ] || __t4_sepN=$separator; }
+  [ "QUIET" = "$mode" ] && { __t4_rep=$nocolor; [ -z $__t4_rep ] || __t4_sepN="$separator"; }
   [ "true" = $nocolors ] &&   tartanswer=$tartanswer$nocolor || tartanswer=$tartanswer$color
   #[ "true" = $nocolors ] &&   echo "nocolors true" || echo "nocolors false"
   #echo " [REPONAME before leaving] nocolor=$nocolor tartanswer=$tartanswer"
@@ -1614,7 +1723,7 @@ __tartify_branch(){
 
       [ "QUIET" = "$mode" ] && {
           #dynamic separator in QUIET mode
-          [ ! -z $bname ] && __t4_sepB=$separator
+          [ ! -z $bname ] && __t4_sepB="$separator"
           #mergeinfos
           [ ! -z $r ] && __t4_merg=$r
           #bare
@@ -1800,11 +1909,11 @@ __tartify_timelastcommit(){
       local color
       if [ "QUIET" = "$mode" ]; then
 
-        [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && {
+        [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && [ -n "$w$i" ] && { # $w:unstaged changes, $i: staged changes
             if [ $TARTIFY_SETTING_TIME_COULDCOMMIT -gt "$secs" ]; then
                 if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then __t4_lnhan=${timestr}
-                elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then __t4_nhcal=${timestr}
-                else __t4_nhcah=${timestr}
+                elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then __t4_lnhal=${timestr}
+                else __t4_lnhah=${timestr}
                 fi
             elif [ $TARTIFY_SETTING_TIME_SHOULDCOMMIT -gt "$secs" ]; then
                 if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then __t4_lccan=${timestr}
@@ -1827,18 +1936,18 @@ __tartify_timelastcommit(){
 
       else
         # STYLES
-        [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && {
-            if [ $TARTIFY_SETTING_TIME_COULDCOMMIT -gt "$secs" ]; then 
+        [ -n "$TARTIFY_SETTING_TIME_BUGME" ] && [ -n "$w$i" ] && { # $w:unstaged changes, $i: staged changes
+            if [ $TARTIFY_SETTING_TIME_COULDCOMMIT -gt "$secs" ]; then
               :
-            elif [ $TARTIFY_SETTING_TIME_SHOULDCOMMIT -gt "$secs" ]; then 
+            elif [ $TARTIFY_SETTING_TIME_SHOULDCOMMIT -gt "$secs" ]; then
                 color=$TARTIFY_STYLE_TIME_COULDCOMMIT
             else color=$TARTIFY_STYLE_TIME_SHOULDCOMMIT
             fi
         }
         # COLORS
-        if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then 
+        if [ $TARTIFY_SETTING_TIME_LOWACTIVITY -lt "$secs" ]; then
             color=$color$TARTIFY_COLOR_TIME_ACTIVITY_NONE
-        elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then 
+        elif [ $TARTIFY_SETTING_TIME_MEDIUMACTIVITY -lt "$secs" ]; then
             color=$color$TARTIFY_COLOR_TIME_ACTIVITY_LOW
         else color=$color$TARTIFY_COLOR_TIME_ACTIVITY_HIGH
         fi
@@ -1869,18 +1978,30 @@ tartify()
   local forceDefaultSep=""
 
 
-  # (optionnal) argument expansion
-  #TODO: these tests suck
-  [ "$argstr"  = "w" ] && argstr="nbrslw"                           #newline after
-  [ "$argstr"  = "W" ] && argstr="nbrslW"                           #newline before
-  [ "$argstr" = "Ww" ] || [ "$argstr" = "wW" ] && argstr="nbrslwW"  #newline BOTH
-  #expand some mono-character options
-  [ "$argstr"  = "o" ] && { argstr="obsr";   forceDefaultSep=true ; } #oldschool
-  [ "$argstr"  = "v" ] && { argstr="vnbrsl";                        } #vim
-  [ "$argstr"  = "p" ] && { argstr="pnbrsl"; forceDefaultSep=true ; } #PS1
-  [ "$argstr"  = "q" ] && { argstr="qnbrsl"; forceDefaultSep=true ; } #QUIET mode
-  [ ${#argstr} -eq 0 ] && { argstr="nbrsl";                         } #no args
-
+  # (optionnal) paramater expansion
+  if [ ${#argstr} -lt 3 ]; then
+    #expand optionless tartify
+    if [ ${#argstr} -eq 0 ]; then
+      argstr="nbrsl"                            #no args
+    #expand some mono-character options
+    elif [ ${#argstr} -eq 1 ]; then
+      case "$argstr" in
+        o) argstr="ob";   forceDefaultSep=true   ;; #oldschool
+        v) argstr="vnbrsl"                       ;; #vim
+        p) argstr="pnbrsl"; forceDefaultSep=true ;; #PS1
+        q) argstr="qnbrsl"; forceDefaultSep=true ;; #QUIET mode
+        w) argstr="nbrslw"                       ;; #newline after
+        W) argstr="nbrslW"                       ;; #newline before
+      esac
+    #expand some 2-characters options
+    else
+      case "$argstr" in
+        wW) argstr="nbrslwW"                      ;; #newline BOTH
+        Ww) argstr="nbrslwW"                      ;; #newline BOTH
+        #TODO: '1w', '3q',...
+      esac
+    fi
+  fi
 
   # -- PARSE help options and exit --
   # do that first to enable testing if 'tartify' is present with exit
@@ -1959,11 +2080,11 @@ tartify()
 
 
     #TODO: make this work
-    local separator=""
+    local separator=
     #force default ' ' separator if need be
     [ -z "$forceDefaultSep" ] || {
       separator=$TARTIFY_STRING_MISC_SEPARATOR
-      [ -z $separator ] && separator=' '
+      [ -z "$separator" ] && separator=' '
     }
 
     local n
@@ -2042,12 +2163,14 @@ tartify()
     #
     # PROCESSING
     #
+    #TODO: cache already done calculations ? (tartify nb-n-b)
+    #(might be totally stupid)
     local firstn="true" #don't insert separator before first item
     local delimNb=0     #delimiter's position
     tartanswer=""
     for ((n=0;n<${#argstr};n++))
     do
-      [ -z $firstn ] && [ ! -z "$separator" ] && tartanswer=$tartanswer$separator
+      [ -z $firstn ] && [ ! -z "$separator" ] && tartanswer="$tartanswer$separator"
 
       local ch=${argstr:$n:1}
       case $ch in
@@ -2196,7 +2319,7 @@ tartitune(){
       # SETTINGS
       bugme)     action="b"            ;;
       timelong)  action="L"            ;;
-      timeshor)  action="S"            ;;
+      timeshort)  action="S"            ;;
       timechar)  action="C"            ;;
 
       # MISC
@@ -2419,7 +2542,7 @@ __tartitune_completion()
     optsARG="bold emphasized underlined inverse black red green yellow
     blue magenta cyan white bgblack bgred bggreen bgyellow bgblue
     bgmagenta bgcyan bgwhite quit nuke last test export help bugme
-    timelong timeshor timechar"
+    timelong timeshort timechar"
 
     #if [[ ${cur} == T* ]] ; then
     if [[ ${cur} == -* ]] ; then
@@ -2440,7 +2563,8 @@ tartiforce(){
       __tartitune_reset
     } || {
       case "$*" in
-        h|-h|?|-?)
+        h | -h | \? | -\?)
+          echo "\$*=$*"
           echo "${__EMR_}tartiforce${__NN_} : force tartify settings in
           the current ${__EMR_}tartitune${__NN_} session"
           ;;
@@ -2461,7 +2585,8 @@ __tartitune_reset(){
   eval $TARTITUNE_SETTING_GROUNDZERO
   TARTITUNE_SETTING_GROUNDZERO=""
   TARTIFY_SETTING_FORCE=
-  echo "exiting$__EMR_ tartitune$__NN_ session, modified environment discarded"
+  echo "exiting$__EMR_ tartitune$__NN_ session, modified environment discarded
+  (use 'tartitune last' to restore)"
 }
 #------------------------------------------------------------------------------
 #
