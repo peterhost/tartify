@@ -42,17 +42,16 @@
 
 # USAGE : Just call the tartify() function from the command line
 #
-#         PROMPT integration : call tartify() inside your $PS1. Examples:
-#
-#           PS1="\$(tartify) [\u@\h]\$ "
-#           PS1="\$(tartify)\n[\u@\h]\$ "
-#           ...
-#
 #         You can also pass arguments to tartify() to make it display only
 #         certain informations
 #
 #           tartify -h
 #
+# SEE ALSO :
+#
+#           tartitune : tune tartify settings (colors, styles, ...)
+#
+#           tartiforce : temporarilly force tartify output
 #
 
 #PS1="${__PS1NN_}${__PS1EMK_}[${__PS1UC_}\u${__PS1EMK_}@${__PS1EMUC_}\h ${__PS1C_}\${NEW_PWD}${__PS1EMK_}] \$"
@@ -64,19 +63,9 @@
 #
 # ISSUE :
 #
-#   * no support for SVN upstream (as I don't use SVN), feel free to augment
-#     this script
-#
-#
 
-#   * conditionnal newline : there is no such thing in a prompt. Either a
-#   newline is hardcoded in the prompt, or it's not. All linebreak(s) inserted
-#   by an external command called in the PS1 variable via "$(command)" are
-#   stripped out when $PS1 is evaluated. With the exception of a newline
-#   followed by something (see ISSUE below)
-#
-#   Solution: if you need a multiline prompt, with the 'tartify' line only
-#   inserted if you're being in a 'git' repository, consider using a
+#   * conditionnal newline : if you need a multiline prompt, with the 'tartify'
+#   line only inserted if you're being in a 'git' repository, consider using a
 #   PROMPT_COMMAND like this :
 #
 #     prompt_command(){
@@ -1204,8 +1193,9 @@ ${__EMR_}DESCRIPTION${__NN_}
       ${__EMG_}Modes${__NN_}
 
               default    default mode is implicit
-      ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update PS1 variables, no output
-      ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   string with escaped (\[...\])ansi escape codes
+      ${__Y_}q${__NN_}       ${__EMY_}q${__NN_}uiet      only update PS1 variables, no output to STDOUT
+      ${__Y_}p${__NN_}       ${__EMY_}p${__NN_}s1 mode   generate string with escaped (\[...\]) non-printing
+                         characters and ${__EMR_}tartify${__NN_}'s own PS1 variables
       ${__Y_}v${__NN_}       ${__EMY_}v${__NN_}im mode   result formated for the Vim tartify plugin
                          (color info appended to result)
 
@@ -1227,15 +1217,15 @@ ${__EMR_}DESCRIPTION${__NN_}
       ${__Y_}d${__NN_}       pw${__EMY_}d${__NN_}          issue \$PWD if not in git repo
       ${__Y_}c${__NN_}       no${__EMY_}c${__NN_}olor      strip all colors
       ${__Y_}t${__NN_}       no ups${__EMY_}t${__NN_}ream  in branch (only staged/unstaged)
-      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line      insert newline : positionnal in MENU mode
-                           at end of line  in other modes
-      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line      prepend newline at beginning (non-positionnal)
+      ${__Y_}w${__NN_}       ne${__EMY_}w${__NN_}line      add newline at end of result
+                           ignored in MENU mode
+      ${__Y_}W${__NN_}       ne${__EMY_}W${__NN_}line      prepend newline to result
                            ignored in MENU mode
       ${__Y_}f${__NN_}       ${__EMY_}f${__NN_}orce        overwrite global TARTIFY_FORCE (once)
                            (see tartitune(), tartiforce() )
       ${__Y_}I${__NN_}       spl${__EMY_}I${__NN_}t        split output (positionnal)
                            -> left of  'I' : no output (=~ quiet mode)
-                           -> right of 'I' : standard output
+                           -> right of 'I' : STDOUT
                            (useful in combination with 'menu mode')
 
       ${__EMG_}Help${__NN_} ${__EM_}all other arguments are ignored${__NN_}
@@ -1339,10 +1329,10 @@ __tartify_build_PS1() {
   for ((n=0;n<${#argstr};n++))
   do
     local ch="${argstr:$n:1}"
-    case $ch in
+    case "$ch" in
       n | N)
         #REPO NAME
-        [ -z $firstn ] && printf "%s" '$__t4_sepN'
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepN'
         printf "%s" '\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_REPO_NAME'\]$__t4_rep'
         printf "%s" '\['$__NN_'\]'
@@ -1355,7 +1345,7 @@ __tartify_build_PS1() {
       b | B | o)
         #TODO: branch : oldschool
         #BRANCH
-        [ -z $firstn ] && printf "%s" '$__t4_sepB'
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepB'
         printf "%s" '\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_BARE'\]$__t4_bare'
 
@@ -1372,12 +1362,19 @@ __tartify_build_PS1() {
         #untracked files
         printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UNSTAGED'\]$__t4_TU''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TuSr''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_AHEAD'\]$__t4_TRA''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_BEHIND'\]$__t4_TRD''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_DIVERGE'\]$__t4_TRI''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_UPTODATE'\]$__t4_TRO''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_UPSTREAM_NOTRACK'\]$__t4_TRN''\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_STYLE_BRANCH_UNTRACKED'\]'
         printf "%s" '\['$TARTIFY_COLOR_BRANCH_STAGED'\]$__t4_TurS'
         printf "%s" '\['$__NN_'\]'
 
@@ -1394,7 +1391,7 @@ __tartify_build_PS1() {
         ;;
       r | R)
         #REMOTES
-        [ -z $firstn ] && printf "%s" '$__t4_sepR'
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepR'
         printf "%s" '\['$__NN_'\]$__t4_rOrsep'
         printf "%s" '\['$TARTIFY_COLOR_REMOTE_NAME_ORIGIN'\]$__t4_rOt$__t4_rOn$__t4_rO1p'
         printf "%s" '\['$TARTIFY_COLOR_REMOTE_COUNT_AHEAD'\]$__t4_rOac'
@@ -1435,8 +1432,8 @@ __tartify_build_PS1() {
       # ->Reuse r) PS1 variables
       u | U)
         #UPSTREAM ONLY
-        [ -z $firstn ] && printf "%s" '$__t4_sepR'
-        #[ -z $firstn ] && [ ! -z "$forceSeparator" ] && printf "%s" '$__t4_sepR'
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepR'
+        #[ -z "$firstn" ] && [ ! -z "$forceSeparator" ] && printf "%s" '$__t4_sepR'
         printf "%s" '\['$__NN_'\]'
 
         printf "%s" '\['$__NN_'\]'
@@ -1445,7 +1442,7 @@ __tartify_build_PS1() {
         ;;
       s | S)
         #STASHES
-        [ -z $firstn ] && printf "%s" '$__t4_sepS'
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepS'
         printf "%s" '\['$__NN_'\]'
         printf "%s" '\['$TARTIFY_COLOR_STASH_NOCOUNT'\]$__t4_st'
         printf "%s" '\['$TARTIFY_COLOR_STASH_COUNT'\]$__t4_ST'
@@ -1457,7 +1454,7 @@ __tartify_build_PS1() {
         ;;
       l | L)
         #LAST COMMIT
-        [ -z $firstn ] && printf "%s" '$__t4_sepL'
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepL'
         printf "%s" '\['$__NN_'\]'
         #COULD COMMIT
         printf "%s" '\['$TARTIFY_STYLE_TIME_COULDCOMMIT'\]'
@@ -1503,7 +1500,7 @@ __tartify_build_PS1() {
         #call of 'tartify q'
         # 0  .. 49 : colored
         # 50 .. 99 : nocolored
-        printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]$__t4_D'$delimNb'\['$__NN_'\]'
+        printf "%s" '\['"$TARTIFY_COLOR_MISC_DELIMITER"'\]$__t4_D'"$delimNb"'\['$__NN_'\]'
         printf "%s" '$__t4_D'$(($delimNb + 50))
         delimNb=$((delimNb + 1))
         ;;
@@ -1583,11 +1580,11 @@ __tartify_popup ()
       7) firstL=2                 ; firstC=0                            ; additLines=2    ;;
       8) firstL=2                 ; firstC=$(( ($ncol - $resLength)/2 )); additLines=2    ;;
       9) firstL=2                 ; firstC=$((  $ncol - $resLength ))   ; additLines=2    ;;
-      0) firstL=$(( $nlines - 1 )); firstC=$((  $ncol - $resLength ))   ; oneliner="true" ;;
+      0) firstL=$(( $nlines - 1 )); firstC=$((  $ncol - $resLength ))   ; additLines=2 ; oneliner="true" ;;
 
     esac
 
-    [ -z $additLines ] || {
+    [ -z "$additLines" ] || {
       [ 2 -le $additLines ] && {
       tput cup $(($firstL - 2)) $firstC;
         printf "%s" "$__NN_$blankLine";
@@ -1599,7 +1596,7 @@ __tartify_popup ()
       }
     }
 
-    [ -z $oneliner ] && {
+    [ -z "$oneliner" ] && {
       tput cup $firstL $firstC;
       printf "%s" "$TARTIFY_COLOR_MENU_BORDER$TARTIFY_STRING_MENU_TOPLEFT$menuBorderTop$TARTIFY_STRING_MENU_TOPRIGHT$__NN_";
       tput cup $(($firstL + 1)) $firstC;
@@ -1697,7 +1694,7 @@ __tartify_repo_name()
 
   [ "true" = $nocolors ] &&  {
     __t4_ncrep=$reponame
-    [ -z $splitargstr ] && tartanswer="$tartanswer$reponame" || {
+    [ -z "$splitargstr" ] && tartanswer="$tartanswer$reponame" || {
       #SPLIT output TEST
       if [[  "$splitargstr" =~ n  ]] || [[  "$splitargstr" =~ N  ]]; then
         tartanswer="$tartanswer$reponame"
@@ -1707,7 +1704,7 @@ __tartify_repo_name()
 
   } || {
     __t4_rep=$reponame
-    [ -z $splitargstr ] && tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAME$reponame${__NN_}" || {
+    [ -z "$splitargstr" ] && tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAME$reponame${__NN_}" || {
       #SPLIT output TEST
       if [[  "$splitargstr" =~ n  ]] || [[  "$splitargstr" =~ N  ]]; then
         tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAME$reponame${__NN_}"
@@ -1765,7 +1762,7 @@ __tartify_branch(){
     local f="$w$i$s$u"
     #printf "%s" "$c${b##refs/heads/}${f:+ $f}$r$p"
     __t4_oldschool="$c${b##refs/heads/}${f:+ $f}$r$p"
-    [ -z $splitargstr ] && tartanswer="$tartanswer$__t4_oldschool" || {
+    [ -z "$splitargstr" ] && tartanswer="$tartanswer$__t4_oldschool" || {
       #SPLIT output TEST
       [[  "$splitargstr" =~ o  ]] && { tartanswer="$tartanswer$__t4_oldschool"; __tartify_reset_PS1_globs BRANCH; }
     }
@@ -1841,14 +1838,14 @@ __tartify_branch(){
               remaind=$(($bnameL - ((2 * $ll)) ))
               [ $(($remaind <= 0)) -eq 1  ] && { remaind=$(($bnameL % 2)); ll=$(($bnameL / 2)) ; }
 
-              [ -z $TARTIFY_SETTING_BRANCH_STAGED_INFO ] && {
+              [ -z "$TARTIFY_SETTING_BRANCH_STAGED_INFO" ] && {
                   #URS [m]aste[r],[ma]st[er] ,[mas][ter], ...
                   res1=${bname:0:$ll}
                   res2=${bname:$ll:$remaind}
                   res3=${bname:(($remaind + $ll )):$ll}
                   #update PS1 vars
-                  [ -n "$u" ] &&  { __t4_TU=$res1; eval "__t4_TR$prefix=\$res2" ; __t4_TurS=$res3; } ||
-                                  { __t4_tU=$res1; eval "__t4_tR$prefix=\$res2" ; __t4_turS=$res3; }
+                  [ -n "$u" ] &&  { __t4_TU=$res1; eval "__t4_TR$prefix=\"\$res2\"" ; __t4_TurS=$res3; } ||
+                                  { __t4_tU=$res1; eval "__t4_tR$prefix=\"\$res2\"" ; __t4_turS=$res3; }
                   #colors for NORMAL mode
                   res1=$Unst$res1; res2=$Remo$res2; res3=$Stag$res3$__NN_
               } || {
@@ -1857,8 +1854,8 @@ __tartify_branch(){
                   res2=${bname:$ll:$ll}
                   res3=${bname:(($ll * 2)):$remaind}
                   #update PS1 vars
-                  [ -n "$u" ] &&  { __t4_TU=$res1; __t4_TuSr=$res2; eval "__t4_TR$prefix=\$res3"; } ||
-                                  { __t4_tU=$res1; __t4_tuSr=$res2; eval "__t4_tR$prefix=\$res3"; }
+                  [ -n "$u" ] &&  { __t4_TU=$res1; __t4_TuSr=$res2; eval "__t4_TR$prefix=\"\$res3\""; } ||
+                                  { __t4_tU=$res1; __t4_tuSr=$res2; eval "__t4_tR$prefix=\"\$res3\""; }
                   #colors for NORMAL mode
                   res1=$Unst$res1; res2=$Stag$res2; res3=$Remo$res3$__NN_
               }
@@ -1872,8 +1869,8 @@ __tartify_branch(){
               res1=${bname:0:$ll}
               res2=${bname:$ll:$remaind}
               #update PS1 vars
-              [ -n "$u" ] &&  { __t4_TU=$res1; eval "__t4_TR$prefix=\$res2"; } ||
-                              { __t4_tU=$res1; eval "__t4_tR$prefix=\$res2"; }
+              [ -n "$u" ] &&  { __t4_TU=$res1; eval "__t4_TR$prefix=\"\$res2\""; } ||
+                              { __t4_tU=$res1; eval "__t4_tR$prefix=\"\$res2\""; }
               #colors for NORMAL mode
               res1=$Unst$res1; res2=$Remo$res2$__NN_
 
@@ -1881,13 +1878,13 @@ __tartify_branch(){
           elif [ "+" = "$i" ]; then
               remaind=$(($bnameL -  $ll  ))
               [ $(($remaind <= 0)) -eq 1  ] && { remaind=1; ll=$(($bnameL - 1)) ; }
-              [ -z $TARTIFY_SETTING_BRANCH_STAGED_INFO ] && {
+              [ -z "$TARTIFY_SETTING_BRANCH_STAGED_INFO" ] && {
                   #RS maste[r],mast[er] ,mas[ter], ...
                   res1=${bname:0:$remaind}
                   res2=${bname:$remaind:$ll}
                   #update PS1 vars
-                  [ -n "$u" ] &&  { eval "__t4_TR$prefix=\$res1" ; __t4_TurS=$res2; } ||
-                                  { eval "__t4_tR$prefix=\$res1" ; __t4_turS=$res2; }
+                  [ -n "$u" ] &&  { eval "__t4_TR$prefix=\"\$res1\"" ; __t4_TurS=$res2; } ||
+                                  { eval "__t4_tR$prefix=\"\$res1\"" ; __t4_turS=$res2; }
                   #colors for NORMAL mode
                   res1=$Remo$res1; res2=$Stag$res2$__NN_
               } || {
@@ -1895,8 +1892,8 @@ __tartify_branch(){
                   res1=${bname:0:$ll}
                   res2=${bname:$ll:$remaind}
                   #update PS1 vars
-                  [ -n "$u" ] &&  { __t4_TuSr=$res1; eval "__t4_TR$prefix=\$res2"; } ||
-                                  { __t4_tuSr=$res1; eval "__t4_tR$prefix=\$res2"; }
+                  [ -n "$u" ] &&  { __t4_TuSr=$res1; eval "__t4_TR$prefix=\"\$res2\""; } ||
+                                  { __t4_tuSr=$res1; eval "__t4_tR$prefix=\"\$res2\""; }
                   #colors for NORMAL mode
                   res1=$Stag$res1; res2=$Remo$res2$__NN_
               }
@@ -1904,8 +1901,8 @@ __tartify_branch(){
           else
             res1=$bname
             #update PS1 vars
-            [ -n "$u" ] &&  { eval "__t4_TR$prefix=\$res1"; } ||
-                            { eval "__t4_tR$prefix=\$res1"; }
+            [ -n "$u" ] &&  { eval "__t4_TR$prefix=\"\$res1\""; } ||
+                            { eval "__t4_tR$prefix=\"\$res1\""; }
             #colors for NORMAL mode
             res1=$Remo$res1$__NN_
           fi
@@ -1919,7 +1916,7 @@ __tartify_branch(){
           __t4_merg=$r  #mergeinfos
           __t4_bare=$c  #bare
 
-          [ -z $splitargstr ] && tartanswer="$tartanswer$c$res1$res2$res3$TARTIFY_COLOR_BRANCH_MERGEINFOS$r$__NN_" || {
+          [ -z "$splitargstr" ] && tartanswer="$tartanswer$c$res1$res2$res3$TARTIFY_COLOR_BRANCH_MERGEINFOS$r$__NN_" || {
             #SPLIT output TEST
             if [[  "$splitargstr" =~ b  ]] || [[  "$splitargstr" =~ B  ]]; then
               tartanswer="$tartanswer$c$res1$res2$res3$TARTIFY_COLOR_BRANCH_MERGEINFOS$r$__NN_"
@@ -1997,11 +1994,11 @@ __tartify_remote(){
         #before_traked="$marker_color$TARTIFY_STRING_REMOTE_TRACKING";
 
         #PS1: tracking symbol
-        [ "false" = $nocolors ] &&  eval "${ps1varRadical}t=$TARTIFY_STRING_REMOTE_TRACKING"
+        [ "false" = $nocolors ] &&  eval "${ps1varRadical}t=\"$TARTIFY_STRING_REMOTE_TRACKING\""
       fi
 
       #PS1: remote name
-      [ "false" = $nocolors ] &&  eval "${ps1varRadical}n=$remName"
+      [ "false" = $nocolors ] &&  eval "${ps1varRadical}n=\"$remName\""
 
       # nb of commits AHEAD/BEHIND
       local ahead_count="$(__tartify_diff_count $remotename/$branchname HEAD)"
@@ -2030,7 +2027,7 @@ __tartify_remote(){
           diffcount="${TARTIFY_COLOR_REMOTE_COUNT_AHEAD}${ahead_count}"
           diffcountnocol="+${ahead_count}"
           #PS1: ahead count
-          [ "false" = $nocolors ] &&  eval "${ps1varRadical}ac=$ahead_count"
+          [ "false" = $nocolors ] &&  eval "${ps1varRadical}ac=\"$ahead_count\""
         fi
 
         if [ 0 -lt "$behind_count" ]; then
@@ -2039,12 +2036,12 @@ __tartify_remote(){
             diffcount="${diffcount}${marker_color}$TARTIFY_STRING_REMOTE_COUNTSEP"
             diffcountnocol="${diffcountnocol}$TARTIFY_STRING_REMOTE_COUNTSEP"
             #PS1 : separator
-            [ "false" = $nocolors ] &&  eval "${ps1varRadical}csep=$TARTIFY_STRING_REMOTE_COUNTSEP"
+            [ "false" = $nocolors ] &&  eval "${ps1varRadical}csep=\"$TARTIFY_STRING_REMOTE_COUNTSEP\""
           }
           diffcount="${diffcount}${TARTIFY_COLOR_REMOTE_COUNT_BEHIND}${behind_count}"
           diffcountnocol="${diffcountnocol}-${behind_count}"
           #PS1: behind count
-          [ "false" = $nocolors ] &&  eval "${ps1varRadical}bc=$behind_count"
+          [ "false" = $nocolors ] &&  eval "${ps1varRadical}bc=\"$behind_count\""
         fi
 
         [ -n "$diffcount" ] && diffcount=" ${marker_color}($diffcount${marker_color}) "
@@ -2055,7 +2052,7 @@ __tartify_remote(){
       [ "true" = $nocolors ] &&  {
         __t4_ncremotes="${before_traked}${remName}${diffcountnocol}"
 
-        [ -z $splitargstr ] && tartanswer="${tartanswer}$__t4_ncremotes" || {
+        [ -z "$splitargstr" ] && tartanswer="${tartanswer}$__t4_ncremotes" || {
           #SPLIT output TEST
           if [[  "$splitargstr" =~ r  ]] || [[  "$splitargstr" =~ R  ]];then
             tartanswer="${tartanswer}$__t4_ncremotes"
@@ -2065,7 +2062,7 @@ __tartify_remote(){
 
       } || {
 
-        [ -z $splitargstr ] && tartanswer="${tartanswer}${marker_color}${before_traked}${remName}${diffcount}${__NN_}" || {
+        [ -z "$splitargstr" ] && tartanswer="${tartanswer}${marker_color}${before_traked}${remName}${diffcount}${__NN_}" || {
           #SPLIT output TEST
           if [[  "$splitargstr" =~ r  ]] || [[  "$splitargstr" =~ R  ]]; then
             tartanswer="${tartanswer}${marker_color}${before_traked}${remName}${diffcount}${__NN_}"
@@ -2123,7 +2120,7 @@ __tartify_stash()
     fi
     [ "true" = $nocolors ] &&   {
 
-        [ -z $splitargstr ] && tartanswer="$tartanswer$stashstr" || {
+        [ -z "$splitargstr" ] && tartanswer="$tartanswer$stashstr" || {
           #SPLIT output TEST
           if [[  "$splitargstr" =~ s  ]] || [[  "$splitargstr" =~ S  ]]; then
             tartanswer="$tartanswer$stashstr"
@@ -2133,7 +2130,7 @@ __tartify_stash()
 
     } || {
 
-        [ -z $splitargstr ] && tartanswer="$tartanswer$color" || {
+        [ -z "$splitargstr" ] && tartanswer="$tartanswer$color" || {
           #SPLIT output TEST
           if [[  "$splitargstr" =~ s  ]] || [[  "$splitargstr" =~ S  ]]; then
             tartanswer="$tartanswer$color"
@@ -2229,9 +2226,9 @@ __tartify_timelastcommit(){
     [ ! -z "$forceSeparator" ] &&  [ ! -z "$timestr" ] && __t4_sepL="$separator"
     #echo "forceSeparator=$forceSeparator - timestr=$timestr - __t4_sepL=$__t4_sepL"
 
-    [ "false" = "$nocolors" ] && {
+    if [ "false" = "$nocolors" ]; then
 
-        [ -z $splitargstr ] && tartanswer="$tartanswer$color$timestr$__NN_" || {
+        [ -z "$splitargstr" ] && tartanswer="$tartanswer$color$timestr$__NN_" || {
           #SPLIT output TEST
           if [[  "$splitargstr" =~ l  ]] || [[  "$splitargstr" =~ L  ]]; then
             tartanswer="$tartanswer$color$timestr$__NN_"
@@ -2239,9 +2236,9 @@ __tartify_timelastcommit(){
           fi
         }
 
-    } || {
+    else
 
-        [ -z $splitargstr ] && tartanswer="$tartanswer$timestr" || {
+        [ -z "$splitargstr" ] && tartanswer="$tartanswer$timestr" || {
           #SPLIT output TEST
           if [[  "$splitargstr" =~ l  ]] || [[  "$splitargstr" =~ L  ]]; then
             tartanswer="$tartanswer$timestr"
@@ -2249,7 +2246,7 @@ __tartify_timelastcommit(){
           fi
         }
 
-    }
+    fi
   fi
 }
 
@@ -2292,8 +2289,8 @@ tartify()
 
   # -- Force Automatic delimiter --
   local hasdelimiters=$(echo "$argstr" | tr -d $TARTIFY_OPTIONS)
-  [ -z $hasdelimiters ] && forceSeparator=true
-  #[ -z $hasdelimiters ] && echo "no delimiter" || echo "hasdelimiters=[$hasdelimiters]"
+  [ -z "$hasdelimiters" ] && forceSeparator=true
+  #[ -z "$hasdelimiters" ] && echo "no delimiter" || echo "hasdelimiters=[$hasdelimiters]"
 
 
   # -- (optionnal) paramater expansion --
@@ -2380,7 +2377,7 @@ tartify()
   for ((n=0;n<${#argstr};n++))
   do
     local ch=${argstr:$n:1}
-    case $ch in
+    case "$ch" in
 
       # -- MODES --
 
@@ -2463,7 +2460,7 @@ tartify()
     #load optionnal ~/.tartifyrc config file
     # * if we're not in the middle of a tartitune session
     # * AND if we're not forcing tartify options ($TARTIFY_FORCE or 'f' option)
-    [ "false" = $TARTITUNE_SETTING_FORCE ] && [ -z $TARTIFY_FORCE ] && [[ "$argstr" =~ f ]] && [ -f ~/.tartifyrc ] && . ~/.tartifyrc
+    [ "false" = $TARTITUNE_SETTING_FORCE ] && [ -z "$TARTIFY_FORCE" ] && [[ "$argstr" =~ f ]] && [ -f ~/.tartifyrc ] && . ~/.tartifyrc
 
     # PS1 tartiforce marker
     [ -n "$TARTIFY_FORCE" ] &&  __t4_force="!"
@@ -2502,13 +2499,13 @@ tartify()
     for ((n=0;n<${#argstr};n++))
     do
       # automatic separator in 'separator-less' tartify option string
-      [ -z $firstn ] && [ ! -z "$forceSeparator" ] && tartanswer="$tartanswer$separator"
+      [ -z "$firstn" ] && [ ! -z "$forceSeparator" ] && tartanswer="$tartanswer$separator"
 
       nocolors="false"
       [ "true" = "$forcenocolors" ] && nocolors="true"
 
       local ch=${argstr:$n:1}
-      case $ch in
+      case "$ch" in
         n)                  __tartify_repo_name      ;;
         b)                  __tartify_branch         ;;
         # OldSchool MODE : no color, branch results with $*+, stash results with %
@@ -2546,7 +2543,6 @@ tartify()
             #NO SPLIT OUTPUT
             tartanswer="$tartanswer$TARTIFY_COLOR_MISC_DELIMITER$ch$__NN_"
             [ " " = "$ch" ] && eval "__t4_D$thisNb=\" \"" || eval "__t4_D$thisNb=\"$ch\""
-            #[ " " = "$ch" ] && echo "__t4_D$thisNb=\" \"" || echo "__t4_D$thisNb=\"$ch\""
 
           } || {
             #SPLIT OUTPUT
@@ -2558,8 +2554,6 @@ tartify()
           }
 
 
-          #[ "false" = "$nocolors" ] &&  printf "%s" '\['$TARTIFY_COLOR_MISC_DELIMITER'\]$__t4_D'$delimNb'\['$__NN_'\]' ||
-          #    printf "%s" '$__t4_D'$delimNb
 
           delimNb=$((delimNb + 1))
           ;;
@@ -2619,10 +2613,16 @@ tartify()
       printf "%s" "$tartanswer"
       [[ "$argstr" =~ w ]] && echo -ne "\n" # linebreak after
     }
+
   } || {
+
     #Not a GIT repo, echo $PWD if 'd' option
     [[ "$argstr" =~ d ]] && {
-        [[ "$argstr" =~ q ]] && __t4_pwd=$(__tartify_smart_PWD) || printf "%s" "$TARTIFY_COLOR_PWD$(__tartify_smart_PWD)$_NN_"
+        if [[ "$argstr" =~ q ]] || [[ "$argstr" =~ I ]]; then
+          __t4_pwd=$(__tartify_smart_PWD)
+        else
+            printf "%s" "$TARTIFY_COLOR_PWD$(__tartify_smart_PWD)$_NN_"
+        fi
     }
   }
 
@@ -2920,7 +2920,7 @@ ${__EMR}ERROR${__NN_}: you cannot use ${__EMG_}compound${__NN_} colors, ${__EMG_
   else
     case $string_or_setting in
 
-      b)  [ -z $TARTIFY_SETTING_TIME_BUGME ] && {
+      b)  [ -z "$TARTIFY_SETTING_TIME_BUGME" ] && {
           TARTIFY_SETTING_TIME_BUGME="TRUE"
           TARTITUNE_SETTING_FORCE="true"
           echo "time display ${__EMG_}will include${__NN_} ${TARTIFY_STYLE_TIME_COULDCOMMIT}could${__NN_}/${TARTIFY_STYLE_TIME_SHOULDCOMMIT}should${__NN_} commit styles"
