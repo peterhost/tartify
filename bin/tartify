@@ -388,6 +388,8 @@ __tartify_reset_PS1_globs(){
 
   if [ "NAME" = "$section" ] || [ -z "$section" ];then
      __t4_rep=""   # repo name
+     __t4_nrep=""  # repo name with 'm/M' option
+     __t4_lpath="" # local path in repo with 'm/M' option
     __t4_sepN=""   # dynamic separator for repo name
    __t4_ncrep=""   # NOCOLORS repo name
   fi
@@ -673,12 +675,12 @@ __tartify_init_globs(){
 
   # Internal (RESERVED)
 
-  export TARTIFY_OPTIONS_ELEMENTS='bBlLnNorRsSuU'
+  export TARTIFY_OPTIONS_ELEMENTS='bBlLmMnNorRsSuU'
   export TARTIFY_OPTIONS_MODES='0123456789pqv'
   export TARTIFY_OPTIONS_MODIFIERS='cdfItwW'
   export TARTIFY_OPTIONS_HELP='eh'
   #export TARTIFY_OPTIONS="${TARTIFY_OPTIONS_ELEMENTS}${TARTIFY_OPTIONS_MODES}${TARTIFY_OPTIONS_MODIFIERS}${TARTIFY_OPTIONS_HELP}"
-  export TARTIFY_OPTIONS="0123456789bBcdefhIlLnNopqrRsStuUvwW"
+  export TARTIFY_OPTIONS="0123456789bBcdefhIlLmMnNopqrRsStuUvwW"
 
   # External TARTIFY PARAMETERS : adapt to your needs
 
@@ -774,7 +776,9 @@ __tartify_init_globs(){
 
   #-------------------------------------------------------
   # REPOSITORY
-  export TARTIFY_COLOR_REPO_NAME=${__C_}                  # repository's "name"              DIM GREY
+  export TARTIFY_COLOR_REPO_NAMEALONE=${__C_}             # repository's "name"                            CYAN
+  export TARTIFY_COLOR_REPO_NAMEBASE=${__EMC_}            # 'm/M' option : repository's "base-name"        BOLD CYAN
+  export TARTIFY_COLOR_REPO_LOCALPATH=${__C_}             # 'm/M' option : local path in repo repository   CYAN
 
   #-------------------------------------------------------
   # REMOTES
@@ -851,9 +855,10 @@ __tartify_init_globs(){
   #-------------------------------------------------------
   # SMART PWD
 
-  export TARTIFY_SETTING_PWD_MAXLEN=25         # How many characters of the $PWD should be kept
-  export TARTIFY_STRING_PWD_TRUNCSYMBOL='..'   # Indicate that there has been dir truncation
-  export TARTIFY_COLOR_PWD=$__C_               # Indicate that there has been dir truncation
+  export TARTIFY_SETTING_PWD_MAXLEN=25         # ('d' option) How many characters of the $PWD should be kept
+  export TARTIFY_SETTING_REPO_NAMEMAXLEN=15     # ('m/M' option) How many characters of the $PWD should be kept
+  export TARTIFY_STRING_PWD_TRUNCSYMBOL='..'   # ('d' option) Indicate that there has been dir truncation
+  export TARTIFY_COLOR_PWD=$__C_               # ('d' option) Color for PWD
 
 
 }
@@ -1182,7 +1187,8 @@ ${__EMR_}DESCRIPTION${__NN_}
 
       ${__EMG_}Elements${__NN_}
 
-       ${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame          ${__Y_}N${__NN_}   same without colors
+      ${__K_}┌${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame          ${__Y_}N${__NN_}   same without colors
+      ${__K_}└${__Y_}m${__NN_}       rep na${__EMY_}m${__NN_}e + local path    ${__Y_}M${__NN_}   same without colors
       ${__K_}┌${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name              ${__Y_}B${__NN_}          \` \`
       ${__K_}└${__Y_}o${__NN_}       branch name ${__EMY_}o${__NN_}ldschool (__git_ps1)
       ${__K_}┌${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes (all)            ${__Y_}R${__NN_}          \` \`
@@ -1330,11 +1336,13 @@ __tartify_build_PS1() {
   do
     local ch="${argstr:$n:1}"
     case "$ch" in
-      n | N)
+      n | N | m | M)
         #REPO NAME
         [ -z "$firstn" ] && printf "%s" '$__t4_sepN'
         printf "%s" '\['$__NN_'\]'
-        printf "%s" '\['$TARTIFY_COLOR_REPO_NAME'\]$__t4_rep'
+        printf "%s" '\['$TARTIFY_COLOR_REPO_NAMEALONE'\]$__t4_rep'
+        printf "%s" '\['$TARTIFY_COLOR_REPO_NAMEBASE'\]$__t4_nrep\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_REPO_LOCALPATH'\]$__t4_lpath'
         printf "%s" '\['$__NN_'\]'
 
         # NOCOLORS option
@@ -1655,7 +1663,6 @@ __tartify_smart_PWD(){
   # How many characters of the $PWD should be kept
   local pwdmaxlen=$TARTIFY_SETTING_PWD_MAXLEN
   # Indicate that there has been dir truncation
-  local TARTIFY_STRING_PWD_TRUNCSYMBOL=".."
   local dir=${PWD##*/}
   pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
   NEW_PWD=${PWD/#$HOME/\~}
@@ -1670,6 +1677,44 @@ __tartify_smart_PWD(){
 
 }
 
+__tartify_smart_repopath(){
+
+  [ -z "$1" ] || {
+    NEW_PWD="$1"
+    # How many characters of the $PWD should be kept
+    local pwdmaxlen=$TARTIFY_SETTING_REPO_NAMEMAXLEN
+    # Indicate that there has been dir truncation
+    local dir=${1##*/}
+    pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
+    local pwdoffset=$(( ${#NEW_PWD} - pwdmaxlen ))
+    if [ ${pwdoffset} -gt "0" ]
+    then
+        NEW_PWD=${NEW_PWD:$pwdoffset:$pwdmaxlen}
+        NEW_PWD=${TARTIFY_STRING_PWD_TRUNCSYMBOL}/${NEW_PWD#*/}
+    fi
+    echo $NEW_PWD
+  }
+
+}
+
+__tartify_smart_repopath_DEPREC(){
+
+  [ -z "$1" ] || {
+    # How many characters of the $PWD should be kept
+    local pwdmaxlen=$TARTIFY_SETTING_REPO_NAMEMAXLEN
+    # Indicate that there has been dir truncation
+    local dir=${1##*/}
+    pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
+    local pwdoffset=$(( ${#NEW_PWD} - pwdmaxlen ))
+    if [ ${pwdoffset} -gt "0" ]
+    then
+        NEW_PWD=${NEW_PWD:$pwdoffset:$pwdmaxlen}
+        NEW_PWD=${TARTIFY_STRING_PWD_TRUNCSYMBOL}/${NEW_PWD#*/}
+    fi
+    echo $NEW_PWD
+  }
+
+}
 
 #------------------------------------------------------------------------------
 #
@@ -1686,31 +1731,54 @@ __tartify_repo_name()
   local updir=""
   [ $isbare = "false" ] && updir="/.." #don't go 1 level up for bare repo
 
-  local reponame
-  reponame=$(echo `cd $g$updir; pwd` | sed 's,.*/,,' | tr -d '\n')
+  local repopath=
+  local reponame=
+  local localpath=$(pwd -P | tr -d '\n')
+  repopath=${g%%/.git}
+  [ ".git" = "$repopath" ] && repopath="$localpath"
 
+  reponame=${repopath##*/}
+  localpath=${localpath##$repopath}
+
+  echo "g=$g - repopath=$repopath - reponame=$reponame - localpath=$localpath"
   #PS1 dynamic separator
   [ ! -z "$forceSeparator" ] &&  [ ! -z "$reponame" ] && __t4_sepN="$separator"
 
+  #NOCOLORS
   [ "true" = $nocolors ] &&  {
-    __t4_ncrep=$reponame
-    [ -z "$splitargstr" ] && tartanswer="$tartanswer$reponame" || {
+  [ "true" = "$includelocalpath" ] && __t4_ncrep="$reponame$(__tartify_smart_repopath $localpath)" ||  __t4_ncrep="$reponame"
+    if [ -z "$splitargstr" ]; then
+      tartanswer="$tartanswer$__t4_ncrep"
+    else
       #SPLIT output TEST
       if [[  "$splitargstr" =~ n  ]] || [[  "$splitargstr" =~ N  ]]; then
-        tartanswer="$tartanswer$reponame"
+        tartanswer="$tartanswer$__t4_ncrep"
         __tartify_reset_PS1_globs NAME
       fi
-    }
+    fi
 
   } || {
-    __t4_rep=$reponame
-    [ -z "$splitargstr" ] && tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAME$reponame${__NN_}" || {
+  #COLORS
+    #WITH LOCAL PATH
+    [ "true" = "$includelocalpath" ] && { __t4_lpath="$(__tartify_smart_repopath $localpath)"; __t4_nrep="$reponame"; } || __t4_rep="$reponame"
+    if [ -z "$splitargstr" ]; then
+      if [ "true" = "$includelocalpath" ]; then
+        tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAMEBASE$reponame${__NN_}$TARTIFY_COLOR_REPO_LOCALPATH$(__tartify_smart_repopath $localpath)${__NN_}"
+      else
+        tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAMEALONE$reponame${__NN_}"
+      fi
+    #NO LOCAL PATH
+    else
       #SPLIT output TEST
       if [[  "$splitargstr" =~ n  ]] || [[  "$splitargstr" =~ N  ]]; then
-        tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAME$reponame${__NN_}"
+        if [ "true" = "$includelocalpath" ]; then
+          tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAMEBASE$reponame${__NN_}$TARTIFY_COLOR_REPO_LOCALPATH$(__tartify_smart_repopath $localpath)${__NN_}"
+        else
+          tartanswer="$tartanswer$TARTIFY_COLOR_REPO_NAMEALONE$reponame${__NN_}"
+        fi
         __tartify_reset_PS1_globs NAME
       fi
-    }
+    fi
   }
 }
 
@@ -2329,6 +2397,7 @@ tartify()
   local hasupstream="false"
   local nocolors=
   local forcenocolors="false"
+  local includelocalpath="false"
   local mode="NORMAL"
   local branchstyle=""
   local menuPos=""
@@ -2405,6 +2474,8 @@ tartify()
           menuPos=$ch
                                   ;;
       # -- MODAL ARGS --
+      m|M) includelocalpath="true" ;;
+
       u|U) processupstream="true" ;;
 
       r|R) processupstream="true"
@@ -2506,22 +2577,21 @@ tartify()
 
       local ch=${argstr:$n:1}
       case "$ch" in
-        n)                  __tartify_repo_name      ;;
-        b)                  __tartify_branch         ;;
-        # OldSchool MODE : no color, branch results with $*+, stash results with %
-        o) nocolors="true"; __tartify_branch         ;;
-        r)                  __tartify_remote         ;;
+        n | m)                  __tartify_repo_name      ;;
+        b)                      __tartify_branch         ;;
+        o)     nocolors="true"; __tartify_branch         ;;
+        r)                      __tartify_remote         ;;
         #TODO:
         #u) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
-        s)                  __tartify_stash          ;;
-        l)                  __tartify_timelastcommit ;;
-        N) nocolors="true"; __tartify_repo_name      ;;
-        B) nocolors="true"; __tartify_branch         ;;
-        R) nocolors="true"; __tartify_remote         ;;
+        s)                      __tartify_stash          ;;
+        l)                      __tartify_timelastcommit ;;
+        N | M) nocolors="true"; __tartify_repo_name      ;;
+        B)     nocolors="true"; __tartify_branch         ;;
+        R)     nocolors="true"; __tartify_remote         ;;
         #TODO:
         #U) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
-        S) nocolors="true"; __tartify_stash          ;;
-        L) nocolors="true"; __tartify_timelastcommit ;;
+        S)     nocolors="true"; __tartify_stash          ;;
+        L)     nocolors="true"; __tartify_timelastcommit ;;
         0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 ) ;;
         I) ;;
         c) ;;
