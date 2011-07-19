@@ -1740,7 +1740,6 @@ __tartify_repo_name()
   reponame=${repopath##*/}
   localpath=${localpath##$repopath}
 
-  echo "g=$g - repopath=$repopath - reponame=$reponame - localpath=$localpath"
   #PS1 dynamic separator
   [ ! -z "$forceSeparator" ] &&  [ ! -z "$reponame" ] && __t4_sepN="$separator"
 
@@ -2055,18 +2054,18 @@ __tartify_remote(){
       firstRemote="false"
 
       # Tracking Branch remName
-      if [ $remotename = $(git config --get branch.$branchname.remote) ]
+      if [ "$remotename" = "$(git config --get branch.$branchname.remote)" ]
       then
-        [ "false" = $nocolors ] &&  before_traked="$marker_color"
+        [ "false" = "$nocolors" ] &&  before_traked="$marker_color"
         before_traked="$before_tracked$TARTIFY_STRING_REMOTE_TRACKING";
         #before_traked="$marker_color$TARTIFY_STRING_REMOTE_TRACKING";
 
         #PS1: tracking symbol
-        [ "false" = $nocolors ] &&  eval "${ps1varRadical}t=\"$TARTIFY_STRING_REMOTE_TRACKING\""
+        [ "false" = "$nocolors" ] &&  eval "${ps1varRadical}t=\"$TARTIFY_STRING_REMOTE_TRACKING\""
       fi
 
       #PS1: remote name
-      [ "false" = $nocolors ] &&  eval "${ps1varRadical}n=\"$remName\""
+      [ "false" = "$nocolors" ] &&  eval "${ps1varRadical}n=\"$remName\""
 
       # nb of commits AHEAD/BEHIND
       local ahead_count="$(__tartify_diff_count $remotename/$branchname HEAD)"
