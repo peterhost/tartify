@@ -426,6 +426,14 @@ __tartify_reset_PS1_globs(){
 __t4_oldschool=""  # OLDSCHOOL branch (__git_PS1)
   fi
 
+  if [ "ANCESTOR" = "$section" ] || [ -z "$section" ];then
+
+      __t4_anc=""  # name of parent repo in case of submodule
+
+     __t4_sepA=""  # dynamic separator for ancestor
+    __t4_ncanc=""  # NOCOLORS ancestor
+  fi
+
   if [ "REMOTE" = "$section" ] || [ -z "$section" ];then
     __t4_sepR=""   # dynamic separator for remotes
     __t4_rOrsep="" # dynamic inter-remotes separator
@@ -675,12 +683,12 @@ __tartify_init_globs(){
 
   # Internal (RESERVED)
 
-  export TARTIFY_OPTIONS_ELEMENTS='bBlLmMnNorRsSuU'
+  export TARTIFY_OPTIONS_ELEMENTS='aAbBlLmMnNorRsSuU'
   export TARTIFY_OPTIONS_MODES='0123456789pqv'
   export TARTIFY_OPTIONS_MODIFIERS='cdfItwW'
   export TARTIFY_OPTIONS_HELP='eh'
   #export TARTIFY_OPTIONS="${TARTIFY_OPTIONS_ELEMENTS}${TARTIFY_OPTIONS_MODES}${TARTIFY_OPTIONS_MODIFIERS}${TARTIFY_OPTIONS_HELP}"
-  export TARTIFY_OPTIONS="0123456789bBcdefhIlLmMnNopqrRsStuUvwW"
+  export TARTIFY_OPTIONS="0123456789aAbBcdefhIlLmMnNopqrRsStuUvwW"
 
   # External TARTIFY PARAMETERS : adapt to your needs
 
@@ -734,6 +742,8 @@ __tartify_init_globs(){
 
   #Branch style : Untracked files
   export TARTIFY_STYLE_BRANCH_UNTRACKED=${__UN_}                 # Untracked Files                  UNDERLINED
+  export TARTIFY_SETTING_BRANCH_UNTRAKEDLOCAL=""          # If non-empty, the untracked markers show untracked files limited only
+                                                          # to 'local directory', not the whole repository
 
   # Branch COLOR : first 2 chars
   export TARTIFY_COLOR_BRANCH_UNSTAGED=${__EMR_}          # unstaged changes (first char)    BOLD RED
@@ -773,6 +783,18 @@ __tartify_init_globs(){
   #     $TARTIFY_SETTING_BRANCH_STAGED_INFOLENGTH =
   #     0 : master    1 : (m)[a]ster    2 : (ma)[st]er    3 : (mas)[ter]    4 : (mas)[ter]    ,...
 
+
+  #-------------------------------------------------------
+  # ANCESTOR
+  export TARTIFY_COLOR_ANCESTOR_NAME=${__EMM_}             # parent repository's "name"                      MAGENTA
+  [ "true" = $supports8 ] && {
+  export TARTIFY_STRING_ANCESTOR_MARKER="↪"               # if non empty, will replace the name of the parent repository
+                                                           # in the 'ancestor' field in case of a submodule
+  } || {
+  export TARTIFY_STRING_ANCESTOR_MARKER=">"
+  }
+  export TARTIFY_STRING_ANCESTOR_NOSUB="!"               # string output before ancestor repo's name in case sub-repo is
+                                                         # a valid submodule
 
   #-------------------------------------------------------
   # REPOSITORY
@@ -1124,9 +1146,17 @@ __tartify_git_ps1(){
       fi
 
       if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] || [ "OLDSCHOOL" != "$branchstyle" ]; then
-         if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-            u="%"
-         fi
+        #__GIT_PS1 source modif :
+        if [ -z "$TARTIFY_SETTING_BRANCH_UNTRAKEDLOCAL" ]; then
+            if [ -n "$(cd "$repopath"; git ls-files --others --exclude-standard)" ]; then
+                u="%"
+            fi
+        else
+            if [ -n "$( git ls-files --others --exclude-standard)" ]; then
+                u="%"
+            fi
+        fi
+        #//__GIT_PS1 source modif :
       fi
 
       if [ "true" = "$processupstream" ] && [ -n $upstream ]; then
@@ -1189,6 +1219,8 @@ ${__EMR_}DESCRIPTION${__NN_}
 
       ${__K_}┌${__Y_}n${__NN_}       repository ${__EMY_}n${__NN_}ame          ${__Y_}N${__NN_}   same without colors
       ${__K_}└${__Y_}m${__NN_}       rep na${__EMY_}m${__NN_}e + local path    ${__Y_}M${__NN_}   same without colors
+       ${__Y_}a${__NN_}       ${__EMY_}a${__NN_}ncestor (indicator      ${__Y_}A${__NN_}   same without colors
+               if we're inside submodule)
       ${__K_}┌${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name              ${__Y_}B${__NN_}          \` \`
       ${__K_}└${__Y_}o${__NN_}       branch name ${__EMY_}o${__NN_}ldschool (__git_ps1)
       ${__K_}┌${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes (all)            ${__Y_}R${__NN_}          \` \`
@@ -1347,6 +1379,19 @@ __tartify_build_PS1() {
 
         # NOCOLORS option
         printf "%s" '$__t4_ncrep'
+
+        unset firstn
+        ;;
+        # TODO!!!!!!!!!!!
+      a | A )
+        #ANCESTOR NAME
+        [ -z "$firstn" ] && printf "%s" '$__t4_sepA'
+        printf "%s" '\['$__NN_'\]'
+        printf "%s" '\['$TARTIFY_COLOR_ANCESTOR_NAME'\]$__t4_anc'
+        printf "%s" '\['$__NN_'\]'
+
+        # NOCOLORS option
+        printf "%s" '$__t4_ncanc'
 
         unset firstn
         ;;
@@ -1677,6 +1722,8 @@ __tartify_smart_PWD(){
 
 }
 
+
+
 __tartify_smart_repopath(){
 
   [ -z "$1" ] || {
@@ -1728,24 +1775,13 @@ __tartify_smart_repopath_DEPREC(){
 
 __tartify_repo_name()
 {
-  local updir=""
-  [ $isbare = "false" ] && updir="/.." #don't go 1 level up for bare repo
-
-  local repopath=
-  local reponame=
-  local localpath=$(pwd -P | tr -d '\n')
-  repopath=${g%%/.git}
-  [ ".git" = "$repopath" ] && repopath="$localpath"
-
-  reponame=${repopath##*/}
-  localpath=${localpath##$repopath}
 
   #PS1 dynamic separator
   [ ! -z "$forceSeparator" ] &&  [ ! -z "$reponame" ] && __t4_sepN="$separator"
 
   #NOCOLORS
   [ "true" = $nocolors ] &&  {
-  [ "true" = "$includelocalpath" ] && __t4_ncrep="$reponame$(__tartify_smart_repopath $localpath)" ||  __t4_ncrep="$reponame"
+    [ "true" = "$includelocalpath" ] && __t4_ncrep="$reponame$(__tartify_smart_repopath $localpath)" ||  __t4_ncrep="$reponame"
     if [ -z "$splitargstr" ]; then
       tartanswer="$tartanswer$__t4_ncrep"
     else
@@ -1780,6 +1816,68 @@ __tartify_repo_name()
     fi
   }
 }
+
+__tartify_ancestor() {
+  # in case of a submodule, we print : 
+  # * the parent repo name, or
+  # * a symbol reminding that we're in a submodule
+  #
+  # NB/ we assume we already are inside a GIT repo
+
+  local parentreponame=
+
+  #[ $isbare = "false" ] && {
+    parentreponame=$(
+      localpath2="$repopath/.."
+      cd "$localpath2"
+      hasanc=$(git rev-parse --git-dir 2>/dev/null)
+      if [ $? -eq 0 ]; then
+        repopath2=${hasanc%%/.git}
+
+        [ ".git" = "$repopath2" ] && repopath2="$localpath2"
+        [ "." = "$repopath2" ] && repopath2="$localpath2"
+        reponame2="${repopath2##*/}"
+
+        # child repo present in .gitmodules ?
+        cd $repopath2
+        cat .gitmodules | grep $reponame >/dev/null 2>&1
+        [ $? -eq 0 ] || printf "%s" "$TARTIFY_STRING_ANCESTOR_NOSUB"
+        [ -z "$TARTIFY_STRING_ANCESTOR_MARKER" ] && printf "%s" "$reponame2" || printf "%s" "$TARTIFY_STRING_ANCESTOR_MARKER"
+      fi
+    )
+  #}
+
+  #PS1 dynamic separator
+  [ ! -z "$forceSeparator" ] &&  [ ! -z "$parentreponame" ] && __t4_sepA="$separator"
+
+  #NOCOLORS
+  [ "true" = $nocolors ] &&  {
+    __t4_ncanc="$parentreponame"
+    if [ -z "$splitargstr" ]; then
+      tartanswer="$tartanswer$__t4_ncanc"
+    else
+      #SPLIT output TEST
+      if [[  "$splitargstr" =~ n  ]] || [[  "$splitargstr" =~ N  ]]; then
+        tartanswer="$tartanswer$__t4_ncanc"
+        __tartify_reset_PS1_globs ANCESTOR
+      fi
+    fi
+  } || {
+  #COLORS
+    __t4_anc="$parentreponame"
+    if [ -z "$splitargstr" ]; then
+      tartanswer="$tartanswer$TARTIFY_COLOR_ANCESTOR_NAME$__t4_anc"
+    else
+      #SPLIT output TEST
+      if [[  "$splitargstr" =~ n  ]] || [[  "$splitargstr" =~ N  ]]; then
+        tartanswer="$tartanswer$TARTIFY_COLOR_ANCESTOR_NAME$__t4_anc"
+        __tartify_reset_PS1_globs ANCESTOR
+      fi
+    fi
+  }
+
+}
+
 
 #TODO: nocolors
 # __t4_ncbranch
@@ -1874,7 +1972,6 @@ __tartify_branch(){
       NORMAL | QUIET)
         local bname=${b##refs/heads/}
         local bnameL=${#bname}
-
 
         # -- COLORS --
         if [ "false" = $nocolors ]; then
@@ -2390,7 +2487,10 @@ tartify()
   # Those are used in the whole tartify scope, from here on
   # (in __tartify_* functions)
   local tartanswer=""
-  local isbare="false"
+  local localpath=""
+  local repopath=""
+  local reponame=""
+  local isbare="false" #TODO: unused ? -> remove
   local isinsideworktree="false"
   local hasstash="false"
   local hasupstream="false"
@@ -2536,6 +2636,15 @@ tartify()
     [ -n "$TARTIFY_FORCE" ] &&  __t4_force="!"
 
     #Perform some cheap 'git' tests (used in more than one '__tartify_*' function)
+
+    localpath="$(pwd -P | tr -d '\n')"
+    local localpath="$(pwd -P | tr -d '\n')"
+    repopath="${g%%/.git}"
+    [ ".git" = "$repopath" ] && repopath="$localpath"
+    [ "." = "$repopath" ] && repopath="$localpath"
+    reponame="${repopath##*/}"
+    localpath="${localpath##$repopath}"
+
     isbare=$( git rev-parse --is-bare-repository 2>/dev/null )
     isinsideworktree=$(git rev-parse --is-inside-work-tree 2>/dev/null)
     if [ "true" = "$isinsideworktree" ]; then
@@ -2577,6 +2686,7 @@ tartify()
       local ch=${argstr:$n:1}
       case "$ch" in
         n | m)                  __tartify_repo_name      ;;
+        a)                      __tartify_ancestor       ;;
         b)                      __tartify_branch         ;;
         o)     nocolors="true"; __tartify_branch         ;;
         r)                      __tartify_remote         ;;
@@ -2584,7 +2694,9 @@ tartify()
         #u) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
         s)                      __tartify_stash          ;;
         l)                      __tartify_timelastcommit ;;
+
         N | M) nocolors="true"; __tartify_repo_name      ;;
+        A)     nocolors="true"; __tartify_ancestor       ;;
         B)     nocolors="true"; __tartify_branch         ;;
         R)     nocolors="true"; __tartify_remote         ;;
         #TODO:
@@ -2599,7 +2711,6 @@ tartify()
         p) ;;
         f) ;;
         i) ;;
-        a) ;;
         q) ;;
         t) ;;
         v) ;;
