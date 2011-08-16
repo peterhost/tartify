@@ -2140,7 +2140,7 @@ __tartify_remote(){
                *) remName="$TARTIFY_STRING_REMOTE_OTHER"
                   marker_color=$TARTIFY_COLOR_REMOTE_NAME_OTHER
                   nbOtherRemotes=$(($nbOtherRemotes + 1))
-                  ps1varRadical='__t4_r$nbOtherRemotes'
+                  ps1varRadical="__t4_r$nbOtherRemotes"
                   ;;
       esac
 
