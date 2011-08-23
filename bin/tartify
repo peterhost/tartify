@@ -545,7 +545,6 @@ __t4_oldschool=""  # OLDSCHOOL branch (__git_PS1)
     __t4_D95=;    __t4_D96=;    __t4_D97=;    __t4_D98=;    __t4_D99=;
 
 
-    __t4_sepD=""
     __t4_pwd=""
     __t4_newline_before=""
     __t4_newline_after=""
@@ -787,15 +786,15 @@ __tartify_init_globs(){
 
   #-------------------------------------------------------
   # ANCESTOR
-  export TARTIFY_COLOR_ANCESTOR_NAME=${__EMM_}             # parent repository's "name"                      MAGENTA
+  export TARTIFY_COLOR_ANCESTOR_NAME=${__EMM_}            # parent repository's "name"                      MAGENTA
   [ "true" = $supports8 ] && {
   export TARTIFY_STRING_ANCESTOR_MARKER="↪"               # if non empty, will replace the name of the parent repository
-                                                           # in the 'ancestor' field in case of a submodule
+                                                          # in the 'ancestor' field in case of a submodule
   } || {
   export TARTIFY_STRING_ANCESTOR_MARKER=">"
   }
-  export TARTIFY_STRING_ANCESTOR_NOSUB="!"               # string output before ancestor repo's name in case sub-repo is
-                                                         # a valid submodule
+  export TARTIFY_STRING_ANCESTOR_NOSUB="!"                # string output before ancestor repo's name in case sub-repo is
+                                                          # a valid submodule
 
   #-------------------------------------------------------
   # REPOSITORY
@@ -1537,7 +1536,6 @@ __tartify_build_PS1() {
         #SMART PWD
         #(always on its own, so no [ -z "$firstn" ] test)
         printf "%s" '\['$__NN_'\]'
-        printf "%s" '$__t4_sepD'
         printf "%s" '\['$TARTIFY_COLOR_PWD'\]$__t4_pwd'
         ;;
       o) ;;
@@ -2812,8 +2810,6 @@ tartify()
     #Not a GIT repo, echo $PWD if 'd' option
     [[ "$argstr" =~ d ]] && {
         if [[ "$argstr" =~ q ]] || [[ "$argstr" =~ I ]]; then
-
-          __t4_sepD=" "
           __t4_pwd=$(__tartify_smart_PWD)
         else
             printf "%s" "$TARTIFY_COLOR_PWD$(__tartify_smart_PWD)$_NN_"
