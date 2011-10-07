@@ -224,8 +224,6 @@
 #          (http://www.wiredrevolution.com/bash-programming/customize-the-bash-ps1-command-prompt)
 
 #TODO:
-# * new option : whitespace before/after
-# * NOCOLOR for __t4_D50...99
 #
 # * WARN: problem with auto-separator (gitps1) with 'tartiforce qNBRSL'
 
@@ -253,7 +251,7 @@ locale | grep -i utf-8 >/dev/null 2>&1 && supports8="true"
 
 #------------------------------------------------------------------------------
 #
-#             SHELL DETECTION
+#         SHELL DETECTION (not used for the moment, planned ZSH support)
 #
 #------------------------------------------------------------------------------
 
@@ -277,6 +275,7 @@ locale | grep -i utf-8 >/dev/null 2>&1 && supports8="true"
 #fi
 
 ## BAIL if using SH on OSX, (scrambles "echo -ne" commands)
+## (DEPRECATED, we use printf wherever possible)
 #[ "$__OSflavor" = "Darwin" ] && [ "$__thisShell" = "sh" ] && { echo " SH detected, exit";  exit 1; }
 
 #------------------------------------------------------------------------------
@@ -764,13 +763,15 @@ __tartify_init_globs(){
   export TARTIFY_COLOR_BRANCH_MERGEINFOS=${__RV_}${__EMR_} # color for the merge/rebase/cherry-pick/bisect status of current branch (if any)
                                                           #                                  BOLD RED
 
-  # Tartify shows U (Unstaged state), S (Staged state) and P (uPstream state,
-  # ahead, behind, diverged, uptodate) directly in the branch name. This
-  # can be tuned for lisibility's sake
+  # Tartify shows U (Unstaged state), S (Staged state) and P (uPstream state:
+  # ahead, behind, diverged, uptodate) directly in the branch name, with 3
+  # different colors. The order of these informations can be tuned for
+  # better readability
   export TARTIFY_SETTING_BRANCH_STAGED_INFO=              # empty     -> (unstaged)UPSTREAM[staged]
                                                           # non-empty -> (unstaged)[staged]UPSTREAM
   export TARTIFY_SETTING_BRANCH_STAGED_INFOLENGTH=2       # How many letters of resulting branchname are to be colored with
-                                                          # the "unstaged" and "staged" markers
+                                                          # the "unstaged" and "staged" marker colors
+                                                          # NB: this number cannot exceed int(length /2), see below
   # Example:
   #     () for      unstaged,      [] for      staged,     rest: upstream info
   #
@@ -909,14 +910,14 @@ __tartitune_init_globs(){
 #
 # This, to ease keeping compatibility with original __git_ps1(), and to
 # ease updates (at the cost of spaghettying tartify's code even more
-# with dynamic variable scope shit)
+# with dynamic variable scope *shit*)
 #
 # Modifications :
 #
-# * local declarations moved to tartify(), as it's the root of our
+# * all local declarations moved to tartify(), as it's the root of our
 #   local dynamic scope
 #
-# Note to self : keep chunks of code in original order to ease diffing
+# Note: keep chunks of code in original order to ease diffing
 
 
 __tartify_git_ps1_find_upstream () {
@@ -1203,16 +1204,17 @@ ${__EMR_}DESCRIPTION${__NN_}
      The ${__EMG_}option string${__NN_} is a CASE-SENSITIVE sequence of characters.
 
       * The following characters are reserved tartify commands :
-         ${__Y_}${TARTIFY_OPTIONS}${__NN_} (and maybe more letters in the future)
+         ${__Y_}${TARTIFY_OPTIONS}${__NN_}
+         (and maybe more alphhanumeric characters in the future)
 
       * any other character will be printed "as is", including spaces. You can use
       those to format the output of the tarttify command (as delimiters,...)
-              \`tartify [r]b - l\` will output \"[repository]branch - time\"
+              \`tartify [r]b - l\` will output "[repository]branch - time"
 
-      * if you need multiple spaces, escape them \"\ \" :
-              \`tartify [r]b -\ \ l\` will output \"[repository]branch - time\"
+      * if you need multiple spaces, escape them "\ " :
+              \`tartify [r]b -\ \ l\` will output "[repository]branch -  time"
 
-      * following characters need to be escaped  ${__Y_}\(\)<>;*\"\'\`\#&|~${__NN_}
+      * following characters need to be escaped  ${__Y_}()<>;*"'\`#&|~${__NN_}
 
 
       ${__EMG_}Elements${__NN_}
@@ -1223,8 +1225,7 @@ ${__EMR_}DESCRIPTION${__NN_}
                if we're inside submodule)
       ${__K_}┌${__Y_}b${__NN_}       ${__EMY_}b${__NN_}ranch name              ${__Y_}B${__NN_}          \` \`
       ${__K_}└${__Y_}o${__NN_}       branch name ${__EMY_}o${__NN_}ldschool (__git_ps1)
-      ${__K_}┌${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes (all)            ${__Y_}R${__NN_}          \` \`
-      ${__K_}└${__Y_}u${__NN_}       remotes (${__EMY_}u${__NN_}pstream only)  ${__Y_}U${__NN_}          \` \`
+       ${__Y_}r${__NN_}       ${__EMY_}r${__NN_}emotes (all)            ${__Y_}R${__NN_}          \` \`
        ${__Y_}s${__NN_}       ${__EMY_}s${__NN_}tash info               ${__Y_}S${__NN_}          \` \`
        ${__Y_}l${__NN_}       ${__EMY_}l${__NN_}ast commit info         ${__Y_}L${__NN_}          \` \`
 
@@ -1264,7 +1265,7 @@ ${__EMR_}DESCRIPTION${__NN_}
       ${__Y_}I${__NN_}       spl${__EMY_}I${__NN_}t        split output (positionnal)
                            -> left of  'I' : no output (=~ quiet mode)
                            -> right of 'I' : STDOUT
-                           (useful in combination with 'menu mode')
+                           (useful when combining 'PS1' with 'menu mode')
 
       ${__EMG_}Help${__NN_} ${__EM_}all other arguments are ignored${__NN_}
 
@@ -1277,8 +1278,8 @@ ${__EMR_}DEFAULT${__NN_}
      tartify o : is equivalent to ${__EM_}tartify${__EMQ_} ${__Y_}obsr${__NN_}
 
 ${__EMR_}SEE ALSO${__NN_}
-     ${__Y_}tartitune${__NN_}  (easily tune  tartify's colors)
-     ${__Y_}tartiforce${__NN_} (force overwrite any options passed to tartify)
+     ${__Y_}tartitune${__NN_}  (easy tune  tartify's settings)
+     ${__Y_}tartiforce${__NN_} (temp. force overwrite any options passed to tartify)
 
 HELPTEXT
 }
@@ -1382,7 +1383,6 @@ __tartify_build_PS1() {
 
         unset firstn
         ;;
-        # TODO!!!!!!!!!!!
       a | A )
         #ANCESTOR NAME
         [ -z "$firstn" ] && printf "%s" '$__t4_sepA'
@@ -1396,7 +1396,6 @@ __tartify_build_PS1() {
         unset firstn
         ;;
       b | B | o)
-        #TODO: branch : oldschool
         #BRANCH
         [ -z "$firstn" ] && printf "%s" '$__t4_sepB'
         printf "%s" '\['$__NN_'\]'
@@ -1478,18 +1477,6 @@ __tartify_build_PS1() {
         printf "%s" '\['$__NN_'\]'
         # NOCOLORS option
         printf "%s" '$__t4_ncremotes'
-
-        unset firstn
-        ;;
-      #TODO: !!!
-      # ->Reuse r) PS1 variables
-      u | U)
-        #UPSTREAM ONLY
-        [ -z "$firstn" ] && printf "%s" '$__t4_sepR'
-        #[ -z "$firstn" ] && [ ! -z "$forceSeparator" ] && printf "%s" '$__t4_sepR'
-        printf "%s" '\['$__NN_'\]'
-
-        printf "%s" '\['$__NN_'\]'
 
         unset firstn
         ;;
@@ -1585,7 +1572,7 @@ __tartify_popup ()
   #   │7      8      9│
   #   │               │
   #   │               │
-  #   │       9      0│
+  #   │              0│
   #   └───────────────┘
 
   #TODO: next test is not necessary
@@ -1748,24 +1735,6 @@ __tartify_smart_repopath(){
 
 }
 
-__tartify_smart_repopath_DEPREC(){
-
-  [ -z "$1" ] || {
-    # How many characters of the $PWD should be kept
-    local pwdmaxlen=$TARTIFY_SETTING_REPO_NAMEMAXLEN
-    # Indicate that there has been dir truncation
-    local dir=${1##*/}
-    pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
-    local pwdoffset=$(( ${#NEW_PWD} - pwdmaxlen ))
-    if [ ${pwdoffset} -gt "0" ]
-    then
-        NEW_PWD=${NEW_PWD:$pwdoffset:$pwdmaxlen}
-        NEW_PWD=${TARTIFY_STRING_PWD_TRUNCSYMBOL}/${NEW_PWD#*/}
-    fi
-    echo $NEW_PWD
-  }
-
-}
 
 #------------------------------------------------------------------------------
 #
@@ -2699,7 +2668,6 @@ tartify()
         o)     nocolors="true"; __tartify_branch         ;;
         r)                      __tartify_remote         ;;
         #TODO:
-        #u) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
         s)                      __tartify_stash          ;;
         l)                      __tartify_timelastcommit ;;
 
@@ -2708,7 +2676,6 @@ tartify()
         B)     nocolors="true"; __tartify_branch         ;;
         R)     nocolors="true"; __tartify_remote         ;;
         #TODO:
-        #U) tartanswer=$tartanswer$( __tartify_remote    $g                                           $nocolors);;
         S)     nocolors="true"; __tartify_stash          ;;
         L)     nocolors="true"; __tartify_timelastcommit ;;
         0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 ) ;;
@@ -3238,13 +3205,12 @@ __tartitune_init_globs
 ##TODO: ZSH compatibility
 #if [[ -n ${ZSH_VERSION-} ]]; then
 #  autoload -U compinit
-#  autoload -U +X bashcompinit && bashcompinit
 #fi
-
+#
 #if [[ -n ${ZSH_VERSION-} ]]; then
 #  emulate -L bash
 #  setopt KSH_TYPESET
-
+#
 #  # workaround zsh's bug that leaves 'words' as a special
 #  # variable in versions < 4.3.12
 #  typeset -h words
@@ -3252,17 +3218,8 @@ __tartitune_init_globs
 
 complete -F __tartitune_completion tartitune
 
-#DEPREC:
-#export __tartify_shell_loaded=1
 
 # script is being executed, run the main command
 # script is being sourced, exit with 0
 [ "$__tartify_whocalled" = "exec" ] && tartify $__tartify_args || return 0
-
-
-# REMOVE ANSI ESCAPE from string
-# MACOS
-# echo  $TOTO | sed -E "s/\\\\033\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
-# LINUX
-#               sed -r
 
