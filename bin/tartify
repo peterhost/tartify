@@ -2531,6 +2531,14 @@ tartify()
         mode="VIM"
         # don't fucking change that:
         separator="vimsplitsep"
+
+        #this was an annoying bug to correct: as VIM mode is used mostly with
+        #the 'tartify v' command, then substituted with 'tartify vnbrsl', we are
+        #in the case of a 'separator-less' tartify option string (separators
+        #being characters which are not a tartify command). In this case,
+        #forceseparator defaults to none. In this case, we need it to be TRUE
+
+        forceSeparator=true
                                   ;;
       # Quiet mode (only update the __TART4PS1* variables)
       # ($tartanswer is discarded)
