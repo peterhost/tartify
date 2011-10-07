@@ -682,12 +682,12 @@ __tartify_init_globs(){
 
   # Internal (RESERVED)
 
-  export TARTIFY_OPTIONS_ELEMENTS='aAbBlLmMnNorRsSuU'
+  export TARTIFY_OPTIONS_ELEMENTS='aAbBlLmMnNorRsS'
   export TARTIFY_OPTIONS_MODES='0123456789pqv'
   export TARTIFY_OPTIONS_MODIFIERS='cdfItwW'
   export TARTIFY_OPTIONS_HELP='eh'
   #export TARTIFY_OPTIONS="${TARTIFY_OPTIONS_ELEMENTS}${TARTIFY_OPTIONS_MODES}${TARTIFY_OPTIONS_MODIFIERS}${TARTIFY_OPTIONS_HELP}"
-  export TARTIFY_OPTIONS="0123456789aAbBcdefhIlLmMnNopqrRsStuUvwW"
+  export TARTIFY_OPTIONS="0123456789aAbBcdefhIlLmMnNopqrRsStwW"
 
   # External TARTIFY PARAMETERS : adapt to your needs
 
@@ -794,7 +794,7 @@ __tartify_init_globs(){
   } || {
   export TARTIFY_STRING_ANCESTOR_MARKER=">"
   }
-  export TARTIFY_STRING_ANCESTOR_NOSUB="!"                # string output before ancestor repo's name in case sub-repo is
+  export TARTIFY_STRING_ANCESTOR_NOSUB="X"                # string output before ancestor repo's name in case sub-repo is
                                                           # a valid submodule
 
   #-------------------------------------------------------
@@ -1714,7 +1714,6 @@ __tartify_smart_PWD(){
 }
 
 
-
 __tartify_smart_repopath(){
 
   [ -z "$1" ] || {
@@ -2556,7 +2555,6 @@ tartify()
       # -- MODAL ARGS --
       m|M) includelocalpath="true" ;;
 
-      u|U) processupstream="true" ;;
 
       r|R) processupstream="true"
             processremotes="true"  ;;
@@ -2847,11 +2845,14 @@ tartitune(){
   local myenv
   local testmode
 
+  # ----------------------------
+  # Parse command line options
+  # ----------------------------
   for myarg in $myargs; do
     case $myarg in
 
       # ENV VARS
-      style_*|color_*) myenv=$myenv$myarg" "
+      style_*|color_*) myenv="$myenv$myarg "
                                        ;;
       test)     testmode="true"           ;;
 
@@ -2997,20 +2998,33 @@ HELPMSG
     esac
   done;
 
-  # avoid conflicts
-  local sortemall=0
-  [ -z "$action" ] || sortemall=$(($sortemall + 1))
-  [ -z "$string_or_setting" ] || sortemall=$(($sortemall + 1))
-  if [ -z "$myenv" ] || [ -z "$myans" ]; then  sortemall=$(($sortemall + 1)); fi
-  [ 1 -lt $sortemall ] && {
+  # ----------------------------
+  # Avoid Conflicting options
+  # ----------------------------
+  #
+  local conflictingOptions=0
+  [ -z "$action" ] || conflictingOptions=$(($conflictingOptions + 1))
+  [ -z "$string_or_setting" ] || conflictingOptions=$(($conflictingOptions + 1))
+
+
+  if [ -n $myenv ]; then :
+  elif [ -n $myansw ]; then :
+  else 
+    conflictingOptions=$(($conflictingOptions + 1))
+  fi
+
+  # -- BAIL if conflicting options --
+  [ 1 -lt $conflictingOptions ] && {
     echo "
 ${__EMR}ERROR${__NN_}: you cannot use ${__EMG_}compound${__NN_} colors, ${__EMG_}string_or_setting${__NN_} and/or ${__EMG_}action${__NN_} options at the same time 
 "
     return 1
   }
 
-  # -- COMPOUND (color) --
-  if [ ! -z "$myenv" ] || [ ! -z "$myans" ]; then
+  # ----------------------------
+  #    COMPOUND (colors)
+  # ----------------------------
+  if [ ! -z "$myenv" ] || [ ! -z "$myansw" ]; then
     [ -n "$myenv" ] && {
           # WITH ENV
           local thisenv
@@ -3035,7 +3049,9 @@ ${__EMR}ERROR${__NN_}: you cannot use ${__EMG_}compound${__NN_} colors, ${__EMG_
         [ "true" = "$testmode" ] && printf "%s\n" "${myansw}*TEST*$__NN_" ||
           printf "%s" "${myansw}"
     }
-  # -- ACTION --
+  # ----------------------------
+  #           ACTION
+  # ----------------------------
   elif [ ! -z "$action" ]; then
     case $action in
 
@@ -3082,7 +3098,9 @@ ${__EMR}ERROR${__NN_}: you cannot use ${__EMG_}compound${__NN_} colors, ${__EMG_
           TARTITUNE_SETTING_FORCE="true";
           ;;
     esac
-  # -- STRING_OR_SETTING --
+  # ----------------------------
+  #    STRING_OR_SETTING
+  # ----------------------------
   else
     case $string_or_setting in
 
@@ -3111,7 +3129,9 @@ ${__EMR}ERROR${__NN_}: you cannot use ${__EMG_}compound${__NN_} colors, ${__EMG_
     esac
   fi
 
-  #save current settings
+  # ----------------------------
+  #    save current settings
+  # ----------------------------
   __tartitune_save_current
 
 }
