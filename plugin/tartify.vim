@@ -76,7 +76,7 @@
 "
 "1}}}
 
-let s:production = 0  "0: dev mode, 1: production mode
+let s:production = 1  "0: dev mode, 1: production mode
                       " (dev mode deactivates loaded_tartify)
 
 "______________________________________________________________________________
@@ -132,6 +132,7 @@ let s:install_dir         = expand('<sfile>:p:h')
 let s:tart_themeDir       = s:install_dir . '/../tarts/themes/'
 let s:tart_pluginDir      = s:install_dir . '/../tarts/plugins/'
 let s:tart_defaultTheme   = s:install_dir . '/../tarts/themes/default.vim'
+let g:tartify_root_dir    = s:install_dir . '/..'
 
 " used in RC files
 let g:tartify_forceColor = {'light': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:{}}, 'dark': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:{}} }
@@ -142,12 +143,16 @@ let g:tartify_forceColor = {'light': {1:{},2:{},3:{},4:{},5:{},6:{},7:{},8:{},9:
 "}}}
 " Store former statusline for restoration in Toggling{{{
 if &statusline != ""
-  call Decho("THERE IS A STATUSLINE")
-  let g:tartify_slbackup = escape(&statusline, " ")
+  if s:production == 0
+    call Decho("THERE IS A STATUSLINE")
+    let g:tartify_slbackup = escape(&statusline, " ")
+  endif
 else
-  call Decho("NO STATUSLINE")
-  "fallback to (little-more-than-)default statusline
-  let g:tartify_slbackup ='%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P'
+  if s:production == 0
+    call Decho("NO STATUSLINE")
+    "fallback to (little-more-than-)default statusline
+    let g:tartify_slbackup ='%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P'
+  endif
 endif
 
 
@@ -288,7 +293,9 @@ function! s:loadTheme()
   "COLORS: load theme-specific User{N} colors
   "
   "
-  call Decho("loadTheme()")
+  if s:production == 0
+    call Decho("loadTheme()")
+  endif
   "check if custom theme exists for current colorscheme
   let l:themefile         = s:tart_themeDir . g:colors_name . ".vim"
   "
@@ -344,17 +351,19 @@ endfunction
 " Force (possible) color directives from a rc file (vimrc,...)
 function! s:forceRCcolors(background)
   if exists("g:tartify_forceColor[a:background]")
-    call Decho("->PROCESSING " . a:background)
-    for [l:nb, l:val] in items(g:tartify_forceColor[a:background])
-        if exists("l:val.hue")
-          let g:tartify_adaptativeHighlights[a:background][l:nb].hue = l:val.hue
-          call Decho("--->ADDED " . l:val.hue)
-        endif
-        if exists("l:val.format")
-          let g:tartify_adaptativeHighlights[a:background][l:nb].format = l:val.format
-          call Decho("--->ADDED " . l:val.format)
-        endif
-    endfo
+    if s:production == 0
+      call Decho("->PROCESSING " . a:background)
+      for [l:nb, l:val] in items(g:tartify_forceColor[a:background])
+          if exists("l:val.hue")
+            let g:tartify_adaptativeHighlights[a:background][l:nb].hue = l:val.hue
+            call Decho("--->ADDED " . l:val.hue)
+          endif
+          if exists("l:val.format")
+            let g:tartify_adaptativeHighlights[a:background][l:nb].format = l:val.format
+            call Decho("--->ADDED " . l:val.format)
+          endif
+      endfo
+    endif
   endif
 endfunction
 
@@ -371,13 +380,13 @@ endfunction
 "  does not work as expected if {mode} equals "gui",in a FOR loop. It
 "  must have stg to do with the scope AND my being an ass, but for the
 "  moment, let's just process the following calls sequentially like a
-"  dummy.
+"  dumb fuck.
 "
 " TODO: do that with redir(), then parse with regex. Might be faster
 
 
-" avoid the "-1" value cause we don't want to feed it back to the
-" Highlight command
+" avoid the "-1" value when encountered cause we don't want to feed it back to
+" the Highlight command
 function! s:noNEG1(arg)
   return (a:arg == "-1")? "" : a:arg
 endfunction
@@ -452,29 +461,34 @@ endfunction
 " the value "reverse" and the other one hasn't
 function! s:detectBuggyColorScheme()
 
-  let l:statuslineNC_ID    = synIDtrans(hlID("StatusLineNC"))
-  let l:listargs = [ "term", "cterm", "gui" ]
+  "TODO: for now, limited to 'dev' mode. Rehabilitate this for production
+  "mode!
 
-  for l:key in l:listargs
-    let l:testArgument = synIDattr(l:statuslineNC_ID, "reverse", l:key)
-    call Decho("  DETECTBUG KEY=" . l:key . " - NC " . l:testArgument . " - orig: " . s:statusLineGroupAttr[l:key])
-    let l:ttt = "TARTIFY : incompatibility detected with colorscheme " . g:colors_name
-    if  ( l:testArgument == 1 && s:statusLineGroupAttr[l:key] !~ "reverse")
-      let l:ttt .=  " ('reverse' present in StatusLineNC (" . l:key . "=...), not in StatusLine)  (':help tartify' for more)"
-      call Decho("----> BUG!!!")
-      redraw
-      echohl ErrorMsg
-      echomsg l:ttt
-      echohl None
-    elseif ( l:testArgument != 1 && s:statusLineGroupAttr[l:key] =~ "reverse")
-      let l:ttt .=  " ('reverse' present in StatusLine (" . l:key . "=...), not in StatusLineNC)  (':help tartify' for more)"
-      call Decho("----> BUG!!!")
-      redraw
-      echohl ErrorMsg
-      echomsg l:ttt
-      echohl None
-    endif
-  endfo
+  if s:production == 0
+    let l:statuslineNC_ID    = synIDtrans(hlID("StatusLineNC"))
+    let l:listargs = [ "term", "cterm", "gui" ]
+
+    for l:key in l:listargs
+      let l:testArgument = synIDattr(l:statuslineNC_ID, "reverse", l:key)
+      call Decho("  DETECTBUG KEY=" . l:key . " - NC " . l:testArgument . " - orig: " . s:statusLineGroupAttr[l:key])
+      let l:ttt = "TARTIFY : incompatibility detected with colorscheme " . g:colors_name
+      if  ( l:testArgument == 1 && s:statusLineGroupAttr[l:key] !~ "reverse")
+        let l:ttt .=  " ('reverse' present in StatusLineNC (" . l:key . "=...), not in StatusLine)  (':help tartify' for more)"
+        call Decho("----> BUG!!!")
+        redraw
+        echohl ErrorMsg
+        echomsg l:ttt
+        echohl None
+      elseif ( l:testArgument != 1 && s:statusLineGroupAttr[l:key] =~ "reverse")
+        let l:ttt .=  " ('reverse' present in StatusLine (" . l:key . "=...), not in StatusLineNC)  (':help tartify' for more)"
+        call Decho("----> BUG!!!")
+        redraw
+        echohl ErrorMsg
+        echomsg l:ttt
+        echohl None
+      endif
+    endfo
+  endif
 endfunction
 
 
@@ -566,11 +580,17 @@ if has("autocmd")
   "      \ | call s:resetTartification()
   "      \ | call Decho("VIMENTER")
   "      \ | autocmd ColorScheme * call s:resetTartification()
+  if s:production == 0
+    autocmd VimEnter *
+          \   call s:resetTartification()
+          \ | call Decho("VIMENTER")
+          \ | autocmd ColorScheme * call s:resetTartification()
+  else
+    autocmd VimEnter *
+          \   call s:resetTartification()
+          \ | autocmd ColorScheme * call s:resetTartification()
+  endif
 
-  autocmd VimEnter *
-        \   call s:resetTartification()
-        \ | call Decho("VIMENTER")
-        \ | autocmd ColorScheme * call s:resetTartification()
 
 endif
 
@@ -640,14 +660,18 @@ let g:tartify_globals.default = ["smart", "nocolors"]
 function! s:activateSequence()
 
   " default
-  call Decho("Loading sequence : Default")
+  if s:production == 0
+    call Decho("Loading sequence : Default")
+  endif
   let g:tartify_sequence.this = g:tartify_sequence.default
 
   " theme-specific sequences ENABLED
   if ! exists("g:tartify_sequence_ignore")
     "current Colorscheme has a corresp. Theme
     if exists("g:tartify_sequence['g:colors_name']")
-      call Decho("Loading sequence : " . g:colors_name)
+      if s:production == 0
+        call Decho("Loading sequence : " . g:colors_name)
+      endif
       let g:tartify_sequence.this = g:tartify_sequence["g:colors_name"]
     endif
   endif
@@ -678,9 +702,9 @@ endfunction
 
 "Visual marker if window is autocollapsible
 function! StatuslineAutoCollapsibleMark()
-  if exists("b:autoCollapsible") &&  winheight(0) > &winminheight
+  if exists("w:autoCollapsible") &&  winheight(0) > &winminheight
     return '[↑⇈]'
-    "return b:autoCollapsible
+    "return w:autoCollapsible
   else
     return ""
   endif
@@ -1032,17 +1056,24 @@ endif
 "______________________________________________________________________________
 " -------- MISC helpers ---------------{{{1
 
+"TODO: temporary solution for 'dev' mode (DECHO messages) fix that in final
+"version
+
 function! g:tartify_list(arg)
   if match(a:arg , 'plug|plugin|plugins')
     "for f in split(glob('/Users/plhoste/.vim/bundle/tartify/*' ), '\n')
     for f in split(glob(s:tart_pluginDir . "*"), '\n')
-      call Decho(f)
+      if s:production == 0
+        call Decho(f)
+      endif
     endfor
     "let l:dirlist = get(s:tart_pluginDir)
     "let l:dirlist = split(glob("s:tart_pluginDir/*"), '\n')
     "call Decho("Dir contains\n" .  l:dirlist )
   else
-    call Decho("unknown arg for g:tart_pluginDir()")
+    if s:production == 0
+      call Decho("unknown arg for g:tart_pluginDir()")
+    endif
   endif
 endfunction
 
