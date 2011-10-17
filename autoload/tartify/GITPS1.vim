@@ -2,6 +2,13 @@
 " -------- FUNCTIONS ------------------{{{1
 
 
+" TODO: VIRER !!
+function! s:errmsg(msg)
+  redraw
+  echohl ErrorMsg
+  echomsg a:msg
+  echohl None
+endfunction
 
 function!  tartify#GITPS1#statusline(item, ...)
 
@@ -20,8 +27,9 @@ function!  tartify#GITPS1#statusline(item, ...)
     "
 
     let l:cd_workdir = "cd `dirname " . shellescape(expand('%:p')) . "`; "
-    let s:tartifyShellScript = expand('<sfile>:p:h') . "/../../bin/tartify "
+    let s:tartifyShellScript = g:tartify_root_dir . "/bin/tartify "
     let b:tart_answer = system( l:cd_workdir . s:tartifyShellScript . "v")
+    let b:tart_answer = b:tart_answer==''? '' : b:tart_answer
 
     "Catchall :unexpected error from shell function (report please)
     let b:statusline_tartify_error = 0
@@ -30,32 +38,23 @@ function!  tartify#GITPS1#statusline(item, ...)
       let b:statusline_tartify_error = 1
     endif
 
-    let b:tart_answer_split = split(b:tart_answer '#vimsplitsep#')
+    " NOTA: 1 : keep empty
+    "       'vimsplitsep' : don't fucking touch that
 
+    let b:tart_answer_split = split(b:tart_answer, 'vimsplitsep', 1)
 
     let b:statusline_tartifyGIT = {}
     let l:index=0
     for l:key in ['repo_name', 'branch', 'remote', 'stash', 'time']
-      let b:statusline_tartifyGIT[l:key] = b:tart_answer_split[ l:index ]
-      "let b:statusline_tartifyGIT[l:key] = system( l:cd_workdir . "__tartify_" . l:key . " TRUE")
+      " get        : to pass empty string as default
+      " substitute : to get rid of the added "'" when string-converting the (1 element) extraxted list
+      let b:statusline_tartifyGIT[l:key] = 
+            \substitute(
+              \string ( get(b:tart_answer_split, l:index, "") ),
+              \"'", "", 'g')
       let l:index = l:index + 1
     endfo
 
-
-    "DEPREC:
-    "let b:statusline_tartifyGIT = {}
-    ""  execute predefined shell commands
-    ""     __tartify_repo_name TRUE"
-    ""     __tartify_branch TRUE TRUE"
-    ""     __tartify_remote TRUE"
-    ""     __tartify_stash TRUE"
-    "for l:key in ['repo_name', 'branch', 'remote', 'stash', 'time']
-    "  let b:statusline_tartifyGIT[l:key] = system( l:cd_workdir . "__tartify_" . l:key . " TRUE")
-    "  "Catchall :unexpected error from shell function (report please)
-    "  if !v:shell_error == 0
-    "    echomsg "TARTIFY: GITPS1 ERROR [" . l:key . "][". v:shell_error . "] RES=" . b:statusline_tartifyGIT[l:key]
-    "  endif
-    "endfo
 
   endif
 
@@ -96,40 +95,75 @@ function!  tartify#GITPS1#statusline(item, ...)
         "
         "   l:branchstate can have one of these values :
         "
-        "       > each of the following, return the branchname and the
-        "         "set laststatus" command will apply a different color
-        "         to the result. The resulting status line snippet is
-        "         only the branchname + colors
+        "       > each of the following, return the branchname and the "set
+        "       laststatus" command will apply a different color to the
+        "       result. The resulting status line snippet is only the
+        "       branchname + colors
         "
         "
-        "         "unstaged",     "unstagedWithUntracked",
-        "         "uncommited",   "uncommitedWithUntracked",
-        "         "unpushed",     "unpushedWithUntracked",
-        "         "ok",           "okWithUntracked",
+        "         "unstaged",     "unstagedWithUntracked", "uncommited",
+        "         "uncommitedWithUntracked", "unpushed",
+        "         "unpushedWithUntracked", "ok",           "okWithUntracked",
         "         "insideGitDir"
         "
         "
-        "        > this will return a "M" symbol which will be prepended
-        "          to the branchname
+        "        > this will return a "M" symbol which will be prepended to
+        "        the branchname
         "
         "         "unmerged"
         "
         "
-        "   the return value of shell function __tartify_branch followed by two
-        "   "TRUE" arguments, is of the form :
+        "   the "branch" part of the return value of the "`tartify v`" shell
+        "   script , is of the form :
         "
-        "   "$nocolor_info|$branch_name"
+        "   "$nocolor_info|$branch_name|$merge_infos"
         "
-        "   where $nocolor_info is a string between 1 and 3 characters:
+        "     where $nocolor_info =~ "[U]?[S]?[IDAONGBE][T]?"
         "
-        "     nocolor_info = "(S|C|P|O|G)(U)?(M)?"
+        "        "[U]nstaged modif(s)"
+        "        "[S]taged modif(s)"
         "
-        "         S "unstaged", C "uncommited", P "unpushed", O "allisOK",
-        "           G "insideDotGit"
+        "       "d[I]verged from remote"
+        "   "behin[D] remote"
+        "        "[A]head of remote"
+        "        "[O]K (remote == HEAD)"
+        "        "[N]o tracked remote"
+        "        "[G]it directory"
+        "        "[B]are repository"
+        "        "[E]mpty repository"
         "
-        "         U "untracked", M "unmerged"
+        "      "un[T]racked files",
         "
+        "     and $merge_infos : either one of these values, or "" :
         "
+        "        "REBASE-i", "REBASE-m", "REBASE", "AM", "AM/REBASE",
+        "        "MERGING", "CHERRY-PICKING", "BISECTING"
+        "
+        "     NB: $merge_infos most of the time empty
+        "
+        "       $nci\|$branchname\|$merge_status
+        "
+        "     nci =~ /[U]?[S]?[AONGBE][T]?/    (nci : no colors info)
+        "
+        "        [U]nstaged modif(s)
+        "
+        "        [S]taged modif(s)
+        "
+        "       d[I]vergd from remote
+        "   behin[D] remote
+        "        [A]head of remote
+        "        [O]K (remote == HEAD)
+        "        [N]o tracked remote
+        "        [G]it directory
+        "        [B]are repository
+        "        [E]mpty repository
+        "
+        "        un[T]racked files,
+        "
+        "     merge_infos : either one of these values, or "" :
+        "
+        "        REBASE-i, REBASE-m, REBASE, AM, AM/REBASE, MERGING, CHERRY-PICKING,
+        "        BISECTING
 
          let l:arglist =
                      \"unstaged|unstagedWithUntracked|
@@ -140,28 +174,40 @@ function!  tartify#GITPS1#statusline(item, ...)
         if  !match(l:branchstate, l:arglist)
           return "BAD arg" . l:branchstate
         else
-            " 1) separate $nocolor_info from $branch_name
-          let l:args = split(b:statusline_tartifyGIT['branch'], '|')
+            " 1) separate $nocolor_info from $branch_name and $merge_infos
+          let l:args = split(b:statusline_tartifyGIT['branch'], '|', 1)
 
           " 2) split $nocolor_info
           let l:commit_status     = ""
+          let l:unstaged_status   = ""
+          let l:staged_status     = ""
           let l:untracked_status  = ""
-          let l:unmerged_status   = ""
 
           for b:tmp_str in split(l:args[0], '\zs')
-            if match(b:tmp_str, '^[SCPOG]$')
+            if match(b:tmp_str, '^[IDAONGBE]$')
               let l:commit_status = b:tmp_str
-            endif
-            if match(b:tmp_str, '^U$')
+            elseif match(b:tmp_str, '^U$')
+              let l:unstaged_status = b:tmp_str
+            elseif match(b:tmp_str, '^S$')
+              let l:staged_status = b:tmp_str
+            elseif match(b:tmp_str, '^T$')
               let l:untracked_status = b:tmp_str
-            endif
-            if match(b:tmp_str, '^M$')
-              let l:unmerged_status = b:tmp_str
             endif
           endfo
 
-          if l:branchstate == "unstaged" && l:commit_status == "S"
-            return l:args[1]
+          "if l:branchstate == "unstaged" && l:commit_status == "S"
+          "  return string(l:args[1])
+          "endif
+
+          "TMP: very temporary fix
+          if l:branchstate == "unstaged"
+
+            return 
+                  \substitute(string(l:args[0]), "'", "", 'g')
+                  \. "["
+                  \. substitute(string(l:args[1]), "'", "", 'g')
+                  \. "]"
+                  \. substitute(string(get(l:args, 2, "''")), "'", "", 'g')
           endif
         endif
       endif
@@ -174,16 +220,18 @@ endfunction
 
 
 
+"TODO: i added ! to function to avoid 'already exists' errors
+"      --> INVESTIGATE why they get defined more than once
+
+"function! tartify#gitps1#tests()
+"  return "true"
+"endfunction
 
 
-function tartify#gitps1#tests()
-endfunction
 
-
-
-function tartify#gitps1#cost()
-  return "20"
-endfunction
+"function! tartify#gitps1#cost()
+"  return "20"
+"endfunction
 
 
 
