@@ -288,16 +288,29 @@ let s:tartify_show = (g:tartify_auto_enable == 1)? 1: 0
 "          \ }
 "      \}
 
+
+
 function! s:loadTheme()
   "
   "COLORS: load theme-specific User{N} colors
   "
   "
+  "check if a colorscheme is enabled otherwise fallback on 'default', and
+  "define g:colors_name as "default" (as it might not be set) then check if a
+  "custom (tartify) theme exists for current colorscheme
+
   if s:production == 0
     call Decho("loadTheme()")
   endif
-  "check if custom theme exists for current colorscheme
-  let l:themefile         = s:tart_themeDir . g:colors_name . ".vim"
+
+  if ! exists("g:colors_name")
+    let g:colors_name = "default"
+    if s:production == 0
+      call Decho("no colorscheme -> assigning default")
+    endif
+  endif
+  let l:themefile = s:tart_themeDir . g:colors_name . ".vim"
+
   "
   " Force specific Theme ?
   "
