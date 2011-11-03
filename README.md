@@ -1,6 +1,8 @@
 
 ![Tartify, give some colors to your GIT_PS1](/Users/plhoste/Tmp/tartify.png "Tartify : Optional title")
 
+# TODO: - replace the two 'perl -pe' calls in tartify (for non-ansi char
+# substitution)
 
 ##Tartification for the masses
 
