@@ -915,8 +915,19 @@ function! s:tartify_set_statusline()
   "set statusline+=%*
 
 
+"TODO:
+"WARN: 
+"TARTIFY désactivé dans statusline pour pouvoir quand même utiliser le plugin
+"!!!
+"TODO : rendre le plugin plus rapide
+"TODO : et réactiver la ligne suivante
+"
+">>>>CELLE CI !!!
+"call tartify#GITPS1#setstatusline()
+"<<<< CELLE LA !
 
-call tartify#GITPS1#setstatusline()
+
+
 
 
   ""_____________________________
