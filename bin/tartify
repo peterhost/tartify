@@ -2097,8 +2097,10 @@ __tartify_remote(){
     local nbOtherRemotes=0
 
     # loop through remotes
-    #for remotename in $(git remote show); do #PROPER (new) syntax, but for compatibility with git 1.5.4.3 & before, we instead use :
-    for remotename in $(git remote); do
+
+    #PROPER (new) syntax, but for compatibility with git 1.5.4.3 & before, we instead use :
+    for remotename in $(git remote show); do
+    #for remotename in $(git remote); do
       (( nbRemotes++))
 
       # special markers for origin and upstream
