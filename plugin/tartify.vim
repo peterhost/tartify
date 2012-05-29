@@ -910,7 +910,7 @@ function! s:tartify_set_statusline()
 
 
   " display current git branch
-  set statusline+=%2*
+  set statusline+=%7*
   set statusline+=%{fugitive#statusline()}
   set statusline+=%*
 
