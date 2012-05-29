@@ -891,6 +891,11 @@ function! s:tartify_set_statusline()
   set statusline+=%#warningmsg#
   set statusline+=%{(&fenc!='utf-8'&&&fenc!='')?'['.&fenc.']':''}
   set statusline+=%*
+  "otherwise, display the info in cool color (utf8)
+  set statusline+=%3*
+  set statusline+=%{(&fenc=='utf-8')?'[UTF8]':''}
+  set statusline+=%*
+
 
   set statusline+=%h      "help file flag
 
@@ -910,13 +915,13 @@ function! s:tartify_set_statusline()
 
 
   " display current git branch
-  set statusline+=%7*
+  set statusline+=%5*
   set statusline+=%{fugitive#statusline()}
   set statusline+=%*
 
 
 "TODO:
-"WARN: 
+"WARN:
 "TARTIFY désactivé dans statusline pour pouvoir quand même utiliser le plugin
 "!!!
 "TODO : rendre le plugin plus rapide
