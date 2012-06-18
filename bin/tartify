@@ -296,8 +296,12 @@ __tartify_define_colors_TPUT() {
 #
 #               * TODO: handle 256 colors (if [ $(tput colors) -ge 256 ] ...)
 #                       -> do that via tartitheme()
-
 #
+
+#ONLY DO THAT if not done anywhere else before when sourcing `.bashrc`
+
+if [ "true" = "$__TPUT_COLORS_DEFINED" ]; then : ; else
+
                                                                      #   ANSI equivalent
                                                                      #  <attr> <fg>  <bg>
   # ALL
@@ -377,7 +381,7 @@ __tartify_define_colors_TPUT() {
   #MISC (non color)
   __NL_=$( tput cud1 )
 
-
+fi
 
 }
 
